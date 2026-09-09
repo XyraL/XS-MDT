@@ -7,8 +7,8 @@
 #     no download figure to show anywhere.
 #
 #  2. That automatic zip contains the whole repository — .github, .gitignore,
-#     CHANGELOG.md — and unpacks to a folder named cipher-mdt-1.0.0
-#     rather than cipher-mdt. Server owners then have to rename it or the
+#     CHANGELOG.md — and unpacks to a folder named XS-MDT-1.0.0
+#     rather than XS-MDT. Server owners then have to rename it or the
 #     resource will not start. This ships exactly what belongs in resources/.
 name: Attach release zip
 

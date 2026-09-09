@@ -1,4 +1,4 @@
-// CipherMDT — Shift Log Panel
+// XSMDT — Shift Log Panel
 
 var _shiftClockedIn = false;
 var _shiftStartTime = null;

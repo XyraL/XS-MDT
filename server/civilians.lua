@@ -1,5 +1,5 @@
-local IsAuthorized = function(src) return exports['cipher-mdt']:IsAuthorized(src) end
-local HasPanel     = function(src, panel) return exports['cipher-mdt']:HasPanel(src, panel) end
+local IsAuthorized = function(src) return exports['XS-MDT']:IsAuthorized(src) end
+local HasPanel     = function(src, panel) return exports['XS-MDT']:HasPanel(src, panel) end
 
 -- Criminal data (warrants / arrests / citations / registered vehicles) is
 -- police-only. EMS and Fire get identity fields, and medical alongside them
@@ -24,7 +24,7 @@ local function SyncCivilian(citizenid)
 end
 
 -- Search civilians by name or DOB
-lib.callback.register('cipher-mdt:server:searchCivilians', function(source, query)
+lib.callback.register('XS-MDT:server:searchCivilians', function(source, query)
     if not IsAuthorized(source) then return nil end
     if not query or #query < 2 then return {} end
 
@@ -76,7 +76,7 @@ lib.callback.register('cipher-mdt:server:searchCivilians', function(source, quer
 end)
 
 -- Get full civilian profile with all records
-lib.callback.register('cipher-mdt:server:getCivilianProfile', function(source, citizenid)
+lib.callback.register('XS-MDT:server:getCivilianProfile', function(source, citizenid)
     if not HasPanel(source, 'civilians') then return nil end
     local civilian = MySQL.single.await('SELECT * FROM mdt_civilians WHERE citizenid = ?', { citizenid })
     if not civilian then
@@ -139,8 +139,8 @@ lib.callback.register('cipher-mdt:server:getCivilianProfile', function(source, c
     -- Licence status is what an officer checks at a traffic stop, and it
     -- carries the reason someone was suspended, so it is police-facing.
     if CanSeeCriminal(source) and Config.Licences and Config.Licences.Enabled then
-        civilian.licences = exports['cipher-mdt']:GetLicences(citizenid)
-        civilian.canRevokeLicence = exports['cipher-mdt']:IsSupervisor(source)
+        civilian.licences = exports['XS-MDT']:GetLicences(citizenid)
+        civilian.canRevokeLicence = exports['XS-MDT']:IsSupervisor(source)
             or not Config.Licences.RevokeRequiresSupervisor
     end
 
@@ -150,7 +150,7 @@ lib.callback.register('cipher-mdt:server:getCivilianProfile', function(source, c
 end)
 
 -- Update civilian mugshot image URL
-lib.callback.register('cipher-mdt:server:updateCivilianImage', function(source, data)
+lib.callback.register('XS-MDT:server:updateCivilianImage', function(source, data)
     if not HasPanel(source, 'mugshots') then return false end
     if not data or not data.citizenid then return false end
     MySQL.update.await('UPDATE mdt_civilians SET image = ? WHERE citizenid = ?', { data.image, data.citizenid })
@@ -158,7 +158,7 @@ lib.callback.register('cipher-mdt:server:updateCivilianImage', function(source, 
 end)
 
 -- Update civilian notes, flags or aliases (officer-added info only)
-lib.callback.register('cipher-mdt:server:updateCivilianNotes', function(source, data)
+lib.callback.register('XS-MDT:server:updateCivilianNotes', function(source, data)
     -- Officer notes, flags and aliases are investigative -> police only.
     if not CanSeeCriminal(source) then return false end
     if type(data) ~= 'table' or not data.citizenid then return false end
@@ -188,7 +188,7 @@ lib.callback.register('cipher-mdt:server:updateCivilianNotes', function(source, 
 end)
 
 -- Mugshot gallery — all civilians with a mugshot, searchable by name
-lib.callback.register('cipher-mdt:server:getMugshots', function(source, data)
+lib.callback.register('XS-MDT:server:getMugshots', function(source, data)
     if not HasPanel(source, 'mugshots') then return nil end
     data = data or {}
     local where = { 'image IS NOT NULL', "image != ''" }

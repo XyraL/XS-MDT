@@ -1,5 +1,5 @@
-local IsAuthorized = function(src) return exports['cipher-mdt']:IsAuthorized(src) end
-local HasPanel = function(src, panel) return exports['cipher-mdt']:HasPanel(src, panel) end
+local IsAuthorized = function(src) return exports['XS-MDT']:IsAuthorized(src) end
+local HasPanel = function(src, panel) return exports['XS-MDT']:HasPanel(src, panel) end
 
 -- draft   — being written, visible only to its author
 -- open    — filed and active
@@ -24,9 +24,9 @@ local function CleanTags(list)
     return out
 end
 
-lib.callback.register('cipher-mdt:server:getIncidents', function(source, data)
+lib.callback.register('XS-MDT:server:getIncidents', function(source, data)
     if not HasPanel(source, 'incidents') then return nil end
-    local officer = exports['cipher-mdt']:GetOfficerInfo(source)
+    local officer = exports['XS-MDT']:GetOfficerInfo(source)
     local filter = (type(data) == 'table' and data.filter) or (type(data) == 'string' and data) or 'all'
 
     -- A draft is a half-written report. It belongs to whoever is writing it
@@ -59,9 +59,9 @@ lib.callback.register('cipher-mdt:server:getIncidents', function(source, data)
     return results
 end)
 
-lib.callback.register('cipher-mdt:server:getIncident', function(source, id)
+lib.callback.register('XS-MDT:server:getIncident', function(source, id)
     if not HasPanel(source, 'incidents') then return nil end
-    local officer = exports['cipher-mdt']:GetOfficerInfo(source)
+    local officer = exports['XS-MDT']:GetOfficerInfo(source)
     local incident = MySQL.single.await('SELECT * FROM mdt_incidents WHERE id = ?', { id })
     if not incident then return nil end
     -- Someone else's unfinished draft is not readable by id either.
@@ -76,9 +76,9 @@ lib.callback.register('cipher-mdt:server:getIncident', function(source, id)
     return incident
 end)
 
-lib.callback.register('cipher-mdt:server:createIncident', function(source, data)
+lib.callback.register('XS-MDT:server:createIncident', function(source, data)
     if not HasPanel(source, 'incidents') then return false end
-    local officer = exports['cipher-mdt']:GetOfficerInfo(source)
+    local officer = exports['XS-MDT']:GetOfficerInfo(source)
     if not data.title or not data.narrative then return false end
 
     local status = VALID_STATUS[data.status] and data.status or 'open'
@@ -111,7 +111,7 @@ lib.callback.register('cipher-mdt:server:createIncident', function(source, data)
 
     -- Starting to type is not an event worth auditing; filing one is.
     if status ~= 'draft' then
-        exports['cipher-mdt']:AuditLog('Incident Created', officer.name, caseNumber .. ': ' .. data.title)
+        exports['XS-MDT']:AuditLog('Incident Created', officer.name, caseNumber .. ': ' .. data.title)
     end
     -- A table, not two values: the NUI bridge keeps only the first return,
     -- so the case number would never reach the panel otherwise.
@@ -121,30 +121,30 @@ end)
 -- Moving a report along its lifecycle. Separate from updateIncident so that
 -- closing a report does not mean sending the whole narrative back to the
 -- server just to change one word.
-lib.callback.register('cipher-mdt:server:setIncidentStatus', function(source, data)
+lib.callback.register('XS-MDT:server:setIncidentStatus', function(source, data)
     if not HasPanel(source, 'incidents') then return { ok = false, error = 'Not authorised' } end
     if type(data) ~= 'table' or not data.id then return { ok = false, error = 'Missing incident' } end
     if not VALID_STATUS[data.status] then return { ok = false, error = 'Unknown status' } end
 
-    local officer = exports['cipher-mdt']:GetOfficerInfo(source)
+    local officer = exports['XS-MDT']:GetOfficerInfo(source)
     local incident = MySQL.single.await('SELECT created_by, case_number, status FROM mdt_incidents WHERE id = ?', { data.id })
     if not incident then return { ok = false, error = 'No such incident' } end
 
     -- Authors move their own reports; supervisors move anyone's.
     local isOwner = incident.created_by == officer.citizenid
-    if not isOwner and not exports['cipher-mdt']:IsSupervisor(source) then
+    if not isOwner and not exports['XS-MDT']:IsSupervisor(source) then
         return { ok = false, error = 'Only the author or a supervisor can change this' }
     end
 
     MySQL.update.await('UPDATE mdt_incidents SET status = ? WHERE id = ?', { data.status, data.id })
-    exports['cipher-mdt']:AuditLog('Incident ' .. data.status, officer.name,
+    exports['XS-MDT']:AuditLog('Incident ' .. data.status, officer.name,
         (incident.case_number or ('#' .. data.id)) .. ' was ' .. (incident.status or '?'))
     return { ok = true }
 end)
 
-lib.callback.register('cipher-mdt:server:updateIncident', function(source, data)
+lib.callback.register('XS-MDT:server:updateIncident', function(source, data)
     if not HasPanel(source, 'incidents') then return false end
-    local officer = exports['cipher-mdt']:GetOfficerInfo(source)
+    local officer = exports['XS-MDT']:GetOfficerInfo(source)
 
     -- Only the author or a supervisor (grade 3+) can edit
     local existing = MySQL.single.await('SELECT created_by FROM mdt_incidents WHERE id = ?', { data.id })
@@ -169,9 +169,9 @@ lib.callback.register('cipher-mdt:server:updateIncident', function(source, data)
     return true
 end)
 
-lib.callback.register('cipher-mdt:server:deleteIncident', function(source, id)
+lib.callback.register('XS-MDT:server:deleteIncident', function(source, id)
     if not HasPanel(source, 'incidents') then return false end
-    local officer = exports['cipher-mdt']:GetOfficerInfo(source)
+    local officer = exports['XS-MDT']:GetOfficerInfo(source)
     local existing = MySQL.single.await('SELECT created_by FROM mdt_incidents WHERE id = ?', { id })
     if not existing then return false end
     local player = exports['qbx_core']:GetPlayer(source)
@@ -179,13 +179,13 @@ lib.callback.register('cipher-mdt:server:deleteIncident', function(source, id)
         return false
     end
     MySQL.query.await('DELETE FROM mdt_incidents WHERE id = ?', { id })
-    exports['cipher-mdt']:AuditLog('Incident Deleted', officer.name, 'Incident #' .. id)
+    exports['XS-MDT']:AuditLog('Incident Deleted', officer.name, 'Incident #' .. id)
     return true
 end)
 
 -- ── Case linking ───────────────────────────────────────────────────────────
 
-lib.callback.register('cipher-mdt:server:setCaseNumber', function(source, data)
+lib.callback.register('XS-MDT:server:setCaseNumber', function(source, data)
     if not HasPanel(source, 'incidents') then return false end
     if not data.incidentId or not data.caseNumber then return false end
     -- Trim and validate: alphanumeric + hyphens, max 50 chars
@@ -197,12 +197,12 @@ end)
 -- Search across every report an officer may see: case number, title, the
 -- narrative itself, and who wrote it. Draft privacy holds here exactly as it
 -- does in the list — someone else's unfinished report is not findable either.
-lib.callback.register('cipher-mdt:server:searchIncidents', function(source, query)
+lib.callback.register('XS-MDT:server:searchIncidents', function(source, query)
     if not HasPanel(source, 'incidents') then return nil end
     query = tostring(query or '')
     if #query < 2 then return {} end
 
-    local officer = exports['cipher-mdt']:GetOfficerInfo(source)
+    local officer = exports['XS-MDT']:GetOfficerInfo(source)
     local like = '%' .. query .. '%'
 
     local results = MySQL.query.await([[
@@ -232,7 +232,7 @@ end)
 local EVIDENCE_KINDS = { photo = true, item = true, note = true }
 local EVIDENCE_EDIT_WINDOW = 15 * 60
 
-lib.callback.register('cipher-mdt:server:addEvidence', function(source, data)
+lib.callback.register('XS-MDT:server:addEvidence', function(source, data)
     if not HasPanel(source, 'incidents') then return { ok = false, error = 'Not authorised' } end
     if type(data) ~= 'table' or not data.incidentId then return { ok = false, error = 'Missing report' } end
     if not EVIDENCE_KINDS[data.kind] then return { ok = false, error = 'Unknown evidence type' } end
@@ -240,7 +240,7 @@ lib.callback.register('cipher-mdt:server:addEvidence', function(source, data)
     local label = tostring(data.label or ''):sub(1, 120)
     if label == '' then return { ok = false, error = 'A label is required' } end
 
-    local officer = exports['cipher-mdt']:GetOfficerInfo(source)
+    local officer = exports['XS-MDT']:GetOfficerInfo(source)
     local incident = MySQL.single.await(
         'SELECT id, status, created_by, case_number FROM mdt_incidents WHERE id = ?', { data.incidentId })
     if not incident then return { ok = false, error = 'No such report' } end
@@ -258,32 +258,32 @@ lib.callback.register('cipher-mdt:server:addEvidence', function(source, data)
         officer.citizenid, officer.name,
     })
 
-    exports['cipher-mdt']:AuditLog('Evidence Logged', officer.name,
+    exports['XS-MDT']:AuditLog('Evidence Logged', officer.name,
         ('%s "%s" on %s'):format(data.kind, label, incident.case_number or ('#' .. incident.id)))
     return { ok = true, id = id }
 end)
 
-lib.callback.register('cipher-mdt:server:deleteEvidence', function(source, data)
+lib.callback.register('XS-MDT:server:deleteEvidence', function(source, data)
     if not HasPanel(source, 'incidents') then return { ok = false, error = 'Not authorised' } end
     if type(data) ~= 'table' or not data.id then return { ok = false, error = 'Missing entry' } end
 
-    local officer = exports['cipher-mdt']:GetOfficerInfo(source)
+    local officer = exports['XS-MDT']:GetOfficerInfo(source)
     local row = MySQL.single.await(
         'SELECT id, label, logged_by, UNIX_TIMESTAMP(created_at) AS at FROM mdt_evidence WHERE id = ?', { data.id })
     if not row then return { ok = false, error = 'Already gone' } end
 
     local own = row.logged_by == officer.citizenid
     local fresh = (os.time() - (row.at or 0)) <= EVIDENCE_EDIT_WINDOW
-    if not ((own and fresh) or exports['cipher-mdt']:IsSupervisor(source)) then
+    if not ((own and fresh) or exports['XS-MDT']:IsSupervisor(source)) then
         return { ok = false, error = 'Only within 15 minutes of logging it, or a supervisor' }
     end
 
     MySQL.query.await('DELETE FROM mdt_evidence WHERE id = ?', { data.id })
-    exports['cipher-mdt']:AuditLog('Evidence Removed', officer.name, ('"%s" (#%d)'):format(row.label, row.id))
+    exports['XS-MDT']:AuditLog('Evidence Removed', officer.name, ('"%s" (#%d)'):format(row.label, row.id))
     return { ok = true }
 end)
 
-lib.callback.register('cipher-mdt:server:getIncidentsByCase', function(source, caseNumber)
+lib.callback.register('XS-MDT:server:getIncidentsByCase', function(source, caseNumber)
     if not HasPanel(source, 'incidents') then return nil end
     if not caseNumber or #caseNumber < 1 then return {} end
     local results = MySQL.query.await([[

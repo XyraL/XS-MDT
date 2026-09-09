@@ -3,15 +3,15 @@ local mdtOpen = false
 -- Open the MDT NUI
 local function OpenMDT()
     if mdtOpen then return end
-    local officer = lib.callback.await('cipher-mdt:server:open', false)
+    local officer = lib.callback.await('XS-MDT:server:open', false)
     if not officer then
-        lib.notify({ title = 'CipherMDT', description = 'Access Denied', type = 'error' })
+        lib.notify({ title = 'XSMDT', description = 'Access Denied', type = 'error' })
         return
     end
     mdtOpen = true
     SetNuiFocus(true, true)
     SendNUIMessage({ action = 'open', officer = officer })
-    TriggerEvent('cipher-mdt:client:mdtStateChanged', true)
+    TriggerEvent('XS-MDT:client:mdtStateChanged', true)
     if Config.Sounds.Enabled then
         SendNUIMessage({ action = 'playSound', sound = 'open' })
     end
@@ -23,28 +23,28 @@ local function CloseMDT()
     mdtOpen = false
     SetNuiFocus(false, false)
     SendNUIMessage({ action = 'close' })
-    TriggerEvent('cipher-mdt:client:mdtStateChanged', false)
+    TriggerEvent('XS-MDT:client:mdtStateChanged', false)
     if Config.Sounds.Enabled then
         SendNUIMessage({ action = 'playSound', sound = 'close' })
     end
 end
 
 -- Register keybind
-RegisterKeyMapping('cipher_mdt_open', 'Open CipherMDT', 'keyboard', Config.OpenKey)
-RegisterCommand('cipher_mdt_open', function()
+RegisterKeyMapping('xs_mdt_open', 'Open XSMDT', 'keyboard', Config.OpenKey)
+RegisterCommand('xs_mdt_open', function()
     if mdtOpen then CloseMDT() else OpenMDT() end
 end, false)
 
 -- Panic button — broadcasts priority alert with officer location to all units
-RegisterKeyMapping('cipher_mdt_panic', 'CipherMDT: Panic Button', 'keyboard', 'F11')
-RegisterCommand('cipher_mdt_panic', function()
+RegisterKeyMapping('xs_mdt_panic', 'XSMDT: Panic Button', 'keyboard', 'F11')
+RegisterCommand('xs_mdt_panic', function()
     local pd = exports['qbx_core']:GetPlayerData()
     if not pd or not Config.AuthorizedJobs[pd.job.name] then return end
     local ped    = PlayerPedId()
     local coords = GetEntityCoords(ped)
     local streetHash, _ = GetStreetNameAtCoord(coords.x, coords.y, coords.z)
     local street = GetStreetNameFromHashKey(streetHash)
-    TriggerServerEvent('cipher-mdt:server:panicButton', {
+    TriggerServerEvent('XS-MDT:server:panicButton', {
         x = coords.x, y = coords.y, z = coords.z,
         street = street,
     })
@@ -68,11 +68,11 @@ end)
 RegisterNetEvent('QBCore:Client:OnJobUpdate', function(job)
     if Config.OnDutyOnly and not job.onduty and mdtOpen then
         CloseMDT()
-        lib.notify({ title = 'CipherMDT', description = 'MDT closed — you went off duty.', type = 'inform' })
+        lib.notify({ title = 'XSMDT', description = 'MDT closed — you went off duty.', type = 'inform' })
     end
     -- Tell server to drop this unit's blip position if off-duty
     if not job.onduty then
-        TriggerServerEvent('cipher-mdt:server:clearPosition')
+        TriggerServerEvent('XS-MDT:server:clearPosition')
     end
 end)
 
@@ -103,7 +103,7 @@ end)
 -- nil still becomes `{}` — plenty of callbacks return nothing on purpose and
 -- the panel expects an object from those.
 RegisterNUICallback('request', function(data, cb)
-    local result = lib.callback.await('cipher-mdt:server:' .. data.endpoint, false, data.payload)
+    local result = lib.callback.await('XS-MDT:server:' .. data.endpoint, false, data.payload)
 
     if result == false then
         cb(false)
@@ -113,7 +113,7 @@ RegisterNUICallback('request', function(data, cb)
 end)
 
 -- Alert: warrant issued
-RegisterNetEvent('cipher-mdt:client:warrantAlert', function(data)
+RegisterNetEvent('XS-MDT:client:warrantAlert', function(data)
     lib.notify({
         title = 'WARRANT ISSUED',
         description = string.format('%s — %d charge(s) | By: %s', data.subject, #data.charges, data.issuedBy),
@@ -126,7 +126,7 @@ RegisterNetEvent('cipher-mdt:client:warrantAlert', function(data)
 end)
 
 -- Alert: BOLO issued or cleared
-RegisterNetEvent('cipher-mdt:client:boloAlert', function(data)
+RegisterNetEvent('XS-MDT:client:boloAlert', function(data)
     lib.notify({
         title = 'BOLO — ' .. (data.type == 'vehicle' and 'VEHICLE' or 'PERSON'),
         description = data.description .. (data.plate and (' | Plate: ' .. data.plate) or '') .. ' | By: ' .. data.issuedBy,
@@ -138,14 +138,14 @@ RegisterNetEvent('cipher-mdt:client:boloAlert', function(data)
     end
 end)
 
-RegisterNetEvent('cipher-mdt:client:boloCleared', function(boloId)
+RegisterNetEvent('XS-MDT:client:boloCleared', function(boloId)
     if mdtOpen then
         SendNUIMessage({ action = 'boloCleared', id = boloId })
     end
 end)
 
 -- Alert: new CAD call
-RegisterNetEvent('cipher-mdt:client:newCall', function(call)
+RegisterNetEvent('XS-MDT:client:newCall', function(call)
     lib.notify({
         title = '📡 NEW CALL — ' .. call.call_number,
         description = (call.call_type or call.type or 'Unknown') .. ' @ ' .. (call.location or ''),
@@ -157,26 +157,26 @@ RegisterNetEvent('cipher-mdt:client:newCall', function(call)
     end
 end)
 
-RegisterNetEvent('cipher-mdt:client:callUpdated', function(data)
+RegisterNetEvent('XS-MDT:client:callUpdated', function(data)
     if mdtOpen then
         SendNUIMessage({ action = 'callUpdated', data = data })
     end
 end)
 
-RegisterNetEvent('cipher-mdt:client:callClosed', function(callId)
+RegisterNetEvent('XS-MDT:client:callClosed', function(callId)
     if mdtOpen then
         SendNUIMessage({ action = 'callClosed', id = callId })
     end
 end)
 
-RegisterNetEvent('cipher-mdt:client:callNoteAdded', function(data)
+RegisterNetEvent('XS-MDT:client:callNoteAdded', function(data)
     if mdtOpen then
         SendNUIMessage({ action = 'callNoteAdded', data = data })
     end
 end)
 
 -- Panic alert received (high-priority in-game + NUI notification)
-RegisterNetEvent('cipher-mdt:client:panicAlert', function(data)
+RegisterNetEvent('XS-MDT:client:panicAlert', function(data)
     lib.notify({
         title       = '🚨 OFFICER NEEDS ASSISTANCE',
         description = data.officerName .. ' (Badge #' .. data.badge .. ')\n📍 ' .. data.location,
@@ -192,7 +192,7 @@ RegisterNetEvent('cipher-mdt:client:panicAlert', function(data)
 end)
 
 -- Auto-dispatch alert (shown to all on-duty officers in-game)
-RegisterNetEvent('cipher-mdt:client:dispatchAlert', function(data)
+RegisterNetEvent('XS-MDT:client:dispatchAlert', function(data)
     lib.notify({
         title = data.icon .. ' DISPATCH — ' .. data.title,
         description = data.description .. '\n📍 ' .. data.location,
@@ -214,10 +214,10 @@ RegisterNetEvent('cipher-mdt:client:dispatchAlert', function(data)
 end)
 
 -- Jail player event (triggered by server after arrest)
-RegisterNetEvent('cipher-mdt:client:jailPlayer', function(minutes)
+RegisterNetEvent('XS-MDT:client:jailPlayer', function(minutes)
     -- Hook into your server's jail system here
     -- Example: TriggerEvent('your-jail-resource:jail', minutes)
-    print('[CipherMDT] Jail trigger: ' .. minutes .. ' minutes')
+    print('[XSMDT] Jail trigger: ' .. minutes .. ' minutes')
 end)
 
 -- ── Quick Dispatch Responder ──────────────────────────────────────────────
@@ -229,7 +229,7 @@ local function OpenQuickDispatch()
     if not pd or not Config.AuthorizedJobs[pd.job.name] then return end
     if Config.OnDutyOnly and not pd.job.onduty then return end
 
-    local calls = lib.callback.await('cipher-mdt:server:getActiveCalls', false)
+    local calls = lib.callback.await('XS-MDT:server:getActiveCalls', false)
     if not calls or #calls == 0 then
         lib.notify({ title = 'Quick Dispatch', description = 'No active calls.', type = 'inform', duration = 3000 })
         return
@@ -240,14 +240,14 @@ local function OpenQuickDispatch()
     SendNUIMessage({ type = 'openQuickDispatch', calls = calls })
 end
 
-RegisterKeyMapping('cipher_mdt_quickdispatch', 'CipherMDT: Quick Dispatch', 'keyboard', 'F10')
-RegisterCommand('cipher_mdt_quickdispatch', function()
+RegisterKeyMapping('xs_mdt_quickdispatch', 'XSMDT: Quick Dispatch', 'keyboard', 'F10')
+RegisterCommand('xs_mdt_quickdispatch', function()
     OpenQuickDispatch()
 end, false)
 
 -- Backup request — sends an urgent dispatch call with officer's location
-RegisterKeyMapping('cipher_mdt_backup', 'CipherMDT: Request Backup', 'keyboard', 'F12')
-RegisterCommand('cipher_mdt_backup', function()
+RegisterKeyMapping('xs_mdt_backup', 'XSMDT: Request Backup', 'keyboard', 'F12')
+RegisterCommand('xs_mdt_backup', function()
     local pd = exports['qbx_core']:GetPlayerData()
     if not pd or not Config.AuthorizedJobs[pd.job.name] then return end
     if Config.OnDutyOnly and not pd.job.onduty then return end
@@ -255,7 +255,7 @@ RegisterCommand('cipher_mdt_backup', function()
     local coords = GetEntityCoords(ped)
     local streetHash, _ = GetStreetNameAtCoord(coords.x, coords.y, coords.z)
     local street = GetStreetNameFromHashKey(streetHash)
-    TriggerServerEvent('cipher-mdt:server:backupRequest', {
+    TriggerServerEvent('XS-MDT:server:backupRequest', {
         x = coords.x, y = coords.y, z = coords.z,
         street = street,
     })
@@ -263,7 +263,7 @@ RegisterCommand('cipher_mdt_backup', function()
 end, false)
 
 -- Expiring warrant alert receiver
-RegisterNetEvent('cipher-mdt:client:expiringWarrantAlert', function(data)
+RegisterNetEvent('XS-MDT:client:expiringWarrantAlert', function(data)
     lib.notify({
         title       = '⚖ WARRANT EXPIRING SOON',
         description = (data.subject or 'Unknown') .. ' — expires in ' .. (data.hoursLeft or '?') .. 'h',
@@ -293,7 +293,7 @@ RegisterNUICallback('qdRespond', function(data, cb)
     end
 
     -- Mark responding on the call server-side
-    TriggerServerEvent('cipher-mdt:server:respondToCall', {
+    TriggerServerEvent('XS-MDT:server:respondToCall', {
         callId = data.callId,
     })
 

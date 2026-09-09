@@ -1,4 +1,4 @@
-// CipherMDT — Callout History Panel
+// XSMDT — Callout History Panel
 
 function loadCallHistory() {
     const panel = document.getElementById('tab-callhistory');

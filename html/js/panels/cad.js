@@ -365,7 +365,7 @@ async function showCADHistory() {
 }
 
 function routeToCall(coords, location) {
-    fetch('https://cipher-mdt/routeToCall', {
+    fetch(`https://${MDT_RESOURCE}/routeToCall`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ coords, location }),

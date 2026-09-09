@@ -9,18 +9,18 @@ end
 exports('PlayMDTSound', PlayMDTSound)
 
 -- Panic button fired — loud in-game siren burst
-RegisterNetEvent('cipher-mdt:client:panicAlert', function()
+RegisterNetEvent('XS-MDT:client:panicAlert', function()
     PlaySoundFrontend(-1, 'TIMER_STOP', 'DLC_HEIST_HACKING_SNAKE_SOUNDS', true)
     Wait(200)
     PlaySoundFrontend(-1, 'TIMER_STOP', 'DLC_HEIST_HACKING_SNAKE_SOUNDS', true)
 end)
 
 -- New CAD call — subtle in-game beep
-RegisterNetEvent('cipher-mdt:client:newCall', function()
+RegisterNetEvent('XS-MDT:client:newCall', function()
     PlaySoundFrontend(-1, 'Countdown_Beep', 'DLC_HEIST_HACKING_SNAKE_SOUNDS', true)
 end)
 
 -- Warrant alert — attention tone
-RegisterNetEvent('cipher-mdt:client:warrantAlert', function()
+RegisterNetEvent('XS-MDT:client:warrantAlert', function()
     PlaySoundFrontend(-1, 'Beep_Green', 'DLC_HEIST_HACKING_SNAKE_SOUNDS', true)
 end)

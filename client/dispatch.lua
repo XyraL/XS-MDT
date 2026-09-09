@@ -1,4 +1,4 @@
--- CipherMDT Client Dispatch — detects game events and sends auto-dispatch calls
+-- XSMDT Client Dispatch — detects game events and sends auto-dispatch calls
 if Config.DisableInternalDispatchDetection then return end
 
 local function InternalDetectionActive()
@@ -14,15 +14,15 @@ end
 local _suppressed = {}
 
 -- Export: other resources suppress a call type
---   exports['cipher-mdt']:SuppressDispatch('SHOTS_FIRED', true)
---   exports['cipher-mdt']:SuppressDispatch('SHOTS_FIRED', false)
+--   exports['XS-MDT']:SuppressDispatch('SHOTS_FIRED', true)
+--   exports['XS-MDT']:SuppressDispatch('SHOTS_FIRED', false)
 exports('SuppressDispatch', function(callType, suppressed)
     _suppressed[callType] = suppressed == true
 end)
 
 -- Net event alternative (for scripts that prefer events over exports)
---   TriggerEvent('cipher-mdt:client:setSuppression', 'SHOTS_FIRED', true)
-AddEventHandler('cipher-mdt:client:setSuppression', function(callType, suppressed)
+--   TriggerEvent('XS-MDT:client:setSuppression', 'SHOTS_FIRED', true)
+AddEventHandler('XS-MDT:client:setSuppression', function(callType, suppressed)
     _suppressed[callType] = suppressed == true
 end)
 
@@ -38,7 +38,7 @@ end
 local function SendDispatch(callType, description, coords)
     if not InternalDetectionActive() then return end
     local street = GetStreetLabel(coords.x, coords.y, coords.z)
-    TriggerServerEvent('cipher-mdt:server:autoDispatch', {
+    TriggerServerEvent('XS-MDT:server:autoDispatch', {
         callType    = callType,
         description = description,
         street      = street,
@@ -126,8 +126,8 @@ AddEventHandler('qb-robbery:client:notify', function(data)
 end)
 
 -- Public API: other resources trigger a custom dispatch call directly
---   TriggerEvent('cipher-mdt:client:dispatch:custom', 'CUSTOM', 'Description', vector3(x,y,z))
-AddEventHandler('cipher-mdt:client:dispatch:custom', function(callType, description, coords)
+--   TriggerEvent('XS-MDT:client:dispatch:custom', 'CUSTOM', 'Description', vector3(x,y,z))
+AddEventHandler('XS-MDT:client:dispatch:custom', function(callType, description, coords)
     if IsSuppr(callType) or IsSuppr('CUSTOM') then return end
     if not coords then coords = GetEntityCoords(PlayerPedId()) end
     SendDispatch(callType, description, coords)

@@ -1,11 +1,11 @@
--- CipherMDT — Fire backend.
+-- XSMDT — Fire backend.
 -- Fire incident reports (NFIRS-flavoured), hazmat entries, and the apparatus
 -- roster with its inspection log. Panel-gated the same way as EMS.
 
-local HasPanel = function(src, panel) return exports['cipher-mdt']:HasPanel(src, panel) end
-local GetInfo  = function(src) return exports['cipher-mdt']:GetOfficerInfo(src) end
-local IsSuper  = function(src) return exports['cipher-mdt']:IsSupervisor(src) end
-local AuditLog = function(...) return exports['cipher-mdt']:AuditLog(...) end
+local HasPanel = function(src, panel) return exports['XS-MDT']:HasPanel(src, panel) end
+local GetInfo  = function(src) return exports['XS-MDT']:GetOfficerInfo(src) end
+local IsSuper  = function(src) return exports['XS-MDT']:IsSupervisor(src) end
+local AuditLog = function(...) return exports['XS-MDT']:AuditLog(...) end
 
 -- ═══════════════════════════════════════════════════════════════════════════
 --  FIRE INCIDENT REPORTS
@@ -19,7 +19,7 @@ local function decodeIncident(r)
     return r
 end
 
-lib.callback.register('cipher-mdt:server:getFireIncidents', function(source, data)
+lib.callback.register('XS-MDT:server:getFireIncidents', function(source, data)
     if not HasPanel(source, 'fireincidents') then return nil end
     local ff     = GetInfo(source)
     local filter = (type(data) == 'table' and data.filter) or 'all'
@@ -46,12 +46,12 @@ lib.callback.register('cipher-mdt:server:getFireIncidents', function(source, dat
     return rows
 end)
 
-lib.callback.register('cipher-mdt:server:getFireIncident', function(source, id)
+lib.callback.register('XS-MDT:server:getFireIncident', function(source, id)
     if not HasPanel(source, 'fireincidents') then return nil end
     return decodeIncident(MySQL.single.await('SELECT * FROM mdt_fire_incidents WHERE id = ?', { id }))
 end)
 
-lib.callback.register('cipher-mdt:server:createFireIncident', function(source, data)
+lib.callback.register('XS-MDT:server:createFireIncident', function(source, data)
     if not HasPanel(source, 'fireincidents') then return false end
     local ff = GetInfo(source)
     if not data or not data.incident_type or not data.address then return false end
@@ -82,7 +82,7 @@ lib.callback.register('cipher-mdt:server:createFireIncident', function(source, d
     return id
 end)
 
-lib.callback.register('cipher-mdt:server:updateFireIncident', function(source, data)
+lib.callback.register('XS-MDT:server:updateFireIncident', function(source, data)
     if not HasPanel(source, 'fireincidents') then return false end
     local ff = GetInfo(source)
     if not data or not data.id then return false end
@@ -117,7 +117,7 @@ lib.callback.register('cipher-mdt:server:updateFireIncident', function(source, d
     return true
 end)
 
-lib.callback.register('cipher-mdt:server:deleteFireIncident', function(source, id)
+lib.callback.register('XS-MDT:server:deleteFireIncident', function(source, id)
     if not HasPanel(source, 'fireincidents') then return false end
     if not IsSuper(source) then return false, 'Supervisor only' end
     local ff = GetInfo(source)
@@ -130,7 +130,7 @@ end)
 --  HAZMAT
 -- ═══════════════════════════════════════════════════════════════════════════
 
-lib.callback.register('cipher-mdt:server:getHazmat', function(source, data)
+lib.callback.register('XS-MDT:server:getHazmat', function(source, data)
     if not HasPanel(source, 'hazmat') then return nil end
     local filter = (type(data) == 'table' and data.filter) or 'active'
 
@@ -143,7 +143,7 @@ lib.callback.register('cipher-mdt:server:getHazmat', function(source, data)
     return MySQL.query.await(sql, params) or {}
 end)
 
-lib.callback.register('cipher-mdt:server:createHazmat', function(source, data)
+lib.callback.register('XS-MDT:server:createHazmat', function(source, data)
     if not HasPanel(source, 'hazmat') then return false end
     local ff = GetInfo(source)
     if not data or not data.substance or not data.location then return false end
@@ -169,7 +169,7 @@ lib.callback.register('cipher-mdt:server:createHazmat', function(source, data)
     return id
 end)
 
-lib.callback.register('cipher-mdt:server:updateHazmatStatus', function(source, data)
+lib.callback.register('XS-MDT:server:updateHazmatStatus', function(source, data)
     if not HasPanel(source, 'hazmat') then return false end
     local ff = GetInfo(source)
     if not data or not data.id or not data.status then return false end
@@ -183,7 +183,7 @@ end)
 --  APPARATUS + INSPECTIONS
 -- ═══════════════════════════════════════════════════════════════════════════
 
-lib.callback.register('cipher-mdt:server:getApparatus', function(source)
+lib.callback.register('XS-MDT:server:getApparatus', function(source)
     if not HasPanel(source, 'apparatus') then return nil end
     local rows = MySQL.query.await('SELECT * FROM mdt_apparatus ORDER BY unit_id ASC') or {}
     for _, a in ipairs(rows) do
@@ -194,7 +194,7 @@ lib.callback.register('cipher-mdt:server:getApparatus', function(source)
     return { apparatus = rows, isSupervisor = IsSuper(source) }
 end)
 
-lib.callback.register('cipher-mdt:server:saveApparatus', function(source, data)
+lib.callback.register('XS-MDT:server:saveApparatus', function(source, data)
     if not HasPanel(source, 'apparatus') then return false end
     if not IsSuper(source) then return false, 'Supervisor only' end
     local ff = GetInfo(source)
@@ -218,7 +218,7 @@ lib.callback.register('cipher-mdt:server:saveApparatus', function(source, data)
     return id
 end)
 
-lib.callback.register('cipher-mdt:server:deleteApparatus', function(source, id)
+lib.callback.register('XS-MDT:server:deleteApparatus', function(source, id)
     if not HasPanel(source, 'apparatus') then return false end
     if not IsSuper(source) then return false, 'Supervisor only' end
     MySQL.query.await('DELETE FROM mdt_apparatus_log WHERE apparatus_id = ?', { id })
@@ -226,7 +226,7 @@ lib.callback.register('cipher-mdt:server:deleteApparatus', function(source, id)
     return true
 end)
 
-lib.callback.register('cipher-mdt:server:getApparatusLog', function(source, apparatusId)
+lib.callback.register('XS-MDT:server:getApparatusLog', function(source, apparatusId)
     if not HasPanel(source, 'apparatus') then return nil end
     return MySQL.query.await(
         'SELECT * FROM mdt_apparatus_log WHERE apparatus_id = ? ORDER BY created_at DESC LIMIT 50',
@@ -234,7 +234,7 @@ lib.callback.register('cipher-mdt:server:getApparatusLog', function(source, appa
 end)
 
 -- Any firefighter can file an inspection; only supervisors edit the roster itself.
-lib.callback.register('cipher-mdt:server:logInspection', function(source, data)
+lib.callback.register('XS-MDT:server:logInspection', function(source, data)
     if not HasPanel(source, 'apparatus') then return false end
     local ff = GetInfo(source)
     if not data or not data.apparatus_id then return false end
@@ -264,7 +264,7 @@ end)
 --  FIRE DASHBOARD STATS
 -- ═══════════════════════════════════════════════════════════════════════════
 
-lib.callback.register('cipher-mdt:server:getFireStats', function(source)
+lib.callback.register('XS-MDT:server:getFireStats', function(source)
     if not HasPanel(source, 'fireincidents') then return nil end
     local ff = GetInfo(source)
 

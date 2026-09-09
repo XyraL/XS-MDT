@@ -1,5 +1,5 @@
-local IsAuthorized = function(src) return exports['cipher-mdt']:IsAuthorized(src) end
-local HasPanel = function(src, panel) return exports['cipher-mdt']:HasPanel(src, panel) end
+local IsAuthorized = function(src) return exports['XS-MDT']:IsAuthorized(src) end
+local HasPanel = function(src, panel) return exports['XS-MDT']:HasPanel(src, panel) end
 
 -- Fine deduction handler — replaceable via exports
 local _fineHandler = function(targetSrc, amount, reason)
@@ -16,9 +16,9 @@ exports('DeductFine', function(targetSrc, amount, reason) _fineHandler(targetSrc
 
 -- ─── Arrests ───────────────────────────────────────────────────────────────
 
-lib.callback.register('cipher-mdt:server:logArrest', function(source, data)
+lib.callback.register('XS-MDT:server:logArrest', function(source, data)
     if not HasPanel(source, 'arrests') then return false end
-    local officer = exports['cipher-mdt']:GetOfficerInfo(source)
+    local officer = exports['XS-MDT']:GetOfficerInfo(source)
     if not data.citizenid or not data.charges or #data.charges == 0 then return false end
 
     local id = MySQL.insert.await([[
@@ -45,21 +45,21 @@ lib.callback.register('cipher-mdt:server:logArrest', function(source, data)
         elseif jailResource == 'ps-prison' then
             TriggerEvent('prison:server:SendToJail', data.targetSource, data.jailTime)
         else
-            TriggerClientEvent('cipher-mdt:client:jailPlayer', data.targetSource, data.jailTime)
+            TriggerClientEvent('XS-MDT:client:jailPlayer', data.targetSource, data.jailTime)
         end
     end
     -- Fine deduction
     if data.targetSource and data.fine and data.fine > 0 and Config.FineDeduction.AutoDeductArrests then
-        _fineHandler(data.targetSource, data.fine, 'cipher-mdt-arrest')
+        _fineHandler(data.targetSource, data.fine, 'XS-MDT-arrest')
     end
 
-    exports['cipher-mdt']:AuditLog('Arrest Logged', officer.name, 'Arrest ID: ' .. id .. ' | Citizenid: ' .. data.citizenid)
-    exports['cipher-mdt']:LogBodyCam(source, 'ARREST_LOGGED',
+    exports['XS-MDT']:AuditLog('Arrest Logged', officer.name, 'Arrest ID: ' .. id .. ' | Citizenid: ' .. data.citizenid)
+    exports['XS-MDT']:LogBodyCam(source, 'ARREST_LOGGED',
         'Subject: ' .. data.citizenid .. ' | Charges: ' .. #data.charges .. ' | Fine: $' .. (data.fine or 0) .. ' | Jail: ' .. (data.jailTime or 0) .. 'min')
     return id
 end)
 
-lib.callback.register('cipher-mdt:server:getArrests', function(source, citizenid)
+lib.callback.register('XS-MDT:server:getArrests', function(source, citizenid)
     if not HasPanel(source, 'arrests') then return nil end
     local results = MySQL.query.await('SELECT * FROM mdt_arrests WHERE citizenid = ? ORDER BY created_at DESC', { citizenid })
     for _, a in ipairs(results) do a.charges = json.decode(a.charges) end
@@ -68,9 +68,9 @@ end)
 
 -- ─── Citations ─────────────────────────────────────────────────────────────
 
-lib.callback.register('cipher-mdt:server:issueCitation', function(source, data)
+lib.callback.register('XS-MDT:server:issueCitation', function(source, data)
     if not HasPanel(source, 'citations') then return false end
-    local officer = exports['cipher-mdt']:GetOfficerInfo(source)
+    local officer = exports['XS-MDT']:GetOfficerInfo(source)
     if not data.citizenid or not data.charges or #data.charges == 0 then return false end
 
     local id = MySQL.insert.await([[
@@ -83,16 +83,16 @@ lib.callback.register('cipher-mdt:server:issueCitation', function(source, data)
 
     -- Fine deduction on immediate cite
     if data.targetSource and data.fine and data.fine > 0 and Config.FineDeduction.AutoDeductCitations then
-        _fineHandler(data.targetSource, data.fine, 'cipher-mdt-citation')
+        _fineHandler(data.targetSource, data.fine, 'XS-MDT-citation')
     end
 
-    exports['cipher-mdt']:AuditLog('Citation Issued', officer.name, 'Citation ID: ' .. id .. ' | Fine: $' .. (data.fine or 0))
-    exports['cipher-mdt']:LogBodyCam(source, 'CITATION_ISSUED',
+    exports['XS-MDT']:AuditLog('Citation Issued', officer.name, 'Citation ID: ' .. id .. ' | Fine: $' .. (data.fine or 0))
+    exports['XS-MDT']:LogBodyCam(source, 'CITATION_ISSUED',
         'Subject: ' .. data.citizenid .. ' | Fine: $' .. (data.fine or 0) .. ' | Charges: ' .. #data.charges)
     return id
 end)
 
-lib.callback.register('cipher-mdt:server:getCitations', function(source, citizenid)
+lib.callback.register('XS-MDT:server:getCitations', function(source, citizenid)
     if not HasPanel(source, 'citations') then return nil end
     local results = MySQL.query.await('SELECT * FROM mdt_citations WHERE citizenid = ? ORDER BY created_at DESC', { citizenid })
     for _, c in ipairs(results) do c.charges = json.decode(c.charges) end
@@ -100,7 +100,7 @@ lib.callback.register('cipher-mdt:server:getCitations', function(source, citizen
 end)
 
 -- Recent arrests (default load when tab opens — no search required)
-lib.callback.register('cipher-mdt:server:getRecentArrests', function(source)
+lib.callback.register('XS-MDT:server:getRecentArrests', function(source)
     if not HasPanel(source, 'arrests') then return nil end
     local results = MySQL.query.await([[
         SELECT a.*, COALESCE(CONCAT(c.firstname,' ',c.lastname), a.citizenid) as civilian_name
@@ -115,7 +115,7 @@ lib.callback.register('cipher-mdt:server:getRecentArrests', function(source)
 end)
 
 -- Unified search for arrests: civilian name/ID + officer name + date range
-lib.callback.register('cipher-mdt:server:searchArrests', function(source, data)
+lib.callback.register('XS-MDT:server:searchArrests', function(source, data)
     if not HasPanel(source, 'arrests') then return nil end
     data = data or {}
     local where, params = {}, {}
@@ -151,7 +151,7 @@ lib.callback.register('cipher-mdt:server:searchArrests', function(source, data)
 end)
 
 -- Legacy alias kept for backward compat
-lib.callback.register('cipher-mdt:server:getArrestsByName', function(source, query)
+lib.callback.register('XS-MDT:server:getArrestsByName', function(source, query)
     if not HasPanel(source, 'arrests') then return nil end
     if not query or #query < 2 then return {} end
     local like = '%'..query..'%'
@@ -166,7 +166,7 @@ lib.callback.register('cipher-mdt:server:getArrestsByName', function(source, que
 end)
 
 -- Recent citations (default load)
-lib.callback.register('cipher-mdt:server:getRecentCitations', function(source)
+lib.callback.register('XS-MDT:server:getRecentCitations', function(source)
     if not HasPanel(source, 'citations') then return nil end
     local results = MySQL.query.await([[
         SELECT ci.*, COALESCE(CONCAT(c.firstname,' ',c.lastname), ci.citizenid) as civilian_name
@@ -181,7 +181,7 @@ lib.callback.register('cipher-mdt:server:getRecentCitations', function(source)
 end)
 
 -- Unified search for citations: civilian name/ID + officer name + date range
-lib.callback.register('cipher-mdt:server:searchCitations', function(source, data)
+lib.callback.register('XS-MDT:server:searchCitations', function(source, data)
     if not HasPanel(source, 'citations') then return nil end
     data = data or {}
     local where, params = {}, {}
@@ -217,7 +217,7 @@ lib.callback.register('cipher-mdt:server:searchCitations', function(source, data
 end)
 
 -- Legacy alias
-lib.callback.register('cipher-mdt:server:getCitationsByName', function(source, query)
+lib.callback.register('XS-MDT:server:getCitationsByName', function(source, query)
     if not HasPanel(source, 'citations') then return nil end
     if not query or #query < 2 then return {} end
     local like = '%'..query..'%'
@@ -233,7 +233,7 @@ end)
 
 -- ─── Record Tags ───────────────────────────────────────────────────────────
 
-lib.callback.register('cipher-mdt:server:updateRecordTags', function(source, data)
+lib.callback.register('XS-MDT:server:updateRecordTags', function(source, data)
     if not HasPanel(source, 'arrests') then return false end
     if not data or not data.type or not data.id or not data.tags then return false end
     local tableMap = { arrest = 'mdt_arrests', citation = 'mdt_citations', incident = 'mdt_incidents' }
@@ -245,7 +245,7 @@ end)
 
 -- ─── Fetch records by ID lists (for incident linked records display) ──────────
 
-lib.callback.register('cipher-mdt:server:getRecordsByIds', function(source, data)
+lib.callback.register('XS-MDT:server:getRecordsByIds', function(source, data)
     if not HasPanel(source, 'arrests') then return nil end
     local result = { arrests = {}, citations = {} }
 
@@ -275,9 +275,9 @@ end)
 -- ─── Citations (mark paid) ──────────────────────────────────────────────────
 
 -- Mark a citation as paid and optionally deduct the fine from the civilian's bank
-lib.callback.register('cipher-mdt:server:markCitationPaid', function(source, citationId)
+lib.callback.register('XS-MDT:server:markCitationPaid', function(source, citationId)
     if not HasPanel(source, 'citations') then return false end
-    local officer = exports['cipher-mdt']:GetOfficerInfo(source)
+    local officer = exports['XS-MDT']:GetOfficerInfo(source)
     local citation = MySQL.single.await('SELECT citizenid, fine FROM mdt_citations WHERE id = ? AND paid = 0', { citationId })
     if not citation then return false end
 
@@ -288,12 +288,12 @@ lib.callback.register('cipher-mdt:server:markCitationPaid', function(source, cit
         local players = exports['qbx_core']:GetQBPlayers()
         for src, player in pairs(players) do
             if player.PlayerData.citizenid == citation.citizenid then
-                _fineHandler(src, citation.fine, 'cipher-mdt-citation-paid')
+                _fineHandler(src, citation.fine, 'XS-MDT-citation-paid')
                 break
             end
         end
     end
 
-    exports['cipher-mdt']:AuditLog('Citation Paid', officer.name, 'Citation #' .. citationId .. ' marked as paid')
+    exports['XS-MDT']:AuditLog('Citation Paid', officer.name, 'Citation #' .. citationId .. ' marked as paid')
     return true
 end)

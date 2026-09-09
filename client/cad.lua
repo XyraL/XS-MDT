@@ -1,7 +1,7 @@
 local cadBlips = {} -- callId -> blip handle
 
 -- Add a map blip for a new CAD call
-RegisterNetEvent('cipher-mdt:client:newCall', function(call)
+RegisterNetEvent('XS-MDT:client:newCall', function(call)
     if not call.coords then return end
     if cadBlips[call.id] then return end
 
@@ -18,7 +18,7 @@ RegisterNetEvent('cipher-mdt:client:newCall', function(call)
 end)
 
 -- Remove blip when call is closed
-RegisterNetEvent('cipher-mdt:client:callClosed', function(callId)
+RegisterNetEvent('XS-MDT:client:callClosed', function(callId)
     if cadBlips[callId] then
         RemoveBlip(cadBlips[callId])
         cadBlips[callId] = nil

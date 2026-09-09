@@ -8,11 +8,11 @@
 -- This keeps the missing half: status, reason, who changed it, and when. The
 -- two are merged on read — Qbox says whether it exists, this says what state
 -- it is in.
-local IsAuthorized  = function(src) return exports['cipher-mdt']:IsAuthorized(src) end
-local HasPanel      = function(src, panel) return exports['cipher-mdt']:HasPanel(src, panel) end
-local IsSupervisor  = function(src) return exports['cipher-mdt']:IsSupervisor(src) end
-local GetOfficer    = function(src) return exports['cipher-mdt']:GetOfficerInfo(src) end
-local AuditLog      = function(a, o, d) exports['cipher-mdt']:AuditLog(a, o, d) end
+local IsAuthorized  = function(src) return exports['XS-MDT']:IsAuthorized(src) end
+local HasPanel      = function(src, panel) return exports['XS-MDT']:HasPanel(src, panel) end
+local IsSupervisor  = function(src) return exports['XS-MDT']:IsSupervisor(src) end
+local GetOfficer    = function(src) return exports['XS-MDT']:GetOfficerInfo(src) end
+local AuditLog      = function(a, o, d) exports['XS-MDT']:AuditLog(a, o, d) end
 
 local VALID_STATUS = { valid = true, suspended = true, revoked = true }
 
@@ -71,13 +71,13 @@ end
 
 exports('GetLicences', BuildLicences)
 
-lib.callback.register('cipher-mdt:server:getLicences', function(source, citizenid)
+lib.callback.register('XS-MDT:server:getLicences', function(source, citizenid)
     if not HasPanel(source, 'civilians') then return nil end
     if not citizenid then return nil end
     return BuildLicences(citizenid)
 end)
 
-lib.callback.register('cipher-mdt:server:setLicenceStatus', function(source, data)
+lib.callback.register('XS-MDT:server:setLicenceStatus', function(source, data)
     if not IsAuthorized(source) then return { ok = false, error = 'Not authorised' } end
     if not HasPanel(source, 'civilians') then return { ok = false, error = 'Not authorised' } end
     if not Config.Licences or not Config.Licences.Enabled then return { ok = false, error = 'Licences are disabled' } end

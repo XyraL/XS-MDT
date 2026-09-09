@@ -62,7 +62,7 @@ local function AuditLog(action, officer, details)
     if Config.AuditWebhook ~= '' then
         PerformHttpRequest(Config.AuditWebhook, function() end, 'POST', json.encode({
             embeds = {{
-                title = '📋 CipherMDT Audit',
+                title = '📋 XSMDT Audit',
                 color = 3447003,
                 fields = {
                     { name = 'Action', value = action, inline = true },
@@ -80,7 +80,7 @@ local function AuditLog(action, officer, details)
 end
 
 -- Audit log retrieval (supervisor-only, with optional filters)
-lib.callback.register('cipher-mdt:server:getAuditLog', function(source, data)
+lib.callback.register('XS-MDT:server:getAuditLog', function(source, data)
     if not IsAuthorized(source) then return nil end
     local officer = GetOfficerInfo(source)
     if not officer or officer.grade < Dept.SupervisorGrade(officer.job) then return nil end
@@ -121,7 +121,7 @@ exports('HasPanel', HasPanel)
 exports('IsSupervisor', IsSupervisor)
 
 -- Search connected players by character name (replaces CID lookup in forms)
-lib.callback.register('cipher-mdt:server:searchPlayersByName', function(source, query)
+lib.callback.register('XS-MDT:server:searchPlayersByName', function(source, query)
     if not IsAuthorized(source) then return nil end
     if not query or #query < 2 then return {} end
     local search = query:lower()
@@ -190,7 +190,7 @@ lib.callback.register('cipher-mdt:server:searchPlayersByName', function(source, 
 end)
 
 -- Main MDT open callback — validates access and returns initial data
-lib.callback.register('cipher-mdt:server:open', function(source)
+lib.callback.register('XS-MDT:server:open', function(source)
     if not IsAuthorized(source) then return nil end
     local officer = GetOfficerInfo(source)
     officer.isSupervisor = officer.grade >= Dept.SupervisorGrade(officer.job)

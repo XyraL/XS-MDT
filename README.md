@@ -1,19 +1,19 @@
-<h1 align="center">Cipher MDT</h1>
+<h1 align="center">XS-MDT</h1>
 
 <p align="center">A full MDT for <strong>QBox</strong> — Police, EMS and Fire, each with their own panels, sharing one live CAD, map and unit roster.</p>
 
 <p align="center">
-  <a href="https://github.com/XyraL/cipher-mdt/releases"><img src="https://img.shields.io/github/v/release/XyraL/cipher-mdt?style=flat-square&color=70baff&label=release" alt="Latest release"></a>
+  <a href="https://github.com/XyraL/XS-MDT/releases"><img src="https://img.shields.io/github/v/release/XyraL/XS-MDT?style=flat-square&color=70baff&label=release" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/framework-QBox-55dcff?style=flat-square" alt="framework">
   <img src="https://img.shields.io/badge/price-free-30d158?style=flat-square" alt="price">
-  <a href="https://xyralscripts.dev/docs-cipher-mdt"><img src="https://img.shields.io/badge/docs-xyralscripts.dev-a889ff?style=flat-square" alt="docs"></a>
+  <a href="https://xyralscripts.dev/docs-xs-mdt"><img src="https://img.shields.io/badge/docs-xyralscripts.dev-a889ff?style=flat-square" alt="docs"></a>
   <a href="https://discord.gg/XRURAw4TM2"><img src="https://img.shields.io/badge/support-discord-5865F2?style=flat-square" alt="support"></a>
 </p>
 
 <p align="center">
-  <a href="https://xyralscripts.dev/cipher-mdt">Website</a> &nbsp;·&nbsp;
-  <a href="https://xyralscripts.dev/docs-cipher-mdt">Setup guide</a> &nbsp;·&nbsp;
-  <a href="https://github.com/XyraL/cipher-mdt/releases">Releases</a> &nbsp;·&nbsp;
+  <a href="https://xyralscripts.dev/xs-mdt">Website</a> &nbsp;·&nbsp;
+  <a href="https://xyralscripts.dev/docs-xs-mdt">Setup guide</a> &nbsp;·&nbsp;
+  <a href="https://github.com/XyraL/XS-MDT/releases">Releases</a> &nbsp;·&nbsp;
   <a href="https://discord.gg/XRURAw4TM2">Discord</a>
 </p>
 
@@ -87,7 +87,7 @@
 | [ox_lib](https://github.com/overextended/ox_lib) | Yes |
 | [oxmysql](https://github.com/overextended/oxmysql) | Yes |
 | [ox_target](https://github.com/overextended/ox_target) **or** [qb-target](https://github.com/qbcore-framework/qb-target) | Optional |
-| [cipher-dispatch](https://github.com/XyraL/cipher-dispatch) *(or any adapter)* | Optional — falls back to the built-in CAD |
+| [XS-Dispatch](https://github.com/XyraL/XS-Dispatch) *(or any adapter)* | Optional — falls back to the built-in CAD |
 
 > **Note:** qbx_core is required. Standard QBCore (`qb-core`) is not directly supported.
 
@@ -97,11 +97,11 @@
 
 ### 1. Add the resource
 
-Place the `cipher-mdt` folder in your `resources` directory (e.g. `resources/[standalone]/cipher-mdt`).
+Place the `XS-MDT` folder in your `resources` directory (e.g. `resources/[standalone]/XS-MDT`).
 
 Add to your `server.cfg`:
 ```cfg
-ensure cipher-mdt
+ensure XS-MDT
 ```
 
 ### 2. Import the database
@@ -130,7 +130,7 @@ Open `config.lua` and adjust the settings for your server (see [Configuration](#
 ### 4. Restart
 
 ```
-restart cipher-mdt
+restart XS-MDT
 ```
 
 ---
@@ -260,8 +260,8 @@ receives officer-safety alerts.
 
 ### Dispatch provider selection
 
-`Config.DispatchProvider = 'auto'` is the recommended setting. Cipher MDT uses
-Cipher Dispatch when it is running, selects another registered adapter by
+`Config.DispatchProvider = 'auto'` is the recommended setting. XS-MDT uses
+XS-Dispatch when it is running, selects another registered adapter by
 priority, and falls back to its internal CAD when no external provider exists.
 The resources may start or stop in either order; provider state is reevaluated
 without a hard manifest dependency.
@@ -270,7 +270,7 @@ Use `'internal'` to force built-in CAD or a registered provider ID to force a
 specific integration. External dispatch resources can register through
 `RegisterDispatchProvider`; export-only resources can be mapped in
 `Config.DispatchAdapters`. The reference implementation is documented in
-`cipher-dispatch/adapters/README.md`.
+`XS-Dispatch/adapters/README.md`.
 
 ```lua
 -- Jobs allowed to access the MDT
@@ -306,7 +306,7 @@ Config.FineDeduction = {
 -- Jail integration
 -- 'qb-prison'  → uses TriggerEvent('qb-prison:server:sendToJail', src, minutes)
 -- 'ps-prison'  → uses TriggerEvent('prison:server:SendToJail', src, minutes)
--- false        → disabled (fires cipher-mdt:client:jailPlayer so you can handle it)
+-- false        → disabled (fires XS-MDT:client:jailPlayer so you can handle it)
 Config.JailResource = false
 
 -- Discord webhook for audit log entries (leave empty '' to disable)
@@ -329,11 +329,11 @@ Config.BodyCam = {
 
 ## Dispatch Integration
 
-CipherMDT includes auto-detection for common in-game events (gunshots, vehicle crashes, fights). To send a dispatch call **from another resource**, use any of the methods below.
+XSMDT includes auto-detection for common in-game events (gunshots, vehicle crashes, fights). To send a dispatch call **from another resource**, use any of the methods below.
 
 ### Server Export (recommended)
 ```lua
-exports['cipher-mdt']:CreateDispatchCall({
+exports['XS-MDT']:CreateDispatchCall({
     callType    = 'BANK_ROBBERY',
     description = 'Silent alarm triggered at Maze Bank.',
     coords      = { x = 148.0, y = -1044.0, z = 29.0 },
@@ -344,7 +344,7 @@ exports['cipher-mdt']:CreateDispatchCall({
 
 ### Client Event
 ```lua
-TriggerEvent('cipher-mdt:client:dispatch:custom',
+TriggerEvent('XS-MDT:client:dispatch:custom',
     'ROBBERY',                          -- call type key (see table below)
     'Armed robbery in progress.',       -- description
     vector3(24.8, -1347.3, 29.5)        -- coords
@@ -353,7 +353,7 @@ TriggerEvent('cipher-mdt:client:dispatch:custom',
 
 ### Server Net Event
 ```lua
-TriggerServerEvent('cipher-mdt:server:autoDispatch', {
+TriggerServerEvent('XS-MDT:server:autoDispatch', {
     callType    = 'SHOTS_FIRED',
     description = 'Gunshots reported in the area.',
     street      = 'Forum Drive',
@@ -381,7 +381,7 @@ Any other key will display the raw string as the call type label.
 ### Testing Dispatch (F8 Client Console)
 
 ```lua
-TriggerServerEvent('cipher-mdt:server:autoDispatch', {
+TriggerServerEvent('XS-MDT:server:autoDispatch', {
     callType = 'SHOTS_FIRED',
     description = 'Multiple shots fired near the bank.',
     street = 'Alta Street',
@@ -424,17 +424,17 @@ Officers at or above `Config.SupervisorGrade` unlock:
 
 ```lua
 -- Check if a player has MDT access
-exports['cipher-mdt']:IsAuthorized(src)           -- returns bool
+exports['XS-MDT']:IsAuthorized(src)           -- returns bool
 
 -- Get officer info for a player
-exports['cipher-mdt']:GetOfficerInfo(src)
+exports['XS-MDT']:GetOfficerInfo(src)
 -- returns { citizenid, name, job, grade, gradeLabel, onduty }
 
 -- Write to the audit log (also fires Discord webhook if configured)
-exports['cipher-mdt']:AuditLog('Action Name', 'Officer Name', 'Details string')
+exports['XS-MDT']:AuditLog('Action Name', 'Officer Name', 'Details string')
 
 -- Create a dispatch call from server-side
-exports['cipher-mdt']:CreateDispatchCall({ callType, description, coords, ... })
+exports['XS-MDT']:CreateDispatchCall({ callType, description, coords, ... })
 ```
 
 ---
@@ -449,7 +449,7 @@ exports['cipher-mdt']:CreateDispatchCall({ callType, description, coords, ... })
 **Dispatch alerts not appearing**
 - Use the correct call type key format (`SHOTS_FIRED`, not `Shots Fired` or `shots_fired`).
 - Auto-dispatch has a 60-second rate limit per player per call type.
-- Verify the resource is running: `status cipher-mdt` in the server console.
+- Verify the resource is running: `status XS-MDT` in the server console.
 
 **SQL errors on start**
 - Ensure you ran `sql/mdt.sql` fully before starting the resource.
@@ -473,25 +473,25 @@ Released under the MIT License. Free to use, modify, and redistribute with attri
 ## Documentation
 
 Full setup guide, requirements and troubleshooting:
-**[xyralscripts.dev/docs-cipher-mdt](https://xyralscripts.dev/docs-cipher-mdt)**
+**[xyralscripts.dev/docs-xs-mdt](https://xyralscripts.dev/docs-xs-mdt)**
 
 ## Support
 
-- **Found a bug?** [Open an issue](https://github.com/XyraL/cipher-mdt/issues)
+- **Found a bug?** [Open an issue](https://github.com/XyraL/XS-MDT/issues)
 - **Need setup help?** [Join the Discord](https://discord.gg/XRURAw4TM2) — check the setup guide first, it usually has the answer
 
-## The rest of the Cipher line
+## My other scripts
 
 All free, all source-available.
 
 | Script | What it is |
 |---|---|
-| **[Cipher](https://github.com/XyraL/cipher)** | modular criminal device for QBox and QBCore — gang ops, blackmarket and boosting in one encrypted tablet. |
-| **[Cipher Admin](https://github.com/XyraL/cipher-admin)** | advanced admin suite for QBox and QBCore — player management, bans, reports, inventory tools and entity inspection. |
-| **[Cipher Drone](https://github.com/XyraL/cipher-drone)** | deployable police drone for QBox and QBCore — smooth flight, thermal, spotlight, tracker darts and real counterplay. |
-| **[Cipher Trucking](https://github.com/XyraL/cipher-trucking)** | civilian trucking job for QBox and QBCore — live route map, truck ownership, fuel and maintenance, and companies. |
-| **[Cipher MultiCharacter](https://github.com/XyraL/cipher-multicharacter)** | cinematic character selection for QBox and QBCore — identity dossiers, saved appearances, spawn cameras and configurable slots. |
-| **[Cipher Dispatch](https://github.com/XyraL/cipher-dispatch)** | multi-department live dispatch for QBox and QBCore — responder tracking, priority calls, TAC radio and provider integrations. |
+| **[XS-CriminalTablet](https://github.com/XyraL/XS-CriminalTablet)** | modular criminal device for QBox and QBCore — gang ops, blackmarket and boosting in one encrypted tablet. |
+| **[XS-AdminMenu](https://github.com/XyraL/XS-AdminMenu)** | advanced admin suite for QBox and QBCore — player management, bans, reports, inventory tools and entity inspection. |
+| **[XS-Drone](https://github.com/XyraL/XS-Drone)** | deployable police drone for QBox and QBCore — smooth flight, thermal, spotlight, tracker darts and real counterplay. |
+| **[XS-Trucking](https://github.com/XyraL/XS-Trucking)** | civilian trucking job for QBox and QBCore — live route map, truck ownership, fuel and maintenance, and companies. |
+| **[XS-MultiCharacter](https://github.com/XyraL/XS-MultiCharacter)** | cinematic character selection for QBox and QBCore — identity dossiers, saved appearances, spawn cameras and configurable slots. |
+| **[XS-Dispatch](https://github.com/XyraL/XS-Dispatch)** | multi-department live dispatch for QBox and QBCore — responder tracking, priority calls, TAC radio and provider integrations. |
 
 ## License
 

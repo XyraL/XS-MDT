@@ -1,5 +1,5 @@
-local IsAuthorized = function(src) return exports['cipher-mdt']:IsAuthorized(src) end
-local HasPanel = function(src, panel) return exports['cipher-mdt']:HasPanel(src, panel) end
+local IsAuthorized = function(src) return exports['XS-MDT']:IsAuthorized(src) end
+local HasPanel = function(src, panel) return exports['XS-MDT']:HasPanel(src, panel) end
 
 -- Plate lookup.
 --
@@ -10,7 +10,7 @@ local HasPanel = function(src, panel) return exports['cipher-mdt']:HasPanel(src,
 --
 -- A plate with no registration is still worth answering: it may well be the
 -- one with a stolen BOLO on it, so BOLOs are checked either way.
-lib.callback.register('cipher-mdt:server:lookupPlate', function(source, plate)
+lib.callback.register('XS-MDT:server:lookupPlate', function(source, plate)
     if not HasPanel(source, 'vehicles') then return nil end
     if not plate or #plate < 1 then return nil end
 
@@ -90,9 +90,9 @@ lib.callback.register('cipher-mdt:server:lookupPlate', function(source, plate)
 end)
 
 -- Mark vehicle as stolen
-lib.callback.register('cipher-mdt:server:flagVehicleStolen', function(source, data)
+lib.callback.register('XS-MDT:server:flagVehicleStolen', function(source, data)
     if not HasPanel(source, 'vehicles') then return false end
-    local officer = exports['cipher-mdt']:GetOfficerInfo(source)
+    local officer = exports['XS-MDT']:GetOfficerInfo(source)
 
     -- Create a BOLO for the vehicle
     MySQL.insert.await([[
@@ -106,13 +106,13 @@ lib.callback.register('cipher-mdt:server:flagVehicleStolen', function(source, da
     })
 
     -- Notify all on-duty officers
-    TriggerClientEvent('cipher-mdt:client:boloAlert', -1, {
+    TriggerClientEvent('XS-MDT:client:boloAlert', -1, {
         type = 'vehicle',
         plate = data.plate,
         description = data.description or 'No additional description',
         issuedBy = officer.name,
     })
 
-    exports['cipher-mdt']:AuditLog('Vehicle Flagged Stolen', officer.name, 'Plate: ' .. data.plate)
+    exports['XS-MDT']:AuditLog('Vehicle Flagged Stolen', officer.name, 'Plate: ' .. data.plate)
     return true
 end)

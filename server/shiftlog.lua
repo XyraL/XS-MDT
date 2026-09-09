@@ -1,13 +1,13 @@
--- CipherMDT Server — Shift Log
+-- XSMDT Server — Shift Log
 
-local IsAuthorized = function(src) return exports['cipher-mdt']:IsAuthorized(src) end
-local HasPanel = function(src, panel) return exports['cipher-mdt']:HasPanel(src, panel) end
-local GetOfficerInfo = function(src) return exports['cipher-mdt']:GetOfficerInfo(src) end
+local IsAuthorized = function(src) return exports['XS-MDT']:IsAuthorized(src) end
+local HasPanel = function(src, panel) return exports['XS-MDT']:HasPanel(src, panel) end
+local GetOfficerInfo = function(src) return exports['XS-MDT']:GetOfficerInfo(src) end
 
 -- Track open shift IDs per citizenid
 local _openShifts = {}  -- citizenid -> shift db id
 
-lib.callback.register('cipher-mdt:server:clockIn', function(source)
+lib.callback.register('XS-MDT:server:clockIn', function(source)
     if not HasPanel(source, 'shiftlog') then return { ok = false, error = 'Unauthorized' } end
     local officer = GetOfficerInfo(source)
     if not officer then return { ok = false, error = 'No officer data' } end
@@ -24,11 +24,11 @@ lib.callback.register('cipher-mdt:server:clockIn', function(source)
     ]], { officer.citizenid, officer.name, badge })
 
     _openShifts[officer.citizenid] = id
-    exports['cipher-mdt']:AuditLog('CLOCK IN', officer.name, 'Shift started')
+    exports['XS-MDT']:AuditLog('CLOCK IN', officer.name, 'Shift started')
     return { ok = true, shiftId = id }
 end)
 
-lib.callback.register('cipher-mdt:server:clockOut', function(source)
+lib.callback.register('XS-MDT:server:clockOut', function(source)
     if not HasPanel(source, 'shiftlog') then return { ok = false, error = 'Unauthorized' } end
     local officer = GetOfficerInfo(source)
     if not officer then return { ok = false, error = 'No officer data' } end
@@ -51,13 +51,13 @@ lib.callback.register('cipher-mdt:server:clockOut', function(source)
     ]], { shiftId })
 
     _openShifts[officer.citizenid] = nil
-    exports['cipher-mdt']:AuditLog('CLOCK OUT', officer.name, 'Shift ended')
+    exports['XS-MDT']:AuditLog('CLOCK OUT', officer.name, 'Shift ended')
 
     local updated = MySQL.single.await('SELECT duration_minutes FROM mdt_shift_log WHERE id = ?', { shiftId })
     return { ok = true, durationMinutes = updated and updated.duration_minutes or 0 }
 end)
 
-lib.callback.register('cipher-mdt:server:getShiftStatus', function(source)
+lib.callback.register('XS-MDT:server:getShiftStatus', function(source)
     if not HasPanel(source, 'shiftlog') then return nil end
     local officer = GetOfficerInfo(source)
     if not officer then return nil end
@@ -67,7 +67,7 @@ lib.callback.register('cipher-mdt:server:getShiftStatus', function(source)
     }
 end)
 
-lib.callback.register('cipher-mdt:server:getShiftHistory', function(source, data)
+lib.callback.register('XS-MDT:server:getShiftHistory', function(source, data)
     if not HasPanel(source, 'shiftlog') then return nil end
     data = data or {}
     local where, params = {}, {}
@@ -96,7 +96,7 @@ lib.callback.register('cipher-mdt:server:getShiftHistory', function(source, data
     return MySQL.query.await(sql, params)
 end)
 
-lib.callback.register('cipher-mdt:server:getWeeklyHours', function(source)
+lib.callback.register('XS-MDT:server:getWeeklyHours', function(source)
     if not HasPanel(source, 'shiftlog') then return nil end
     local officer = GetOfficerInfo(source)
     if not officer then return nil end

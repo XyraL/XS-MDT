@@ -1,7 +1,7 @@
-local IsAuthorized = function(src) return exports['cipher-mdt']:IsAuthorized(src) end
-local HasPanel = function(src, panel) return exports['cipher-mdt']:HasPanel(src, panel) end
+local IsAuthorized = function(src) return exports['XS-MDT']:IsAuthorized(src) end
+local HasPanel = function(src, panel) return exports['XS-MDT']:HasPanel(src, panel) end
 
-lib.callback.register('cipher-mdt:server:getWarrants', function(source, data)
+lib.callback.register('XS-MDT:server:getWarrants', function(source, data)
     if not HasPanel(source, 'warrants') then return nil end
     local filter = (type(data) == 'table' and data.filter) or (type(data) == 'string' and data) or 'active'
     local results = MySQL.query.await([[
@@ -19,9 +19,9 @@ lib.callback.register('cipher-mdt:server:getWarrants', function(source, data)
     return results
 end)
 
-lib.callback.register('cipher-mdt:server:issueWarrant', function(source, data)
+lib.callback.register('XS-MDT:server:issueWarrant', function(source, data)
     if not HasPanel(source, 'warrants') then return false end
-    local officer = exports['cipher-mdt']:GetOfficerInfo(source)
+    local officer = exports['XS-MDT']:GetOfficerInfo(source)
     if not officer then return false end
     if not data.citizenid or not data.charges or #data.charges == 0 then return false end
 
@@ -38,13 +38,13 @@ lib.callback.register('cipher-mdt:server:issueWarrant', function(source, data)
 
     -- Notify all on-duty officers
     local civName = MySQL.scalar.await("SELECT CONCAT(firstname, ' ', lastname) FROM mdt_civilians WHERE citizenid = ?", { data.citizenid })
-    TriggerClientEvent('cipher-mdt:client:warrantAlert', -1, {
+    TriggerClientEvent('XS-MDT:client:warrantAlert', -1, {
         subject = civName or data.citizenid,
         charges = data.charges,
         issuedBy = officer.name,
     })
 
-    exports['cipher-mdt']:AuditLog('Warrant Issued', officer.name, 'Subject: ' .. (civName or data.citizenid))
+    exports['XS-MDT']:AuditLog('Warrant Issued', officer.name, 'Subject: ' .. (civName or data.citizenid))
 
     if Config.BodyCam.Enabled then
         MySQL.insert.await('INSERT INTO mdt_bodycam (citizenid, officer_name, action, details) VALUES (?,?,?,?)', {
@@ -55,18 +55,18 @@ lib.callback.register('cipher-mdt:server:issueWarrant', function(source, data)
     return id
 end)
 
-lib.callback.register('cipher-mdt:server:clearWarrant', function(source, warrantId)
+lib.callback.register('XS-MDT:server:clearWarrant', function(source, warrantId)
     if not HasPanel(source, 'warrants') then return false end
-    local officer = exports['cipher-mdt']:GetOfficerInfo(source)
+    local officer = exports['XS-MDT']:GetOfficerInfo(source)
     MySQL.update.await("UPDATE mdt_warrants SET status = 'cleared', cleared_by = ?, cleared_at = NOW() WHERE id = ?", {
         officer.citizenid, warrantId
     })
-    exports['cipher-mdt']:AuditLog('Warrant Cleared', officer.name, 'Warrant ID: ' .. warrantId)
-    exports['cipher-mdt']:LogBodyCam(source, 'WARRANT_CLEARED', 'Warrant ID: ' .. warrantId)
+    exports['XS-MDT']:AuditLog('Warrant Cleared', officer.name, 'Warrant ID: ' .. warrantId)
+    exports['XS-MDT']:LogBodyCam(source, 'WARRANT_CLEARED', 'Warrant ID: ' .. warrantId)
     return true
 end)
 
-lib.callback.register('cipher-mdt:server:getWarrantsForCivilian', function(source, citizenid)
+lib.callback.register('XS-MDT:server:getWarrantsForCivilian', function(source, citizenid)
     if not HasPanel(source, 'warrants') then return nil end
     local results = MySQL.query.await('SELECT * FROM mdt_warrants WHERE citizenid = ? ORDER BY created_at DESC', { citizenid })
     for _, w in ipairs(results) do w.charges = json.decode(w.charges) end
@@ -91,7 +91,7 @@ CreateThread(function()
                 'UPDATE mdt_warrants SET status = "expired" WHERE id IN (' .. table.concat(ids, ',') .. ')',
                 {}
             )
-            print('[CipherMDT] Auto-expired ' .. #expired .. ' warrant(s)')
+            print('[XSMDT] Auto-expired ' .. #expired .. ' warrant(s)')
         end
 
         -- Alert about warrants expiring in the next 24 hours (send once per warrant)
@@ -121,7 +121,7 @@ CreateThread(function()
                 for psrc, p in pairs(players) do
                     local job = p.PlayerData.job
                     if Config.AuthorizedJobs[job.name] and (not Config.OnDutyOnly or job.onduty) then
-                        TriggerClientEvent('cipher-mdt:client:expiringWarrantAlert', psrc, {
+                        TriggerClientEvent('XS-MDT:client:expiringWarrantAlert', psrc, {
                             subject   = w.subject_name or 'Unknown',
                             expiresAt = w.expires_at,
                             hoursLeft = 'less than 24',
@@ -136,7 +136,7 @@ CreateThread(function()
                 'UPDATE mdt_warrants SET expiry_alert_sent = 1 WHERE id IN (' .. table.concat(alertIds, ',') .. ')',
                 {}
             )
-            print('[CipherMDT] Sent expiry alerts for ' .. #expiring .. ' warrant(s)')
+            print('[XSMDT] Sent expiry alerts for ' .. #expiring .. ' warrant(s)')
         end
     end
 end)

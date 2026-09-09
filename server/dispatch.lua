@@ -1,5 +1,5 @@
-local HasPanel = function(src, panel) return exports['cipher-mdt']:HasPanel(src, panel) end
--- CipherMDT Server Dispatch — receives auto-dispatch events and creates CAD calls
+local HasPanel = function(src, panel) return exports['XS-MDT']:HasPanel(src, panel) end
+-- XSMDT Server Dispatch — receives auto-dispatch events and creates CAD calls
 if Config.DisableInternalDispatchDetection then return end
 
 -- ── Suppression & Filter Registry ────────────────────────────────────────
@@ -13,13 +13,13 @@ local _filters    = {}
     Globally enable or disable a dispatch call type server-wide.
 
     Example — suppress shots fired (e.g. during a paintball event):
-        exports['cipher-mdt']:SuppressDispatch('SHOTS_FIRED', true)
+        exports['XS-MDT']:SuppressDispatch('SHOTS_FIRED', true)
 
     Re-enable it when the event ends:
-        exports['cipher-mdt']:SuppressDispatch('SHOTS_FIRED', false)
+        exports['XS-MDT']:SuppressDispatch('SHOTS_FIRED', false)
 
     Pass nil as callType to suppress ALL auto-dispatch:
-        exports['cipher-mdt']:SuppressDispatch(nil, true)
+        exports['XS-MDT']:SuppressDispatch(nil, true)
 ]]
 exports('SuppressDispatch', function(callType, suppressed)
     if callType == nil then
@@ -39,7 +39,7 @@ end)
     Multiple filters can be registered per callType; ALL must pass.
 
     Example — only allow SHOTS_FIRED outside a specific zone:
-        exports['cipher-mdt']:RegisterDispatchFilter('SHOTS_FIRED', function(data, src)
+        exports['XS-MDT']:RegisterDispatchFilter('SHOTS_FIRED', function(data, src)
             local coords = data.coords
             local dist = #(vector3(coords.x, coords.y, coords.z) - vector3(200.0, -900.0, 30.0))
             return dist > 100.0  -- block if within 100u of paintball arena center
@@ -87,7 +87,7 @@ end
     Returns: callId (number) or nil on failure
 
     Example — from a robbery resource:
-        local callId = exports['cipher-mdt']:CreateDispatchCall({
+        local callId = exports['XS-MDT']:CreateDispatchCall({
             callType    = 'STORE_ROBBERY',
             description = 'Armed robbery at Discount Store.',
             coords      = { x = 24.8, y = -1347.3, z = 29.5 },
@@ -152,8 +152,8 @@ exports('CreateDispatchCall', function(data)
     for psrc, p in pairs(players) do
         local job = p.PlayerData.job
         if Dept.ReceivesCall(job.name, data.callType) and (not Config.OnDutyOnly or job.onduty) then
-            TriggerClientEvent('cipher-mdt:client:newCall', psrc, callData)
-            TriggerClientEvent('cipher-mdt:client:dispatchAlert', psrc, {
+            TriggerClientEvent('XS-MDT:client:newCall', psrc, callData)
+            TriggerClientEvent('XS-MDT:client:dispatchAlert', psrc, {
                 icon        = icon,
                 title       = label,
                 description = data.description,
@@ -200,8 +200,8 @@ local CALL_LABELS = {
 -- Rate limit: don't spam identical calls from same player
 local _recentCalls = {}
 
-RegisterNetEvent('cipher-mdt:server:autoDispatch')
-AddEventHandler('cipher-mdt:server:autoDispatch', function(data)
+RegisterNetEvent('XS-MDT:server:autoDispatch')
+AddEventHandler('XS-MDT:server:autoDispatch', function(data)
     local src = source
     if MdtDispatchBridge.IsExternal() then
         MdtDispatchBridge.Call('createCall', src, {
@@ -269,8 +269,8 @@ AddEventHandler('cipher-mdt:server:autoDispatch', function(data)
     for psrc, p in pairs(players) do
         local job = p.PlayerData.job
         if Dept.ReceivesCall(job.name, callType) and (not Config.OnDutyOnly or job.onduty) then
-            TriggerClientEvent('cipher-mdt:client:newCall', psrc, callData)
-            TriggerClientEvent('cipher-mdt:client:dispatchAlert', psrc, {
+            TriggerClientEvent('XS-MDT:client:newCall', psrc, callData)
+            TriggerClientEvent('XS-MDT:client:dispatchAlert', psrc, {
                 icon        = icon,
                 title       = label,
                 description = data.description or label,
@@ -283,15 +283,15 @@ AddEventHandler('cipher-mdt:server:autoDispatch', function(data)
     end
 
     -- Audit log
-    exports['cipher-mdt']:AuditLog('AUTO_DISPATCH', callerName, label .. ' at ' .. (data.street or '?'))
+    exports['XS-MDT']:AuditLog('AUTO_DISPATCH', callerName, label .. ' at ' .. (data.street or '?'))
 end)
 
 -- Manual dispatch from CAD panel
-RegisterNetEvent('cipher-mdt:server:manualDispatch')
-AddEventHandler('cipher-mdt:server:manualDispatch', function(data)
+RegisterNetEvent('XS-MDT:server:manualDispatch')
+AddEventHandler('XS-MDT:server:manualDispatch', function(data)
     local src = source
-    if not exports['cipher-mdt']:HasPanel(src, 'cad') then return end
-    local officer = exports['cipher-mdt']:GetOfficerInfo(src)
+    if not exports['XS-MDT']:HasPanel(src, 'cad') then return end
+    local officer = exports['XS-MDT']:GetOfficerInfo(src)
     if not officer then return end
     if MdtDispatchBridge.IsExternal() then
         MdtDispatchBridge.Call('createCall', src, {
@@ -339,14 +339,14 @@ AddEventHandler('cipher-mdt:server:manualDispatch', function(data)
     for psrc, p in pairs(players) do
         local job = p.PlayerData.job
         if Dept.ReceivesCall(job.name, 'CUSTOM') and (not Config.OnDutyOnly or job.onduty) then
-            TriggerClientEvent('cipher-mdt:client:newCall', psrc, callData)
+            TriggerClientEvent('XS-MDT:client:newCall', psrc, callData)
         end
     end
 end)
 
 -- Panic button handler
-RegisterNetEvent('cipher-mdt:server:panicButton')
-AddEventHandler('cipher-mdt:server:panicButton', function(data)
+RegisterNetEvent('XS-MDT:server:panicButton')
+AddEventHandler('XS-MDT:server:panicButton', function(data)
     local src    = source
     local player = exports['qbx_core']:GetPlayer(src)
     if not player then return end
@@ -362,8 +362,8 @@ AddEventHandler('cipher-mdt:server:panicButton', function(data)
             description='OFFICER NEEDS ASSISTANCE — ' .. name .. ' (Badge #' .. badge .. ')',
             priority=1, street=street, coords=data, caller=name,
         })
-        exports['cipher-mdt']:AuditLog('PANIC BUTTON', name, 'Badge #' .. badge .. ' at ' .. street)
-        exports['cipher-mdt']:LogBodyCam(src, 'PANIC_BUTTON', 'Location: ' .. street)
+        exports['XS-MDT']:AuditLog('PANIC BUTTON', name, 'Badge #' .. badge .. ' at ' .. street)
+        exports['XS-MDT']:LogBodyCam(src, 'PANIC_BUTTON', 'Location: ' .. street)
         return
     end
 
@@ -402,24 +402,24 @@ AddEventHandler('cipher-mdt:server:panicButton', function(data)
     local players = exports['qbx_core']:GetQBPlayers()
     for psrc, p in pairs(players) do
         if Dept.ReceivesCall(p.PlayerData.job.name, nil) then   -- safety alert: all departments
-            TriggerClientEvent('cipher-mdt:client:panicAlert', psrc, {
+            TriggerClientEvent('XS-MDT:client:panicAlert', psrc, {
                 officerName = name,
                 badge       = badge,
                 location    = street,
                 coords      = data,
                 callNumber  = callNumber,
             })
-            TriggerClientEvent('cipher-mdt:client:newCall', psrc, callData)
+            TriggerClientEvent('XS-MDT:client:newCall', psrc, callData)
         end
     end
 
-    exports['cipher-mdt']:AuditLog('PANIC BUTTON', name, 'Badge #' .. badge .. ' at ' .. street)
-    exports['cipher-mdt']:LogBodyCam(src, 'PANIC_BUTTON', 'Location: ' .. street)
+    exports['XS-MDT']:AuditLog('PANIC BUTTON', name, 'Badge #' .. badge .. ' at ' .. street)
+    exports['XS-MDT']:LogBodyCam(src, 'PANIC_BUTTON', 'Location: ' .. street)
 end)
 
 -- Backup request — lower urgency than panic, creates a BACKUP_REQUEST call
-RegisterNetEvent('cipher-mdt:server:backupRequest')
-AddEventHandler('cipher-mdt:server:backupRequest', function(data)
+RegisterNetEvent('XS-MDT:server:backupRequest')
+AddEventHandler('XS-MDT:server:backupRequest', function(data)
     local src    = source
     local player = exports['qbx_core']:GetPlayer(src)
     if not player then return end
@@ -435,7 +435,7 @@ AddEventHandler('cipher-mdt:server:backupRequest', function(data)
             description='BACKUP REQUESTED — ' .. name .. ' (Badge #' .. badge .. ')',
             priority=2, street=street, coords=data, caller=name,
         })
-        exports['cipher-mdt']:AuditLog('BACKUP REQUEST', name, 'Badge #' .. badge .. ' at ' .. street)
+        exports['XS-MDT']:AuditLog('BACKUP REQUEST', name, 'Badge #' .. badge .. ' at ' .. street)
         return
     end
 
@@ -473,8 +473,8 @@ AddEventHandler('cipher-mdt:server:backupRequest', function(data)
     local players = exports['qbx_core']:GetQBPlayers()
     for psrc, p in pairs(players) do
         if Dept.ReceivesCall(p.PlayerData.job.name, nil) then   -- safety alert: all departments
-            TriggerClientEvent('cipher-mdt:client:newCall', psrc, callData)
-            TriggerClientEvent('cipher-mdt:client:dispatchAlert', psrc, {
+            TriggerClientEvent('XS-MDT:client:newCall', psrc, callData)
+            TriggerClientEvent('XS-MDT:client:dispatchAlert', psrc, {
                 icon        = '🆘',
                 title       = 'BACKUP REQUEST',
                 description = 'BACKUP REQUESTED — ' .. name .. ' (Badge #' .. badge .. ')',
@@ -486,5 +486,5 @@ AddEventHandler('cipher-mdt:server:backupRequest', function(data)
         end
     end
 
-    exports['cipher-mdt']:AuditLog('BACKUP REQUEST', name, 'Badge #' .. badge .. ' at ' .. street)
+    exports['XS-MDT']:AuditLog('BACKUP REQUEST', name, 'Badge #' .. badge .. ' at ' .. street)
 end)

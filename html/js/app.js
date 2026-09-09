@@ -1,3 +1,7 @@
+// The NUI host must equal the resource folder name exactly, and that name is
+// case-sensitive on Linux servers. Ask the game for it rather than hardcoding.
+const MDT_RESOURCE = typeof GetParentResourceName === 'function' ? GetParentResourceName() : 'XS-MDT';
+
 // ── State ─────────────────────────────────────────────────────────────────
 const MDT = {
     officer      : null,
@@ -70,7 +74,7 @@ function getStatusConfig(code) {
 
 // ── NUI Bridge ────────────────────────────────────────────────────────────
 function nuiFetch(endpoint, payload = {}) {
-    return fetch(`https://cipher-mdt/request`, {
+    return fetch(`https://${MDT_RESOURCE}/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ endpoint, payload }),
@@ -80,7 +84,7 @@ function nuiFetch(endpoint, payload = {}) {
 // nuiFetch() relays to a SERVER callback. nuiPost() hits a client-side
 // RegisterNUICallback directly, for things the game handles locally.
 function nuiPost(name, payload = {}) {
-    return fetch(`https://cipher-mdt/${name}`, {
+    return fetch(`https://${MDT_RESOURCE}/${name}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -89,7 +93,7 @@ function nuiPost(name, payload = {}) {
 
 function closeMDT() {
     if (typeof stopMap === 'function') stopMap();
-    fetch('https://cipher-mdt/close', { method: 'POST' });
+    fetch(`https://${MDT_RESOURCE}/close`, { method: 'POST' });
     document.getElementById('mdt-overlay').classList.add('hidden');
 }
 
@@ -244,11 +248,11 @@ function ensureMapLoaded() {
 
     if (!_mapScriptLoading) {
         _mapScriptLoading = new Promise((resolve, reject) => {
-            const existing = document.querySelector('script[data-cipher-map]');
+            const existing = document.querySelector('script[data-xs-map]');
             if (existing) { existing.addEventListener('load', resolve, { once:true }); existing.addEventListener('error', reject, { once:true }); return; }
             const script = document.createElement('script');
             script.src = 'js/panels/map.js';
-            script.dataset.cipherMap = 'true';
+            script.dataset.xsMap = 'true';
             script.onload = resolve;
             script.onerror = reject;
             document.body.appendChild(script);
@@ -259,7 +263,7 @@ function ensureMapLoaded() {
         if (typeof window.initMapPanel === 'function') window.initMapPanel();
         else throw new Error('Map panel loaded without initMapPanel');
     }).catch(error => {
-        console.error('[CipherMDT] Failed to load Live Map:', error);
+        console.error('[XSMDT] Failed to load Live Map:', error);
         if (panel) panel.innerHTML = '<div class="empty-state"><div class="empty-title">Live Map unavailable</div><div class="empty-subtitle">Verify html/js/panels/map.js was uploaded with the resource.</div></div>';
         _mapScriptLoading = null;
     });

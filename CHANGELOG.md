@@ -1,8 +1,21 @@
 # Changelog
 
+## [2.1.0] — 2026-08-28
+
+Adds a bridge for Cipher-Evidence. If you run both, cases and evidence line up
+across the two.
+
+> **Upgrading:** just update the resource. No SQL changes, nothing to configure.
+
+### Added
+
+- Two server exports, `CreateIncidentExternal` and `AttachEvidence`, so
+  Cipher-Evidence (or anything else) can open an incident and add evidence to it
+  without a player behind the request. Nothing changes if you don't use them.
+
 ## [1.5.0] — 2026-08-13
 
-Cipher MDT becomes multi-department: Police, EMS and Fire in one resource.
+XS-MDT becomes multi-department: Police, EMS and Fire in one resource.
 
 > **Upgrading:** re-run `sql/mdt.sql` (adds eight tables, touches nothing existing),
 > then review `Config.Departments` in `config.lua` and map your server's job names.

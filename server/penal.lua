@@ -1,7 +1,7 @@
-local IsAuthorized = function(src) return exports['cipher-mdt']:IsAuthorized(src) end
-local HasPanel = function(src, panel) return exports['cipher-mdt']:HasPanel(src, panel) end
+local IsAuthorized = function(src) return exports['XS-MDT']:IsAuthorized(src) end
+local HasPanel = function(src, panel) return exports['XS-MDT']:HasPanel(src, panel) end
 
-lib.callback.register('cipher-mdt:server:getPenalCodes', function(source)
+lib.callback.register('XS-MDT:server:getPenalCodes', function(source)
     if not HasPanel(source, 'penal') then return nil end
     local codes = MySQL.query.await('SELECT * FROM mdt_penal_codes WHERE active = 1 ORDER BY category, code', {})
     -- Group by category
@@ -19,7 +19,7 @@ lib.callback.register('cipher-mdt:server:getPenalCodes', function(source)
 end)
 
 -- Admin only: add/edit/remove penal codes
-lib.callback.register('cipher-mdt:server:addPenalCode', function(source, data)
+lib.callback.register('XS-MDT:server:addPenalCode', function(source, data)
     if not HasPanel(source, 'penal') then return false end
     local player = exports['qbx_core']:GetPlayer(source)
     if not player or player.PlayerData.job.grade.level < 3 then return false end
@@ -31,7 +31,7 @@ lib.callback.register('cipher-mdt:server:addPenalCode', function(source, data)
     return true
 end)
 
-lib.callback.register('cipher-mdt:server:updatePenalCode', function(source, data)
+lib.callback.register('XS-MDT:server:updatePenalCode', function(source, data)
     if not HasPanel(source, 'penal') then return false end
     local player = exports['qbx_core']:GetPlayer(source)
     if not player or player.PlayerData.job.grade.level < 3 then return false end
@@ -43,7 +43,7 @@ lib.callback.register('cipher-mdt:server:updatePenalCode', function(source, data
     return true
 end)
 
-lib.callback.register('cipher-mdt:server:deletePenalCode', function(source, id)
+lib.callback.register('XS-MDT:server:deletePenalCode', function(source, id)
     if not HasPanel(source, 'penal') then return false end
     local player = exports['qbx_core']:GetPlayer(source)
     if not player or player.PlayerData.job.grade.level < 3 then return false end

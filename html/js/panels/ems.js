@@ -1,4 +1,4 @@
-// CipherMDT — EMS panels: Patient Care Reports, Medical Records, Narcotics Log.
+// XSMDT — EMS panels: Patient Care Reports, Medical Records, Narcotics Log.
 
 const PCR_DISPOSITIONS = [
     { value: 'treated_released', label: 'Treated & Released' },

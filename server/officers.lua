@@ -1,9 +1,9 @@
-local IsAuthorized = function(src) return exports['cipher-mdt']:IsAuthorized(src) end
-local HasPanel = function(src, panel) return exports['cipher-mdt']:HasPanel(src, panel) end
-local GetOfficerInfo = function(src) return exports['cipher-mdt']:GetOfficerInfo(src) end
+local IsAuthorized = function(src) return exports['XS-MDT']:IsAuthorized(src) end
+local HasPanel = function(src, panel) return exports['XS-MDT']:HasPanel(src, panel) end
+local GetOfficerInfo = function(src) return exports['XS-MDT']:GetOfficerInfo(src) end
 
 -- Public identity adapter for dispatch resources. Keeps MDT table ownership
--- inside Cipher MDT instead of requiring integrations to query it directly.
+-- inside XS-MDT instead of requiring integrations to query it directly.
 exports('GetDispatchIdentity', function(src)
     local officer = GetOfficerInfo(tonumber(src))
     if not officer then return nil end
@@ -30,7 +30,7 @@ exports('SetDispatchStatus', function(src, status)
 end)
 
 -- Get all currently on-duty officers (live, from connected players)
-lib.callback.register('cipher-mdt:server:getRoster', function(source)
+lib.callback.register('XS-MDT:server:getRoster', function(source)
     if not IsAuthorized(source) then return nil end
     local roster = {}
     local players = exports['qbx_core']:GetQBPlayers()
@@ -54,7 +54,7 @@ lib.callback.register('cipher-mdt:server:getRoster', function(source)
 end)
 
 -- Get or create the MDT officer profile for the requesting player
-lib.callback.register('cipher-mdt:server:getMyOfficerProfile', function(source)
+lib.callback.register('XS-MDT:server:getMyOfficerProfile', function(source)
     if not IsAuthorized(source) then return nil end
     local officer = GetOfficerInfo(source)
     local profile = MySQL.single.await('SELECT * FROM mdt_officers WHERE citizenid = ?', { officer.citizenid })
@@ -75,7 +75,7 @@ lib.callback.register('cipher-mdt:server:getMyOfficerProfile', function(source)
 end)
 
 -- Search on-duty officers by name (for incident linking)
-lib.callback.register('cipher-mdt:server:searchOfficers', function(source, query)
+lib.callback.register('XS-MDT:server:searchOfficers', function(source, query)
     if not IsAuthorized(source) then return nil end
     if not query or #query < 2 then return {} end
     local search = '%' .. query:lower() .. '%'
@@ -101,7 +101,7 @@ lib.callback.register('cipher-mdt:server:searchOfficers', function(source, query
 end)
 
 -- Update officer callsign/badge
-lib.callback.register('cipher-mdt:server:updateOfficerProfile', function(source, data)
+lib.callback.register('XS-MDT:server:updateOfficerProfile', function(source, data)
     if not IsAuthorized(source) then return false end
     local officer = GetOfficerInfo(source)
     if not officer then return false end
@@ -116,7 +116,7 @@ lib.callback.register('cipher-mdt:server:updateOfficerProfile', function(source,
         data.badge, data.callsign, officer.citizenid
     })
     -- Drop the cached badge so live blip labels pick the new one up.
-    exports['cipher-mdt']:InvalidateBadgeCache(officer.citizenid)
+    exports['XS-MDT']:InvalidateBadgeCache(officer.citizenid)
     return true
 end)
 
@@ -164,13 +164,13 @@ function BroadcastUnits()
             for _, u in ipairs(units) do
                 if Dept.CanSeeUnit(viewerJob, u.job) then visible[#visible + 1] = u end
             end
-            TriggerClientEvent('cipher-mdt:client:updateBlips', psrc, visible)
+            TriggerClientEvent('XS-MDT:client:updateBlips', psrc, visible)
         end
     end
 end
 
-RegisterNetEvent('cipher-mdt:server:broadcastPosition')
-AddEventHandler('cipher-mdt:server:broadcastPosition', function(data)
+RegisterNetEvent('XS-MDT:server:broadcastPosition')
+AddEventHandler('XS-MDT:server:broadcastPosition', function(data)
     if not (Config.Blips or {}).Enabled then return end
     local src    = source
     local player = exports['qbx_core']:GetPlayer(src)
@@ -201,7 +201,7 @@ AddEventHandler('cipher-mdt:server:broadcastPosition', function(data)
 end)
 
 -- Callback for the NUI map to pull the current picture on demand.
-lib.callback.register('cipher-mdt:server:getUnits', function(source)
+lib.callback.register('XS-MDT:server:getUnits', function(source)
     if not IsAuthorized(source) then return {} end
     local player = exports['qbx_core']:GetPlayer(source)
     local viewerJob = player and player.PlayerData.job and player.PlayerData.job.name
@@ -213,8 +213,8 @@ lib.callback.register('cipher-mdt:server:getUnits', function(source)
 end)
 
 -- Clear a unit's position (going off duty or disconnecting)
-RegisterNetEvent('cipher-mdt:server:clearPosition')
-AddEventHandler('cipher-mdt:server:clearPosition', function()
+RegisterNetEvent('XS-MDT:server:clearPosition')
+AddEventHandler('XS-MDT:server:clearPosition', function()
     local player = exports['qbx_core']:GetPlayer(source)
     if not player then return end
     _unitPositions[player.PlayerData.citizenid] = nil
@@ -233,9 +233,9 @@ end)
 exports('InvalidateBadgeCache', InvalidateBadge)
 
 -- Unit status update (10-8, 10-6, Code 4, etc.)
-lib.callback.register('cipher-mdt:server:setUnitStatus', function(source, status)
+lib.callback.register('XS-MDT:server:setUnitStatus', function(source, status)
     if not IsAuthorized(source) then return false end
-    local officer = exports['cipher-mdt']:GetOfficerInfo(source)
+    local officer = exports['XS-MDT']:GetOfficerInfo(source)
     if not officer then return false end
     if _unitPositions[officer.citizenid] then
         _unitPositions[officer.citizenid].status = status
@@ -253,7 +253,7 @@ end)
 -- stays with supervisors, because "who arrested the least this week" pinned on
 -- everyone's dashboard is a drama machine.
 
-lib.callback.register('cipher-mdt:server:getDepartmentStats', function(source, data)
+lib.callback.register('XS-MDT:server:getDepartmentStats', function(source, data)
     if not HasPanel(source, 'arrests') then return nil end
     local officer = GetOfficerInfo(source)
     if not officer then return nil end

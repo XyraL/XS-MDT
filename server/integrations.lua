@@ -33,7 +33,7 @@ local function dynamicExport(resource, exportName, ...)
 end
 
 for _, adapter in ipairs(Config.DispatchAdapters or {}) do
-    if adapter.id ~= 'cipher-dispatch' then
+    if adapter.id ~= 'XS-Dispatch' then
         local names = adapter.exports or {}
         register(adapter.id, {
             resource = adapter.resource, priority = adapter.priority,
@@ -47,14 +47,14 @@ for _, adapter in ipairs(Config.DispatchAdapters or {}) do
     end
 end
 
-register('cipher-dispatch', {
-    resource = 'cipher-dispatch', priority = 100,
-    getActiveCalls = function() return exports['cipher-dispatch']:GetActiveCalls() end,
-    createCall = function(source, data) return exports['cipher-dispatch']:CreateCall(data) end,
-    respond = function(source, id) return exports['cipher-dispatch']:RespondUnit(source, id) end,
-    setCallStatus = function(source, id, status) return exports['cipher-dispatch']:SetCallStatus(source, id, status) end,
-    addCallNote = function(source, id, note) return exports['cipher-dispatch']:AddCallNote(id, note) end,
-    setUnitStatus = function(source, status) return exports['cipher-dispatch']:SetUnitStatus(source, status, true) end,
+register('XS-Dispatch', {
+    resource = 'XS-Dispatch', priority = 100,
+    getActiveCalls = function() return exports['XS-Dispatch']:GetActiveCalls() end,
+    createCall = function(source, data) return exports['XS-Dispatch']:CreateCall(data) end,
+    respond = function(source, id) return exports['XS-Dispatch']:RespondUnit(source, id) end,
+    setCallStatus = function(source, id, status) return exports['XS-Dispatch']:SetCallStatus(source, id, status) end,
+    addCallNote = function(source, id, note) return exports['XS-Dispatch']:AddCallNote(id, note) end,
+    setUnitStatus = function(source, status) return exports['XS-Dispatch']:SetUnitStatus(source, status, true) end,
 })
 
 function MdtDispatchBridge.Resolve()
@@ -120,9 +120,9 @@ exports('IngestDispatchUpdate', function(action, call, envelope)
         created_at=call.created_at or os.date('!%Y-%m-%dT%H:%M:%SZ', call.createdAt or os.time()),
         operation=call.operation, external=true, provider=envelope.origin, revision=revision,
     }
-    if action == 'closed' then TriggerClientEvent('cipher-mdt:client:callClosed', -1, call.id)
-    elseif action == 'created' then TriggerClientEvent('cipher-mdt:client:newCall', -1, normalized)
-    else TriggerClientEvent('cipher-mdt:client:callUpdated', -1, normalized) end
+    if action == 'closed' then TriggerClientEvent('XS-MDT:client:callClosed', -1, call.id)
+    elseif action == 'created' then TriggerClientEvent('XS-MDT:client:newCall', -1, normalized)
+    else TriggerClientEvent('XS-MDT:client:callUpdated', -1, normalized) end
     return true
 end)
 

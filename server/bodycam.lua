@@ -1,9 +1,9 @@
-local IsAuthorized = function(src) return exports['cipher-mdt']:IsAuthorized(src) end
+local IsAuthorized = function(src) return exports['XS-MDT']:IsAuthorized(src) end
 
 -- Internal logger — called by other server files
 local function LogBodyCam(src, action, details)
     if not Config.BodyCam.Enabled then return end
-    local officer = exports['cipher-mdt']:GetOfficerInfo(src)
+    local officer = exports['XS-MDT']:GetOfficerInfo(src)
     if not officer then return end
     MySQL.insert.await('INSERT INTO mdt_bodycam (citizenid, officer_name, action, details) VALUES (?,?,?,?)', {
         officer.citizenid, officer.name, action, details or ''
@@ -13,9 +13,9 @@ end
 exports('LogBodyCam', LogBodyCam)
 
 -- Get body cam log for an officer (supervisor sees any officer, others see own only)
-lib.callback.register('cipher-mdt:server:getBodyCamLog', function(source, targetCitizenid)
+lib.callback.register('XS-MDT:server:getBodyCamLog', function(source, targetCitizenid)
     if not IsAuthorized(source) then return nil end
-    local officer = exports['cipher-mdt']:GetOfficerInfo(source)
+    local officer = exports['XS-MDT']:GetOfficerInfo(source)
     if not officer then return nil end
 
     -- Non-supervisors can only view their own log
@@ -49,7 +49,7 @@ local function PurgeOldLogs()
         DELETE FROM mdt_bodycam WHERE created_at < DATE_SUB(NOW(), INTERVAL ? DAY)
     ]], { Config.BodyCam.RetentionDays })
     if deleted and deleted > 0 then
-        print('[CipherMDT] Purged ' .. deleted .. ' old body cam log entries')
+        print('[XSMDT] Purged ' .. deleted .. ' old body cam log entries')
     end
 end
 

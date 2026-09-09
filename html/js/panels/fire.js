@@ -1,4 +1,4 @@
-// CipherMDT — Fire panels: Incident Reports, Hazmat, Apparatus.
+// XSMDT — Fire panels: Incident Reports, Hazmat, Apparatus.
 
 const FIRE_TYPES = [
     'Structure Fire', 'Vehicle Fire', 'Brush / Wildland', 'Rubbish Fire',

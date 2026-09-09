@@ -1,5 +1,5 @@
-local IsAuthorized = function(src) return exports['cipher-mdt']:IsAuthorized(src) end
-local HasPanel = function(src, panel) return exports['cipher-mdt']:HasPanel(src, panel) end
+local IsAuthorized = function(src) return exports['XS-MDT']:IsAuthorized(src) end
+local HasPanel = function(src, panel) return exports['XS-MDT']:HasPanel(src, panel) end
 local activeCalls = {} -- in-memory cache for live calls
 
 local function UsesExternalDispatch()
@@ -20,19 +20,19 @@ local function ExternalCall(call)
     }
 end
 
-AddEventHandler('cipher-dispatch:provider:mdt:callCreated', function(call)
+AddEventHandler('XS-Dispatch:provider:mdt:callCreated', function(call)
     if not UsesExternalDispatch() then return end
-    TriggerClientEvent('cipher-mdt:client:newCall', -1, ExternalCall(call))
+    TriggerClientEvent('XS-MDT:client:newCall', -1, ExternalCall(call))
 end)
 
-AddEventHandler('cipher-dispatch:provider:mdt:callClosed', function(call)
+AddEventHandler('XS-Dispatch:provider:mdt:callClosed', function(call)
     if not UsesExternalDispatch() then return end
-    TriggerClientEvent('cipher-mdt:client:callClosed', -1, call.id)
+    TriggerClientEvent('XS-MDT:client:callClosed', -1, call.id)
 end)
 
-AddEventHandler('cipher-dispatch:provider:mdt:callUpdated', function(call)
+AddEventHandler('XS-Dispatch:provider:mdt:callUpdated', function(call)
     if not UsesExternalDispatch() then return end
-    TriggerClientEvent('cipher-mdt:client:callUpdated', -1, ExternalCall(call))
+    TriggerClientEvent('XS-MDT:client:callUpdated', -1, ExternalCall(call))
 end)
 
 -- Generate a unique call number: e.g. CAD-20240615-001
@@ -43,7 +43,7 @@ local function GenerateCallNumber()
     return string.format('CAD-%s-%03d', date, count)
 end
 
-lib.callback.register('cipher-mdt:server:getActiveCalls', function(source)
+lib.callback.register('XS-MDT:server:getActiveCalls', function(source)
     if not HasPanel(source, 'cad') then return nil end
     if UsesExternalDispatch() then
         local result = {}
@@ -67,14 +67,14 @@ lib.callback.register('cipher-mdt:server:getActiveCalls', function(source)
     return calls
 end)
 
-lib.callback.register('cipher-mdt:server:createCall', function(source, data)
+lib.callback.register('XS-MDT:server:createCall', function(source, data)
     if not HasPanel(source, 'cad') then return false end
     if UsesExternalDispatch() then
         local coords = data.coords or GetEntityCoords(GetPlayerPed(source))
         local id, call = MdtDispatchBridge.Call('createCall', source, { type = 'custom', title = data.type, description = data.description, street = data.location, coords = coords, priority = data.priority, caller = GetPlayerName(source) })
         return call and ExternalCall(call) or false
     end
-    local officer = exports['cipher-mdt']:GetOfficerInfo(source)
+    local officer = exports['XS-MDT']:GetOfficerInfo(source)
     if not data.type or not data.description or not data.location then return false end
 
     local callNumber = GenerateCallNumber()
@@ -107,15 +107,15 @@ lib.callback.register('cipher-mdt:server:createCall', function(source, data)
     activeCalls[id] = call
 
     -- Push new call to all on-duty officers
-    TriggerClientEvent('cipher-mdt:client:newCall', -1, call)
-    exports['cipher-mdt']:AuditLog('CAD Call Created', officer.name, callNumber .. ': ' .. data.type .. ' @ ' .. data.location)
+    TriggerClientEvent('XS-MDT:client:newCall', -1, call)
+    exports['XS-MDT']:AuditLog('CAD Call Created', officer.name, callNumber .. ': ' .. data.type .. ' @ ' .. data.location)
     return call
 end)
 
-lib.callback.register('cipher-mdt:server:respondToCall', function(source, callId)
+lib.callback.register('XS-MDT:server:respondToCall', function(source, callId)
     if not HasPanel(source, 'cad') then return false end
     if UsesExternalDispatch() then return MdtDispatchBridge.Call('respond', source, callId) end
-    local officer = exports['cipher-mdt']:GetOfficerInfo(source)
+    local officer = exports['XS-MDT']:GetOfficerInfo(source)
 
     local call = MySQL.single.await('SELECT units FROM mdt_cad_calls WHERE id = ?', { callId })
     if not call then return false end
@@ -138,41 +138,41 @@ lib.callback.register('cipher-mdt:server:respondToCall', function(source, callId
     MySQL.update.await('UPDATE mdt_cad_calls SET units = ? WHERE id = ?', { json.encode(units), callId })
 
     -- Notify all clients of unit update
-    TriggerClientEvent('cipher-mdt:client:callUpdated', -1, {
+    TriggerClientEvent('XS-MDT:client:callUpdated', -1, {
         id = callId,
         units = units,
         status = 'enroute',
     })
-    exports['cipher-mdt']:LogBodyCam(source, 'CALL_RESPONDED', 'Call ID: ' .. callId)
+    exports['XS-MDT']:LogBodyCam(source, 'CALL_RESPONDED', 'Call ID: ' .. callId)
     return true
 end)
 
-lib.callback.register('cipher-mdt:server:updateCallStatus', function(source, data)
+lib.callback.register('XS-MDT:server:updateCallStatus', function(source, data)
     if not HasPanel(source, 'cad') then return false end
     if UsesExternalDispatch() then return MdtDispatchBridge.Call('setCallStatus', source, data.callId, data.status) end
-    local officer = exports['cipher-mdt']:GetOfficerInfo(source)
+    local officer = exports['XS-MDT']:GetOfficerInfo(source)
 
     MySQL.update.await('UPDATE mdt_cad_calls SET status = ?, updated_at = NOW() WHERE id = ?', {
         data.status, data.callId
     })
 
-    TriggerClientEvent('cipher-mdt:client:callUpdated', -1, {
+    TriggerClientEvent('XS-MDT:client:callUpdated', -1, {
         id = data.callId,
         status = data.status,
     })
 
     if data.status == 'completed' or data.status == 'cancelled' then
-        TriggerClientEvent('cipher-mdt:client:callClosed', -1, data.callId)
+        TriggerClientEvent('XS-MDT:client:callClosed', -1, data.callId)
         activeCalls[data.callId] = nil
     end
 
-    exports['cipher-mdt']:AuditLog('Call Status Updated', officer.name, 'Call #' .. data.callId .. ' → ' .. data.status)
+    exports['XS-MDT']:AuditLog('Call Status Updated', officer.name, 'Call #' .. data.callId .. ' → ' .. data.status)
     return true
 end)
 
-lib.callback.register('cipher-mdt:server:addCallNote', function(source, data)
+lib.callback.register('XS-MDT:server:addCallNote', function(source, data)
     if not HasPanel(source, 'cad') then return false end
-    local officer = exports['cipher-mdt']:GetOfficerInfo(source)
+    local officer = exports['XS-MDT']:GetOfficerInfo(source)
     if UsesExternalDispatch() then return MdtDispatchBridge.Call('addCallNote', source, data.callId, { author = officer.name, text = data.text }) end
 
     local call = MySQL.single.await('SELECT notes FROM mdt_cad_calls WHERE id = ?', { data.callId })
@@ -186,20 +186,20 @@ lib.callback.register('cipher-mdt:server:addCallNote', function(source, data)
     }
 
     MySQL.update.await('UPDATE mdt_cad_calls SET notes = ? WHERE id = ?', { json.encode(notes), data.callId })
-    TriggerClientEvent('cipher-mdt:client:callNoteAdded', -1, { callId = data.callId, notes = notes })
+    TriggerClientEvent('XS-MDT:client:callNoteAdded', -1, { callId = data.callId, notes = notes })
     return true
 end)
 
 -- Quick Dispatch: mark officer as responding to a call
-RegisterNetEvent('cipher-mdt:server:respondToCall')
-AddEventHandler('cipher-mdt:server:respondToCall', function(data)
+RegisterNetEvent('XS-MDT:server:respondToCall')
+AddEventHandler('XS-MDT:server:respondToCall', function(data)
     local src = source
     if not HasPanel(src, 'cad') then return end
     if UsesExternalDispatch() then
         MdtDispatchBridge.Call('respond', src, data and data.callId)
         return
     end
-    local officer = exports['cipher-mdt']:GetOfficerInfo(src)
+    local officer = exports['XS-MDT']:GetOfficerInfo(src)
     if not officer or not data.callId then return end
 
     local call = MySQL.single.await('SELECT units FROM mdt_cad_calls WHERE id = ?', { data.callId })
@@ -227,15 +227,15 @@ AddEventHandler('cipher-mdt:server:respondToCall', function(data)
     local players = exports['qbx_core']:GetQBPlayers()
     for psrc, p in pairs(players) do
         if Config.AuthorizedJobs[p.PlayerData.job.name] then
-            TriggerClientEvent('cipher-mdt:client:callUpdated', psrc, { id = data.callId, units = units })
+            TriggerClientEvent('XS-MDT:client:callUpdated', psrc, { id = data.callId, units = units })
         end
     end
 
-    exports['cipher-mdt']:AuditLog('RESPOND_TO_CALL', officer.name, 'Call ID: ' .. data.callId)
+    exports['XS-MDT']:AuditLog('RESPOND_TO_CALL', officer.name, 'Call ID: ' .. data.callId)
 end)
 
 -- Pull historical calls (last 50 completed)
-lib.callback.register('cipher-mdt:server:getCallHistory', function(source)
+lib.callback.register('XS-MDT:server:getCallHistory', function(source)
     if not HasPanel(source, 'callhistory') then return nil end
     local calls = MySQL.query.await([[
         SELECT * FROM mdt_cad_calls
@@ -250,7 +250,7 @@ lib.callback.register('cipher-mdt:server:getCallHistory', function(source)
 end)
 
 -- Searchable callout history (all statuses, with filters)
-lib.callback.register('cipher-mdt:server:searchCallHistory', function(source, data)
+lib.callback.register('XS-MDT:server:searchCallHistory', function(source, data)
     if not HasPanel(source, 'callhistory') then return nil end
     data = data or {}
     local where, params = {}, {}

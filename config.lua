@@ -186,7 +186,7 @@ Config.Sounds = {
 -- Jail integration — triggers when an arrest with jail time is logged
 -- Options: 'qb-prison'  → TriggerEvent('qb-prison:server:sendToJail', src, minutes)
 --          'ps-prison'  → TriggerEvent('prison:server:SendToJail', src, minutes)
---          'custom'     → exports['cipher-mdt']:OnJailPlayer(src, minutes) — implement your own handler
+--          'custom'     → exports['XS-MDT']:OnJailPlayer(src, minutes) — implement your own handler
 --          false        → disabled (fires client event only, handle in client/main.lua)
 Config.JailResource = false
 
@@ -195,7 +195,7 @@ Config.JailResource = false
 Config.DispatchProvider = 'auto'
 Config.DisableInternalDispatchDetection = false
 Config.DispatchAdapters = {
-    { id = 'cipher-dispatch', resource = 'cipher-dispatch', priority = 100 },
+    { id = 'XS-Dispatch', resource = 'XS-Dispatch', priority = 100 },
     -- Generic export adapter example:
     -- { id = 'my-dispatch', resource = 'my-dispatch', priority = 50, exports = {
     --     getActiveCalls='GetActiveCalls', createCall='CreateCall', respond='RespondUnit',

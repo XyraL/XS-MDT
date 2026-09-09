@@ -1,12 +1,12 @@
--- CipherMDT — EMS backend.
+-- XSMDT — EMS backend.
 -- Patient Care Reports, per-civilian medical history, and the controlled
 -- substance log. Every callback gates on the panel, not just the job, so a
 -- department without 'pcr' in its panel list can't reach any of this.
 
-local HasPanel  = function(src, panel) return exports['cipher-mdt']:HasPanel(src, panel) end
-local GetInfo   = function(src) return exports['cipher-mdt']:GetOfficerInfo(src) end
-local IsSuper   = function(src) return exports['cipher-mdt']:IsSupervisor(src) end
-local AuditLog  = function(...) return exports['cipher-mdt']:AuditLog(...) end
+local HasPanel  = function(src, panel) return exports['XS-MDT']:HasPanel(src, panel) end
+local GetInfo   = function(src) return exports['XS-MDT']:GetOfficerInfo(src) end
+local IsSuper   = function(src) return exports['XS-MDT']:IsSupervisor(src) end
+local AuditLog  = function(...) return exports['XS-MDT']:AuditLog(...) end
 
 -- ═══════════════════════════════════════════════════════════════════════════
 --  PATIENT CARE REPORTS
@@ -20,7 +20,7 @@ local function decodePCR(r)
     return r
 end
 
-lib.callback.register('cipher-mdt:server:getPCRs', function(source, data)
+lib.callback.register('XS-MDT:server:getPCRs', function(source, data)
     if not HasPanel(source, 'pcr') then return nil end
     local medic  = GetInfo(source)
     local filter = (type(data) == 'table' and data.filter) or 'all'
@@ -47,12 +47,12 @@ lib.callback.register('cipher-mdt:server:getPCRs', function(source, data)
     return rows
 end)
 
-lib.callback.register('cipher-mdt:server:getPCR', function(source, id)
+lib.callback.register('XS-MDT:server:getPCR', function(source, id)
     if not HasPanel(source, 'pcr') then return nil end
     return decodePCR(MySQL.single.await('SELECT * FROM mdt_pcr WHERE id = ?', { id }))
 end)
 
-lib.callback.register('cipher-mdt:server:createPCR', function(source, data)
+lib.callback.register('XS-MDT:server:createPCR', function(source, data)
     if not HasPanel(source, 'pcr') then return false end
     local medic = GetInfo(source)
     if not data or not data.patient_citizenid or not data.chief_complaint then return false end
@@ -80,7 +80,7 @@ lib.callback.register('cipher-mdt:server:createPCR', function(source, data)
     return id
 end)
 
-lib.callback.register('cipher-mdt:server:updatePCR', function(source, data)
+lib.callback.register('XS-MDT:server:updatePCR', function(source, data)
     if not HasPanel(source, 'pcr') then return false end
     local medic = GetInfo(source)
     if not data or not data.id then return false end
@@ -110,7 +110,7 @@ lib.callback.register('cipher-mdt:server:updatePCR', function(source, data)
     return true
 end)
 
-lib.callback.register('cipher-mdt:server:deletePCR', function(source, id)
+lib.callback.register('XS-MDT:server:deletePCR', function(source, id)
     if not HasPanel(source, 'pcr') then return false end
     if not IsSuper(source) then return false, 'Supervisor only' end
     local medic = GetInfo(source)
@@ -125,7 +125,7 @@ end)
 --  type, plus dated entries. Police never see any of this.
 -- ═══════════════════════════════════════════════════════════════════════════
 
-lib.callback.register('cipher-mdt:server:getMedicalRecord', function(source, citizenid)
+lib.callback.register('XS-MDT:server:getMedicalRecord', function(source, citizenid)
     if not HasPanel(source, 'medhistory') then return nil end
     if not citizenid then return nil end
 
@@ -157,7 +157,7 @@ lib.callback.register('cipher-mdt:server:getMedicalRecord', function(source, cit
     }
 end)
 
-lib.callback.register('cipher-mdt:server:updateMedicalRecord', function(source, data)
+lib.callback.register('XS-MDT:server:updateMedicalRecord', function(source, data)
     if not HasPanel(source, 'medhistory') then return false end
     local medic = GetInfo(source)
     if not data or not data.citizenid then return false end
@@ -182,7 +182,7 @@ lib.callback.register('cipher-mdt:server:updateMedicalRecord', function(source, 
     return true
 end)
 
-lib.callback.register('cipher-mdt:server:addMedicalEntry', function(source, data)
+lib.callback.register('XS-MDT:server:addMedicalEntry', function(source, data)
     if not HasPanel(source, 'medhistory') then return false end
     local medic = GetInfo(source)
     if not data or not data.citizenid or not data.entry then return false end
@@ -196,7 +196,7 @@ lib.callback.register('cipher-mdt:server:addMedicalEntry', function(source, data
     return id
 end)
 
-lib.callback.register('cipher-mdt:server:deleteMedicalEntry', function(source, id)
+lib.callback.register('XS-MDT:server:deleteMedicalEntry', function(source, id)
     if not HasPanel(source, 'medhistory') then return false end
     if not IsSuper(source) then return false, 'Supervisor only' end
     MySQL.query.await('DELETE FROM mdt_medical_history WHERE id = ?', { id })
@@ -209,7 +209,7 @@ end)
 --  get a reconciliation summary.
 -- ═══════════════════════════════════════════════════════════════════════════
 
-lib.callback.register('cipher-mdt:server:getNarcLog', function(source, data)
+lib.callback.register('XS-MDT:server:getNarcLog', function(source, data)
     if not HasPanel(source, 'narclog') then return nil end
     local medic  = GetInfo(source)
     local filter = (type(data) == 'table' and data.filter) or 'mine'
@@ -235,7 +235,7 @@ lib.callback.register('cipher-mdt:server:getNarcLog', function(source, data)
     return { entries = rows, totals = totals, isSupervisor = IsSuper(source) }
 end)
 
-lib.callback.register('cipher-mdt:server:addNarcEntry', function(source, data)
+lib.callback.register('XS-MDT:server:addNarcEntry', function(source, data)
     if not HasPanel(source, 'narclog') then return false end
     local medic = GetInfo(source)
     if not data or not data.drug or not data.action then return false end
@@ -264,7 +264,7 @@ end)
 --  EMS DASHBOARD STATS
 -- ═══════════════════════════════════════════════════════════════════════════
 
-lib.callback.register('cipher-mdt:server:getEMSStats', function(source)
+lib.callback.register('XS-MDT:server:getEMSStats', function(source)
     if not HasPanel(source, 'pcr') then return nil end
     local medic = GetInfo(source)
 

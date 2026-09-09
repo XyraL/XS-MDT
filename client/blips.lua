@@ -1,4 +1,4 @@
--- CipherMDT Blips — live on-duty Police / EMS / Fire blips on the game map.
+-- XSMDT Blips — live on-duty Police / EMS / Fire blips on the game map.
 -- Which jobs take part, whether departments see each other, and whether the
 -- system runs at all are all controlled by Config.Blips.
 
@@ -108,7 +108,7 @@ local function ClearAllBlips()
 end
 
 -- Receive full unit list from server every broadcast cycle
-RegisterNetEvent('cipher-mdt:client:updateBlips', function(units)
+RegisterNetEvent('XS-MDT:client:updateBlips', function(units)
     if not (Config.Blips or {}).Enabled then return ClearAllBlips() end
 
     local myData = exports['qbx_core']:GetPlayerData()
@@ -160,7 +160,7 @@ CreateThread(function()
             local coords = GetEntityCoords(ped)
             local veh    = IsPedInAnyVehicle(ped, false) and GetVehiclePedIsIn(ped, false) or 0
 
-            TriggerServerEvent('cipher-mdt:server:broadcastPosition', {
+            TriggerServerEvent('XS-MDT:server:broadcastPosition', {
                 x       = coords.x,
                 y       = coords.y,
                 z       = coords.z,

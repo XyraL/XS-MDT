@@ -18,7 +18,7 @@ function qdClose() {
     QD.visible = false;
     document.getElementById('quick-dispatch').classList.add('hidden');
     document.removeEventListener('keydown', qdKeyHandler);
-    fetch('https://cipher-mdt/qdClosed', { method: 'POST', body: JSON.stringify({}) });
+    fetch(`https://${MDT_RESOURCE}/qdClosed`, { method: 'POST', body: JSON.stringify({}) });
 }
 
 function qdRender() {
@@ -62,7 +62,7 @@ function qdSelect(i) {
 function qdRespond() {
     const call = QD.calls[QD.selected];
     if (!call) return;
-    fetch('https://cipher-mdt/qdRespond', {
+    fetch(`https://${MDT_RESOURCE}/qdRespond`, {
         method: 'POST',
         body: JSON.stringify({
             callId:      call.id,

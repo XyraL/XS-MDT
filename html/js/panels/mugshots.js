@@ -1,4 +1,4 @@
-// CipherMDT — Mugshot Gallery Panel
+// XSMDT — Mugshot Gallery Panel
 
 var _mugshotSearch = '';
 

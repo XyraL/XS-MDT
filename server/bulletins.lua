@@ -1,8 +1,8 @@
-local IsAuthorized = function(src) return exports['cipher-mdt']:IsAuthorized(src) end
-local HasPanel = function(src, panel) return exports['cipher-mdt']:HasPanel(src, panel) end
-local GetOfficerInfo = function(src) return exports['cipher-mdt']:GetOfficerInfo(src) end
+local IsAuthorized = function(src) return exports['XS-MDT']:IsAuthorized(src) end
+local HasPanel = function(src, panel) return exports['XS-MDT']:HasPanel(src, panel) end
+local GetOfficerInfo = function(src) return exports['XS-MDT']:GetOfficerInfo(src) end
 
-lib.callback.register('cipher-mdt:server:getBulletins', function(source)
+lib.callback.register('XS-MDT:server:getBulletins', function(source)
     if not HasPanel(source, 'bulletins') then return nil end
     return MySQL.query.await([[
         SELECT * FROM mdt_bulletins
@@ -12,7 +12,7 @@ lib.callback.register('cipher-mdt:server:getBulletins', function(source)
     ]], {})
 end)
 
-lib.callback.register('cipher-mdt:server:createBulletin', function(source, data)
+lib.callback.register('XS-MDT:server:createBulletin', function(source, data)
     if not HasPanel(source, 'bulletins') then return false end
     local officer = GetOfficerInfo(source)
     if not officer or officer.grade < Dept.SupervisorGrade(officer.job) then return false end
@@ -32,11 +32,11 @@ lib.callback.register('cipher-mdt:server:createBulletin', function(source, data)
         officer.citizenid, officer.name, expiresAt
     })
 
-    exports['cipher-mdt']:AuditLog('Bulletin Posted', officer.name, 'Bulletin #' .. id .. ': ' .. data.title)
+    exports['XS-MDT']:AuditLog('Bulletin Posted', officer.name, 'Bulletin #' .. id .. ': ' .. data.title)
     return id
 end)
 
-lib.callback.register('cipher-mdt:server:deleteBulletin', function(source, bulletinId)
+lib.callback.register('XS-MDT:server:deleteBulletin', function(source, bulletinId)
     if not HasPanel(source, 'bulletins') then return false end
     local officer = GetOfficerInfo(source)
     if not officer or officer.grade < Dept.SupervisorGrade(officer.job) then return false end
@@ -44,7 +44,7 @@ lib.callback.register('cipher-mdt:server:deleteBulletin', function(source, bulle
     return true
 end)
 
-lib.callback.register('cipher-mdt:server:pinBulletin', function(source, data)
+lib.callback.register('XS-MDT:server:pinBulletin', function(source, data)
     if not HasPanel(source, 'bulletins') then return false end
     local officer = GetOfficerInfo(source)
     if not officer or officer.grade < Dept.SupervisorGrade(officer.job) then return false end

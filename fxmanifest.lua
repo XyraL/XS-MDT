@@ -1,10 +1,10 @@
 fx_version 'cerulean'
 game 'gta5'
 
-name 'CipherMDT'
+name 'XSMDT'
 description 'Multi-department MDT (Police / EMS / Fire) with CAD integration for QBox'
-version '2.0.1'
-author 'cipher-mdt'
+version '2.1.0'
+author 'XS-MDT'
 
 shared_scripts {
     '@ox_lib/init.lua',
@@ -30,6 +30,7 @@ server_scripts {
     '@oxmysql/lib/MySQL.lua',
     'server/main.lua',
     'server/integrations.lua',
+    'server/evidence-bridge.lua',
     'server/dispatch.lua',
     'server/officers.lua',
     'server/civilians.lua',
