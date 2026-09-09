@@ -1,4 +1,4 @@
--- XSMDT Client Dispatch — detects game events and sends auto-dispatch calls
+-- XS-MDT Client Dispatch — detects game events and sends auto-dispatch calls
 if Config.DisableInternalDispatchDetection then return end
 
 local function InternalDetectionActive()

@@ -1,5 +1,5 @@
 local HasPanel = function(src, panel) return exports['XS-MDT']:HasPanel(src, panel) end
--- XSMDT Server Dispatch — receives auto-dispatch events and creates CAD calls
+-- XS-MDT Server Dispatch — receives auto-dispatch events and creates CAD calls
 if Config.DisableInternalDispatchDetection then return end
 
 -- ── Suppression & Filter Registry ────────────────────────────────────────

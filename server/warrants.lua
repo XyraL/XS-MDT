@@ -91,7 +91,7 @@ CreateThread(function()
                 'UPDATE mdt_warrants SET status = "expired" WHERE id IN (' .. table.concat(ids, ',') .. ')',
                 {}
             )
-            print('[XSMDT] Auto-expired ' .. #expired .. ' warrant(s)')
+            print('[XS-MDT] Auto-expired ' .. #expired .. ' warrant(s)')
         end
 
         -- Alert about warrants expiring in the next 24 hours (send once per warrant)
@@ -136,7 +136,7 @@ CreateThread(function()
                 'UPDATE mdt_warrants SET expiry_alert_sent = 1 WHERE id IN (' .. table.concat(alertIds, ',') .. ')',
                 {}
             )
-            print('[XSMDT] Sent expiry alerts for ' .. #expiring .. ' warrant(s)')
+            print('[XS-MDT] Sent expiry alerts for ' .. #expiring .. ' warrant(s)')
         end
     end
 end)

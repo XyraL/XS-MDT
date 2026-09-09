@@ -49,7 +49,7 @@ local function PurgeOldLogs()
         DELETE FROM mdt_bodycam WHERE created_at < DATE_SUB(NOW(), INTERVAL ? DAY)
     ]], { Config.BodyCam.RetentionDays })
     if deleted and deleted > 0 then
-        print('[XSMDT] Purged ' .. deleted .. ' old body cam log entries')
+        print('[XS-MDT] Purged ' .. deleted .. ' old body cam log entries')
     end
 end
 

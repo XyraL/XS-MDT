@@ -5,7 +5,7 @@ local function OpenMDT()
     if mdtOpen then return end
     local officer = lib.callback.await('XS-MDT:server:open', false)
     if not officer then
-        lib.notify({ title = 'XSMDT', description = 'Access Denied', type = 'error' })
+        lib.notify({ title = 'XS-MDT', description = 'Access Denied', type = 'error' })
         return
     end
     mdtOpen = true
@@ -30,13 +30,13 @@ local function CloseMDT()
 end
 
 -- Register keybind
-RegisterKeyMapping('xs_mdt_open', 'Open XSMDT', 'keyboard', Config.OpenKey)
+RegisterKeyMapping('xs_mdt_open', 'Open XS-MDT', 'keyboard', Config.OpenKey)
 RegisterCommand('xs_mdt_open', function()
     if mdtOpen then CloseMDT() else OpenMDT() end
 end, false)
 
 -- Panic button — broadcasts priority alert with officer location to all units
-RegisterKeyMapping('xs_mdt_panic', 'XSMDT: Panic Button', 'keyboard', 'F11')
+RegisterKeyMapping('xs_mdt_panic', 'XS-MDT: Panic Button', 'keyboard', 'F11')
 RegisterCommand('xs_mdt_panic', function()
     local pd = exports['qbx_core']:GetPlayerData()
     if not pd or not Config.AuthorizedJobs[pd.job.name] then return end
@@ -68,7 +68,7 @@ end)
 RegisterNetEvent('QBCore:Client:OnJobUpdate', function(job)
     if Config.OnDutyOnly and not job.onduty and mdtOpen then
         CloseMDT()
-        lib.notify({ title = 'XSMDT', description = 'MDT closed — you went off duty.', type = 'inform' })
+        lib.notify({ title = 'XS-MDT', description = 'MDT closed — you went off duty.', type = 'inform' })
     end
     -- Tell server to drop this unit's blip position if off-duty
     if not job.onduty then
@@ -217,7 +217,7 @@ end)
 RegisterNetEvent('XS-MDT:client:jailPlayer', function(minutes)
     -- Hook into your server's jail system here
     -- Example: TriggerEvent('your-jail-resource:jail', minutes)
-    print('[XSMDT] Jail trigger: ' .. minutes .. ' minutes')
+    print('[XS-MDT] Jail trigger: ' .. minutes .. ' minutes')
 end)
 
 -- ── Quick Dispatch Responder ──────────────────────────────────────────────
@@ -240,13 +240,13 @@ local function OpenQuickDispatch()
     SendNUIMessage({ type = 'openQuickDispatch', calls = calls })
 end
 
-RegisterKeyMapping('xs_mdt_quickdispatch', 'XSMDT: Quick Dispatch', 'keyboard', 'F10')
+RegisterKeyMapping('xs_mdt_quickdispatch', 'XS-MDT: Quick Dispatch', 'keyboard', 'F10')
 RegisterCommand('xs_mdt_quickdispatch', function()
     OpenQuickDispatch()
 end, false)
 
 -- Backup request — sends an urgent dispatch call with officer's location
-RegisterKeyMapping('xs_mdt_backup', 'XSMDT: Request Backup', 'keyboard', 'F12')
+RegisterKeyMapping('xs_mdt_backup', 'XS-MDT: Request Backup', 'keyboard', 'F12')
 RegisterCommand('xs_mdt_backup', function()
     local pd = exports['qbx_core']:GetPlayerData()
     if not pd or not Config.AuthorizedJobs[pd.job.name] then return end

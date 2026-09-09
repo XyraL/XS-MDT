@@ -1,4 +1,4 @@
-// XSMDT — Fire panels: Incident Reports, Hazmat, Apparatus.
+// XS-MDT — Fire panels: Incident Reports, Hazmat, Apparatus.
 
 const FIRE_TYPES = [
     'Structure Fire', 'Vehicle Fire', 'Brush / Wildland', 'Rubbish Fire',

@@ -1,4 +1,4 @@
--- XSMDT — EMS backend.
+-- XS-MDT — EMS backend.
 -- Patient Care Reports, per-civilian medical history, and the controlled
 -- substance log. Every callback gates on the panel, not just the job, so a
 -- department without 'pcr' in its panel list can't reach any of this.

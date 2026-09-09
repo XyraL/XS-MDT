@@ -1,10 +1,10 @@
 fx_version 'cerulean'
 game 'gta5'
 
-name 'XSMDT'
+name 'XS-MDT'
 description 'Multi-department MDT (Police / EMS / Fire) with CAD integration for QBox'
 version '2.1.0'
-author 'XS-MDT'
+author 'XyraL'
 
 shared_scripts {
     '@ox_lib/init.lua',

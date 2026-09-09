@@ -1,4 +1,4 @@
-// XSMDT — Callout History Panel
+// XS-MDT — Callout History Panel
 
 function loadCallHistory() {
     const panel = document.getElementById('tab-callhistory');

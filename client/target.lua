@@ -104,13 +104,13 @@ end)
 -- Server sends back profile/citation data → open or auto-open MDT
 RegisterNetEvent('XS-MDT:client:targetResult', function(civData, mode)
     if not civData then
-        lib.notify({ title = 'XSMDT', description = 'Player not found in database', type = 'error' })
+        lib.notify({ title = 'XS-MDT', description = 'Player not found in database', type = 'error' })
         return
     end
 
     local pd = exports['qbx_core']:GetPlayerData()
     if not pd or not Config.AuthorizedJobs[pd.job.name] then
-        lib.notify({ title = 'XSMDT', description = 'Access denied', type = 'error' })
+        lib.notify({ title = 'XS-MDT', description = 'Access denied', type = 'error' })
         return
     end
 

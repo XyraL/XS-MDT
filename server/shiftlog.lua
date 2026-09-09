@@ -1,4 +1,4 @@
--- XSMDT Server — Shift Log
+-- XS-MDT Server — Shift Log
 
 local IsAuthorized = function(src) return exports['XS-MDT']:IsAuthorized(src) end
 local HasPanel = function(src, panel) return exports['XS-MDT']:HasPanel(src, panel) end

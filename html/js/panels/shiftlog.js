@@ -1,4 +1,4 @@
-// XSMDT — Shift Log Panel
+// XS-MDT — Shift Log Panel
 
 var _shiftClockedIn = false;
 var _shiftStartTime = null;

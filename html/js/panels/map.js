@@ -1,4 +1,4 @@
-/* XSMDT — Live Map
+/* XS-MDT — Live Map
  *
  * Leaflet over a tile pyramid of the San Andreas satellite render. The game's
  * own pause map can't be rendered inside NUI (it's an engine render target
@@ -212,8 +212,8 @@ function buildLeaflet() {
         tileErrors++;
         const url = (e.tile && e.tile.src) || '(unknown)';
         if (tileErrors === 1) {
-            console.error('[XSMDT] map tile failed to load:', url);
-            console.error('[XSMDT] Check that fxmanifest ships ' +
+            console.error('[XS-MDT] map tile failed to load:', url);
+            console.error('[XS-MDT] Check that fxmanifest ships ' +
                           'html/assets/maps/tiles/*.webp and that the tiles exist. ' +
                           'Rebuild with: node tools/build-map-tiles.js');
             showToast('Map tiles missing',

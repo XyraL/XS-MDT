@@ -263,7 +263,7 @@ function ensureMapLoaded() {
         if (typeof window.initMapPanel === 'function') window.initMapPanel();
         else throw new Error('Map panel loaded without initMapPanel');
     }).catch(error => {
-        console.error('[XSMDT] Failed to load Live Map:', error);
+        console.error('[XS-MDT] Failed to load Live Map:', error);
         if (panel) panel.innerHTML = '<div class="empty-state"><div class="empty-title">Live Map unavailable</div><div class="empty-subtitle">Verify html/js/panels/map.js was uploaded with the resource.</div></div>';
         _mapScriptLoading = null;
     });

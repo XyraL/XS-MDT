@@ -1,4 +1,4 @@
-// XSMDT — Mugshot Gallery Panel
+// XS-MDT — Mugshot Gallery Panel
 
 var _mugshotSearch = '';
 

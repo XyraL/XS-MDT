@@ -1,4 +1,4 @@
--- XSMDT Blips — live on-duty Police / EMS / Fire blips on the game map.
+-- XS-MDT Blips — live on-duty Police / EMS / Fire blips on the game map.
 -- Which jobs take part, whether departments see each other, and whether the
 -- system runs at all are all controlled by Config.Blips.
 

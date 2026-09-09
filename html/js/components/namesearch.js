@@ -1,5 +1,5 @@
 /**
- * XSMDT Name Search Component
+ * XS-MDT Name Search Component
  * Replaces all CID/ID inputs with live player-name lookups.
  *
  * Usage:

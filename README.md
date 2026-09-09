@@ -329,7 +329,7 @@ Config.BodyCam = {
 
 ## Dispatch Integration
 
-XSMDT includes auto-detection for common in-game events (gunshots, vehicle crashes, fights). To send a dispatch call **from another resource**, use any of the methods below.
+XS-MDT includes auto-detection for common in-game events (gunshots, vehicle crashes, fights). To send a dispatch call **from another resource**, use any of the methods below.
 
 ### Server Export (recommended)
 ```lua

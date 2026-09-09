@@ -62,7 +62,7 @@ local function AuditLog(action, officer, details)
     if Config.AuditWebhook ~= '' then
         PerformHttpRequest(Config.AuditWebhook, function() end, 'POST', json.encode({
             embeds = {{
-                title = '📋 XSMDT Audit',
+                title = '📋 XS-MDT Audit',
                 color = 3447003,
                 fields = {
                     { name = 'Action', value = action, inline = true },

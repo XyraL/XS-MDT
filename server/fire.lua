@@ -1,4 +1,4 @@
--- XSMDT — Fire backend.
+-- XS-MDT — Fire backend.
 -- Fire incident reports (NFIRS-flavoured), hazmat entries, and the apparatus
 -- roster with its inspection log. Panel-gated the same way as EMS.
 

@@ -1,4 +1,4 @@
--- XSMDT Database Schema
+-- XS-MDT Database Schema
 -- Run this once before starting the resource
 
 -- ── Upgrade scripts (run these if updating from an older version) ──────────
