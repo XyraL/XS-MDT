@@ -222,9 +222,13 @@ If the map is blank, the F8 console names the tile URL that failed — that is
 almost always the manifest not shipping `html/assets/maps/tiles/*.webp`, or the
 tiles not having reached the server.
 
-If unit dots land slightly off where they should be, calibrate `MAP.world` at the
-top of `html/js/panels/map.js`: stand somewhere recognisable in-game, note your
-coords, open the Live Map, and nudge the bounds until the dot sits on you.
+If unit dots land slightly off, do not nudge one edge of `MAP.world` until the
+dot sits on you — that is exactly what broke it before. The rectangle is
+9000 x 13500, which is 2:3, because the render is 4096 x 6144 and its pixels are
+square. Move one axis on its own and that stops being true, which shows up as
+everyone being a little off: near zero in the middle of the map, worst at the
+edges. A refit has to keep the ratio and needs east-west reference points, not
+just north-south ones. See `html/assets/maps/README.md`.
 
 To use a different render, drop it in as `html/assets/maps/san-andreas-satellite.webp`
 and rebuild the tiles:
@@ -235,7 +239,9 @@ node tools/build-map-tiles.js
 ```
 
 The script prints the native zoom it used — put that in `MAP.nativeZoom`, along
-with the new `imageW` / `imageH`. See `html/assets/maps/README.md`.
+with the new `imageW` / `imageH`. If the new render is not 2:3 you also have to
+refit `MAP.world`, because the rectangle's width:height must match the image's.
+See `html/assets/maps/README.md`.
 
 ### Call routing
 
