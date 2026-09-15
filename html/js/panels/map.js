@@ -15,13 +15,14 @@ const MAP = {
     nativeZoom: 4,     // zoom at which the render sits 1:1 (see the build script)
     maxZoom: 6,        // Leaflet upscales past nativeZoom so you can keep zooming
 
-    // The GTA world rectangle this render covers. If unit dots sit slightly off
-    // where they should be, nudge these — stand somewhere recognisable, note
-    // your coords with the map open, and adjust until the dot lands on you.
-    // Calibrated against landmarks with known coordinates — the depot on
-    // Terminal Island, Sandy Shores airfield, Mount Chiliad, Paleto Bay. The
-    // old numbers put the trucking depot in the sea.
-    world: { minX: -4508, maxX: 5086, minY: -4891, maxY: 8317 },
+    // The GTA world rectangle this render covers. Fitted against the postal
+    // set that is drawn on the render itself — six postals from the north
+    // tip to LSIA, both coasts and dead centre, all land within two pixels.
+    //
+    // 9000 x 13500 is exactly 2:3, like the 4096 x 6144 image, so the pixels
+    // are square. Never nudge one axis on its own — doing that is what put
+    // players up to 300m out before.
+    world: { minX: -4140, maxX: 4860, minY: -5100, maxY: 8400 },
 };
 
 // Mirrors the department colours in config.lua.
