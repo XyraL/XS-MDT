@@ -126,30 +126,23 @@ ensure XS-MDT
 
 ### 2. Import the database
 
-Run two files against your database, in this order:
+Two files, in this order:
 
-1. `sql/mdt.sql` — the schema. It uses `CREATE TABLE IF NOT EXISTS` throughout, so it is safe to re-run.
-2. `sql/penal-codes.sql` — the charge book, 178 charges across seven titles. It uses `INSERT IGNORE`, so re-running it never touches a charge you edited or added yourself.
+1. `sql/mdt.sql` — the tables. Nothing else is in it, and it is safe to re-run.
+2. `sql/penal-codes.sql` — the charge book, 178 charges across seven titles. `INSERT IGNORE`, so re-running it never touches a charge you edited or added.
 
-If you are **upgrading from a previous version**, run only the commented `ALTER TABLE` lines at the top of the SQL file that match your current version.
+**Already running an older version?** Run the upgrade file for where you are
+coming from *first*, then the two above.
 
-> **Upgrading to 3.0:** run the `v2.x → v3.0` block at the top of `sql/mdt.sql`,
-> then import `sql/penal-codes.sql`. The new book uses `PC 1.34 A` style codes;
-> your old charges stay active alongside it until you turn them off, and the
-> upgrade block has the one line that does that.
+| Coming from | Run |
+|---|---|
+| 2.x | `sql/upgrade-3.0.sql` |
+| 1.x | `sql/upgrade-legacy.sql`, then `sql/upgrade-3.0.sql` |
 
-> **Upgrading to 2.0:** run the `v1.6 → v2.0` block at the top of `sql/mdt.sql`
-> (one new table, `mdt_evidence`). Nothing existing is touched.
-
-> **Upgrading to 1.6:** run the `v1.5 → v1.6` block at the top of `sql/mdt.sql`.
-> It adds `mdt_licences` and four columns, and touches nothing existing. Licence
-> status starts empty, which reads as "valid" for everyone until an officer
-> changes one.
-
-> **Upgrading to multi-department:** re-run `sql/mdt.sql`. It adds eight new
-> tables (`mdt_pcr`, `mdt_medical`, `mdt_medical_history`, `mdt_narc_log`,
-> `mdt_fire_incidents`, `mdt_hazmat`, `mdt_apparatus`, `mdt_apparatus_log`) and
-> leaves every existing table untouched.
+Re-running `sql/mdt.sql` afterwards adds every table 3.0 introduced and
+leaves the ones you already have alone. Your old charges stay active
+alongside the new book until you turn them off — the last line of
+`sql/upgrade-3.0.sql` is the one that does it, commented out.
 
 ### 3. Configure
 

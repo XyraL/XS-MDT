@@ -6,10 +6,11 @@ A new look and a lot more MDT. Cases, an evidence locker, a weapons registry,
 cameras, internal affairs, field training, SOPs, a management panel, a proper
 charge book, and it runs on QBCore as well as QBox.
 
-> **Upgrading:** run the `v2.x → v3.0` block at the top of `sql/mdt.sql`, then
-> re-run `sql/mdt.sql` for the new tables, then import `sql/penal-codes.sql`.
-> Your existing charges stay active alongside the new book until you turn them
-> off; the upgrade block has the one line that does it.
+> **Upgrading:** run `sql/upgrade-3.0.sql`, then re-run `sql/mdt.sql` for the
+> new tables, then import `sql/penal-codes.sql`. Coming from 1.x, run
+> `sql/upgrade-legacy.sql` before all of that. Your existing charges stay
+> active alongside the new book until you turn them off — the last line of
+> the upgrade file does it, commented out.
 
 ### The look
 
@@ -117,6 +118,17 @@ department resolved to, how much is in each table, and the whole audit trail.
 
 Rows now record the citizenid of who acted and who it was about. A name alone
 made two officers called J. Reyes the same person.
+
+### The SQL files
+
+`sql/mdt.sql` is the tables and nothing else. Six versions of commented ALTER
+statements had piled up above the first CREATE TABLE, so a first-time install
+opened to sixty lines of upgrade history for versions they never ran. Tables
+are in dependency order, which alphabetical was not — mdt_case_links carries a
+foreign key to mdt_cases and would have failed on a fresh import.
+
+Upgrades moved to `sql/upgrade-3.0.sql` and `sql/upgrade-legacy.sql`. Nothing
+was dropped.
 
 ### Fixed
 

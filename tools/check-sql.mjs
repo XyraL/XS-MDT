@@ -59,3 +59,44 @@ if (problems.length) {
 }
 
 console.log('every table the Lua queries exists');
+
+// ── The install file stays an install file ─────────────────────────────────
+//
+// Six versions of commented ALTER statements once piled up above the first
+// CREATE TABLE, so a first-time installer read sixty lines of upgrade history
+// before reaching anything they needed. Upgrades live in their own file now.
+
+const stray = [];
+const lines = schema.split(/\r?\n/);
+
+lines.forEach((line, i) => {
+  const t = line.trim();
+  if (/^(ALTER|INSERT|UPDATE|DELETE|DROP)\b/i.test(t)) {
+    stray.push(`sql/mdt.sql:${i + 1}: ${t.slice(0, 60)} — that belongs in an upgrade file`);
+  }
+  // Comments are the two-line header and nothing else.
+  if (/^--/.test(t) && i > 2) {
+    stray.push(`sql/mdt.sql:${i + 1}: ${t.slice(0, 60)} — the schema file carries no commentary`);
+  }
+});
+
+// A foreign key has to point at a table created earlier in the same file.
+const emitted = new Set();
+for (const m of schema.matchAll(/CREATE TABLE IF NOT EXISTS `(\w+)`([\s\S]*?)\n\) ENGINE/g)) {
+  for (const r of m[2].matchAll(/REFERENCES `(\w+)`/g)) {
+    if (r[1] === m[1]) continue;
+    if (!emitted.has(r[1])) {
+      stray.push(`${m[1]} references ${r[1]}, which this file creates later — a fresh import would fail`);
+    }
+  }
+  emitted.add(m[1]);
+}
+
+if (stray.length) {
+  console.log('\nPROBLEMS:');
+  for (const s of stray.slice(0, 20)) console.log('  ' + s);
+  if (stray.length > 20) console.log(`  …and ${stray.length - 20} more`);
+  process.exit(1);
+}
+
+console.log('sql/mdt.sql is tables only, in dependency order');
