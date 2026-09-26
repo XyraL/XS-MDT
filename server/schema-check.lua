@@ -58,18 +58,19 @@ local function Read()
     return tables, order
 end
 
-local function Existing()
+--[[ The columns a table really has, straight from the database.
+
+     Read per table rather than trusted from a spec: a CREATE that quietly
+     did nothing, or a table missed by the sweep below, both used to leave the
+     pass thinking every column was present. ]]
+local function ColumnsOf(name)
     local rows = MySQL.query.await([[
-        SELECT TABLE_NAME AS t, COLUMN_NAME AS c
-        FROM information_schema.COLUMNS
-        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME LIKE 'mdt\_%'
-    ]]) or {}
+        SELECT COLUMN_NAME AS c FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?
+    ]], { name }) or {}
 
     local out = {}
-    for _, row in ipairs(rows) do
-        out[row.t] = out[row.t] or {}
-        out[row.t][row.c] = true
-    end
+    for _, row in ipairs(rows) do out[row.c] = true end
     return out
 end
 
@@ -111,28 +112,34 @@ CreateThread(function()
             return
         end
 
-        local have = Existing()
-        local createdTables, addedColumns = {}, {}
+        local createdTables, addedColumns, failures = {}, {}, {}
 
         for _, name in ipairs(order) do
             local spec = wanted[name]
 
-            if not have[name] then
-                if spec.sql then
-                    local ok = pcall(function() MySQL.query.await(spec.sql) end)
-                    if ok then
-                        createdTables[#createdTables + 1] = name
-                        have[name] = {}
-                        for _, c in ipairs(spec.order) do have[name][c] = true end
-                    end
-                end
-            else
+            --[[ No columns back means the table is not there.
+
+                 CREATE TABLE IF NOT EXISTS succeeds as a no-op on a table that
+                 already exists, so its success says nothing at all. Trusting
+                 it — and assuming the table therefore matched the spec — is
+                 what made a table skip its column check and add nothing. ]]
+            local cols = ColumnsOf(name)
+
+            if not next(cols) and spec.sql then
+                local ok, e = pcall(function() MySQL.query.await(spec.sql) end)
+                if ok then createdTables[#createdTables + 1] = name
+                else failures[#failures + 1] = ('%s: %s'):format(name, e) end
+                cols = ColumnsOf(name)
+            end
+
+            if next(cols) then
                 for _, col in ipairs(spec.order) do
-                    if not have[name][col] then
-                        local ok = pcall(function()
+                    if not cols[col] and spec.columns[col] then
+                        local ok, e = pcall(function()
                             MySQL.query.await(('ALTER TABLE `%s` ADD COLUMN `%s` %s'):format(name, col, spec.columns[col]))
                         end)
-                        if ok then addedColumns[#addedColumns + 1] = name .. '.' .. col end
+                        if ok then addedColumns[#addedColumns + 1] = name .. '.' .. col
+                        else failures[#failures + 1] = ('%s.%s: %s'):format(name, col, e) end
                     end
                 end
             end
@@ -148,6 +155,11 @@ CreateThread(function()
         end
         if #createdTables == 0 and #addedColumns == 0 then
             print('[XS-MDT] database is up to date')
+        end
+
+        if #failures > 0 then
+            print(('^1[XS-MDT] %d change(s) could not be applied:^7'):format(#failures))
+            for i = 1, math.min(#failures, 8) do print('^1[XS-MDT]   ' .. failures[i] .. '^7') end
         end
 
         -- The charge book is data, not schema, so it is only seeded when the table
