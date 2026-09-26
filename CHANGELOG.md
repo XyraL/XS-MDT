@@ -70,6 +70,17 @@ Ammu-Nation, the casino, plus street and transit cameras. A camera with
 coordinates sets a GPS waypoint from its card, and a new one takes the officer's
 own position.
 
+**Live body cams.** Command picks an on-duty officer and watches what their
+chest camera sees. It is a real spectate — the watcher is moved to them,
+made invisible and frozen, and a camera is attached to SKEL_Spine3 taking
+the ped's body rotation, so it looks where their chest faces rather than
+where their head turns. That is what a real body cam does, and it is also
+the only rotation you can read off a remote ped reliably.
+
+The officer is told their camera is being viewed, every viewing and its
+duration goes to the audit log, and a supervisor can only watch their own
+department. All three are switches in `Config.BodyCam.Live`.
+
 Footage is one row per clip from a street camera, a dashcam or a bodycam, with
 what it shows, how long it is, and the case it belongs to. The MDT does not play
 video — it points you at the camera and records that somebody looked.

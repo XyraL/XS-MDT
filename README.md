@@ -40,6 +40,7 @@
 - **Weapons registry** — serial-first, because that is how a seized firearm is looked up, and a serial that is not on it is an unregistered one. A civilian lookup shows what they are registered to carry
 - **Cameras** — 35 real places seeded on first start: the six Fleecas, Pacific Standard, Blaine County Savings, the 24/7s, LTDs, Rob's Liquor, Vangelico, Ammu-Nation, the casino, plus street and transit cameras. Add your own in `Config.DefaultCameras`. A camera sets a GPS waypoint from its card
 - **Footage** — one row per clip from a street camera, a dashcam or a bodycam, with what it shows, how long it is and the case it belongs to. The MDT does not play video; it points you at the camera and records that somebody looked
+- **Live body cams** — command picks an on-duty officer and watches what their chest camera sees. The officer is told it is happening, every viewing and its duration is audited, and supervisors only see their own department. `ESC` comes back. All of that is `Config.BodyCam.Live`
 - **Charge book** — 178 charges across seven titles, written as `PC 1.34 A`. One grid with a class filter, and admins add their own in the panel
 
 ### Personnel

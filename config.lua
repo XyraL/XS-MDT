@@ -53,7 +53,7 @@ Config.Departments = {
         panels = {
             'dashboard', 'roster', 'map',
             'civilians',
-            'cases',
+            'cases', 'cameras',
             'pcr', 'medhistory', 'narclog',
             'cad', 'callhistory', 'bulletins',
             'shiftlog',
@@ -72,7 +72,7 @@ Config.Departments = {
         panels = {
             'dashboard', 'roster', 'map',
             'civilians',
-            'cases',
+            'cases', 'cameras',
             'fireincidents', 'hazmat', 'apparatus',
             'cad', 'callhistory', 'bulletins',
             'shiftlog',
@@ -278,9 +278,38 @@ Config.FineDeduction = {
 }
 
 -- Body camera logging — records key officer actions
+-- ═══════════════════════════════════════════════════════════════════════════
+--  BODY CAMS
+--  Two things share this block: the action log every officer writes as they
+--  work, and the live view a supervisor can open on an on-duty officer.
+--
+--  The live view is a chest-mounted camera, so it looks where the officer's
+--  body faces rather than where their head turns — which is what a real body
+--  cam does. Watching is written to the audit log every time, and by default
+--  the officer is told it is happening.
+-- ═══════════════════════════════════════════════════════════════════════════
 Config.BodyCam = {
     Enabled       = true,
     RetentionDays = 30,  -- Auto-purge logs older than this (0 = keep forever)
+
+    Live = {
+        Enabled       = true,
+        SupervisorOnly = true,   -- false lets any officer watch their own department
+        NotifyOfficer  = true,   -- tell the officer their cam is being viewed
+        SameDepartment = true,   -- a fire captain has no business on a police cam
+
+        -- Where the camera sits. Bone is SKEL_Spine3 (chest); the offset is
+        -- metres, forward on Y and up on Z. Pitch tilts it down slightly, the
+        -- way a clipped-on camera sits.
+        Bone   = 24818,
+        Offset = { x = 0.0, y = 0.22, z = 0.0 },
+        Pitch  = -4.0,
+        Fov    = 80.0,
+
+        -- Dropped if the officer goes off duty, disconnects or leaves the
+        -- watcher's streaming range for this long.
+        SignalLossSeconds = 8,
+    },
 }
 
 -- ox_target / qb-target integration — right-click players in-world

@@ -1,0 +1,145 @@
+/*  Live body cam overlay
+ *
+ *  The game renders behind this, so everything here sits on transparency. It
+ *  is the chrome a body cam burns into its own footage and nothing else: a
+ *  recording light, a clock, who is wearing it, where they are.
+ *
+ *  Deliberately not the MDT's design. A body cam feed is not a panel — it is
+ *  footage, so it gets the white stencil lettering, the hard red dot and the
+ *  slight grain that footage has, and none of the accent colour.
+ */
+
+#bodycam {
+  position: fixed; inset: 0; z-index: 90;
+  display: none;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .9);
+}
+#bodycam.live { display: block; }
+
+/* Lens falloff, and the faint noise a small sensor produces. Both are pure
+   CSS — a texture would mean shipping an image for three pixels of grain. */
+.bc-vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center,
+      transparent 42%,
+      rgba(0, 0, 0, .28) 78%,
+      rgba(0, 0, 0, .62) 100%);
+}
+.bc-grain {
+  position: absolute; inset: -50%;
+  opacity: .035;
+  background-image:
+    repeating-linear-gradient(0deg,   rgba(255,255,255,.9) 0 1px, transparent 1px 2px),
+    repeating-linear-gradient(90deg,  rgba(255,255,255,.6) 0 1px, transparent 1px 3px);
+  animation: bc-shift .9s steps(3) infinite;
+}
+@keyframes bc-shift {
+  0%   { transform: translate(0, 0); }
+  33%  { transform: translate(-1px, 1px); }
+  66%  { transform: translate(1px, -1px); }
+  100% { transform: translate(0, 0); }
+}
+
+/* ── Top strip ─────────────────────────────────────────────────────────── */
+
+.bc-top {
+  position: absolute; top: 0; left: 0; right: 0;
+  display: flex; align-items: center; gap: 18px;
+  padding: 18px 26px;
+}
+
+.bc-rec {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 700 13px/1 var(--font-mono);
+  letter-spacing: .22em;
+}
+.bc-rec-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #ff2d3f;
+  box-shadow: 0 0 10px rgba(255, 45, 63, .9);
+  animation: bc-blink 1.4s ease-in-out infinite;
+}
+@keyframes bc-blink { 0%, 55% { opacity: 1; } 75%, 100% { opacity: .15; } }
+
+.bc-unit { display: flex; flex-direction: column; gap: 2px; }
+.bc-callsign { font: 700 15px/1 var(--font-mono); letter-spacing: .14em; }
+.bc-name { font: 11.5px/1 var(--font-mono); letter-spacing: .1em; opacity: .8; text-transform: uppercase; }
+
+.bc-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+
+.bc-signal {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 10.5px/1 var(--font-mono); letter-spacing: .16em;
+  opacity: .85;
+}
+.bc-bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
+.bc-bars i { width: 3px; background: #fff; border-radius: 1px; }
+.bc-bars i:nth-child(1) { height: 4px; }
+.bc-bars i:nth-child(2) { height: 7px; }
+.bc-bars i:nth-child(3) { height: 10px; }
+.bc-bars i:nth-child(4) { height: 12px; }
+
+.bc-batt {
+  position: relative;
+  width: 26px; height: 12px;
+  border: 1.5px solid rgba(255, 255, 255, .85);
+  border-radius: 2px;
+}
+.bc-batt::after {
+  content: ''; position: absolute; right: -4px; top: 3px;
+  width: 2px; height: 5px; background: rgba(255, 255, 255, .85);
+}
+.bc-batt-fill {
+  position: absolute; inset: 2px; right: 9px;
+  background: rgba(255, 255, 255, .85);
+}
+
+/* ── Bottom strip ──────────────────────────────────────────────────────── */
+
+.bc-bottom {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  display: flex; align-items: flex-end; gap: 18px;
+  padding: 20px 26px;
+}
+.bc-stamp { font: 13px/1 var(--font-mono); letter-spacing: .1em; }
+.bc-where {
+  font: 11.5px/1 var(--font-mono); letter-spacing: .12em;
+  text-transform: uppercase; opacity: .82;
+  padding-bottom: 1px;
+}
+.bc-elapsed {
+  margin-left: auto;
+  font: 700 15px/1 var(--font-mono); letter-spacing: .12em;
+  font-variant-numeric: tabular-nums;
+}
+
+.bc-exit {
+  position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+  font: 10.5px/1 var(--font-mono); letter-spacing: .18em;
+  text-transform: uppercase; opacity: .45;
+}
+
+/* ── Signal loss ───────────────────────────────────────────────────────── */
+
+.bc-lost {
+  position: absolute; inset: 0;
+  display: none;
+  place-content: center; text-align: center;
+  background: rgba(0, 0, 0, .55);
+}
+#bodycam.nosignal .bc-lost { display: grid; }
+#bodycam.nosignal .bc-rec-dot { animation: none; opacity: .2; }
+#bodycam.nosignal .bc-bars i { background: rgba(255, 255, 255, .25); }
+
+.bc-lost-title {
+  font: 700 22px/1 var(--font-mono); letter-spacing: .3em;
+  animation: bc-blink 1s ease-in-out infinite;
+}
+.bc-lost-sub {
+  margin-top: 10px;
+  font: 11px/1 var(--font-mono); letter-spacing: .2em;
+  text-transform: uppercase; opacity: .6;
+}

@@ -49,6 +49,7 @@ function loadCameras() {
                 <div class="seg" id="cam-view">
                     <button class="seg-btn ${_camView === 'cameras' ? 'active' : ''}" data-view="cameras">Cameras</button>
                     <button class="seg-btn ${_camView === 'footage' ? 'active' : ''}" data-view="footage">Footage</button>
+                    <button class="seg-btn ${_camView === 'live' ? 'active' : ''}" data-view="live">Body Cams</button>
                 </div>
                 <div class="search-bar" style="width:220px;">
                     <span class="search-icon"><i class="i i-search"></i></span>
@@ -84,8 +85,15 @@ function fetchCameraView() {
     const add = document.getElementById('cam-add');
     if (add) {
         add.textContent = _camView === 'cameras' ? 'Add Camera' : 'Log Footage';
+        add.style.display = _camView === 'live' ? 'none' : '';
         add.onclick = () => (_camView === 'cameras' ? openCameraEditor() : openFootageEditor());
     }
+    // Hide the whole search row, not just the input — the magnifier lives in
+    // a sibling span and was left floating on its own.
+    const search = document.getElementById('cam-search');
+    if (search && search.parentElement) search.parentElement.style.display = _camView === 'live' ? 'none' : '';
+
+    if (_camView === 'live') return fetchLiveCams();
     return _camView === 'cameras' ? fetchCams() : fetchClips();
 }
 
@@ -373,6 +381,72 @@ function removeFootage(id) {
         fetchClips();
     });
 }
+
+// ── Live body cams ────────────────────────────────────────────────────────
+//
+// Who is on duty and wearing one. Watching opens a spectate view of what their
+// chest camera sees, and the officer is told it is happening.
+
+function fetchLiveCams() {
+    nuiFetch('getLiveCams').then(data => {
+        const body = document.getElementById('cam-body');
+        if (!body) return;
+
+        const add = document.getElementById('cam-add');
+        if (add) add.style.display = 'none';
+
+        if (!data || !data.canWatch) {
+            body.innerHTML = `<div class="empty-state">
+                <div class="empty-icon"><i class="i i-lock"></i></div>
+                <div class="empty-title">Supervisors only</div>
+                <div class="empty-subtitle">Watching an officer's camera is a command function.</div>
+            </div>`;
+            return;
+        }
+
+        if (!data.units || !data.units.length) {
+            body.innerHTML = `<div class="empty-state">
+                <div class="empty-icon"><i class="i i-badge"></i></div>
+                <div class="empty-title">Nobody on duty</div>
+                <div class="empty-subtitle">A camera only exists while its officer is working.</div>
+            </div>`;
+            return;
+        }
+
+        body.innerHTML = `
+            <div class="form-hint" style="margin-bottom:12px;">
+                The officer is told when you open their camera, and every viewing is written to the audit log.
+                Press <span class="kbd">ESC</span> to come back.
+            </div>
+            <div class="live-grid">
+                ${data.units.map(u => `
+                    <div class="live-card" onclick="watchBodyCam(${u.serverId}, '${String(u.callsign || '').replace(/'/g, "\\'")}', '${String(u.badge || '').replace(/'/g, "\\'")}')">
+                        <div class="live-feed">
+                            <div class="live-dot"></div>
+                            <div class="live-label">LIVE</div>
+                            <div class="live-lines"></div>
+                        </div>
+                        <div class="live-body">
+                            <div class="live-unit">${esc(u.callsign || ('#' + u.badge))}</div>
+                            <div class="live-name">${esc(u.name)}</div>
+                            <div class="live-meta">${esc(u.rank || '')} · ${esc(u.status || '10-8')}</div>
+                        </div>
+                        <div class="live-watch"><i class="i i-video"></i> Watch</div>
+                    </div>`).join('')}
+            </div>`;
+    });
+}
+
+function watchBodyCam(serverId, callsign, badge) {
+    nuiPost('startBodyCam', { serverId, callsign, badge }).then(res => {
+        if (!res || res.ok !== true) {
+            showToast('No feed', 'That unit could not be reached.', 'error', 3500);
+        }
+    });
+}
+
+window.fetchLiveCams = fetchLiveCams;
+window.watchBodyCam = watchBodyCam;
 
 window.loadCameras = loadCameras;
 window.cameraWaypoint = cameraWaypoint;

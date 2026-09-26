@@ -444,6 +444,20 @@ window.addEventListener('message', (e) => {
             if (typeof stopMap === 'function') stopMap();
             document.getElementById('mdt-overlay').classList.add('hidden');
             break;
+        // The overlay lives on the same page as the MDT but is not part of
+        // it — the tablet is closed by the time these arrive.
+        case 'bodycamOpen':
+            BodyCam.open(data.unit);
+            break;
+        case 'bodycamClose':
+            BodyCam.close();
+            break;
+        case 'bodycamTick':
+            BodyCam.update(data);
+            break;
+        case 'bodycamSignal':
+            BodyCam.setSignal(data.ok);
+            break;
         case 'refused':
             showToast('Not allowed', data.reason, 'error', 5000);
             break;

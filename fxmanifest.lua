@@ -22,6 +22,7 @@ dependencies {
 client_scripts {
     'bridge/framework.lua',
     'client/main.lua',
+    'client/bodycam.lua',
     'client/cad.lua',
     'client/blips.lua',
     'client/dispatch.lua',
@@ -65,8 +66,10 @@ files {
     'html/index.html',
     'html/css/style.css',
     'html/css/icons.css',
+    'html/css/bodycam.css',
     
     'html/js/app.js',
+    'html/js/bodycam.js',
     'html/js/panels/officer.js',
     'html/js/panels/personnel.js',
     'html/js/panels/cases.js',

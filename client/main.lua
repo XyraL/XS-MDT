@@ -29,6 +29,14 @@ local function CloseMDT()
     end
 end
 
+--[[ The body cam overlay replaces the tablet rather than sitting on top of
+     it, so the tablet has to close properly. Hiding it would leave NUI focus
+     on the watcher's mouse and leave mdtOpen true, so the open key would
+     then "close" a tablet nobody can see. ]]
+AddEventHandler('XS-MDT:client:closeForBodyCam', function()
+    CloseMDT()
+end)
+
 -- Register keybind
 RegisterKeyMapping('xs_mdt_open', 'Open XS-MDT', 'keyboard', Config.OpenKey)
 RegisterCommand('xs_mdt_open', function()

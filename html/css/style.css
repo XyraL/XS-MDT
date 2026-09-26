@@ -460,8 +460,6 @@ body.hidden, .hidden { display: none !important; }
 
 .tag-remove { cursor: pointer; opacity: .6; }
 .tag-remove:hover { opacity: 1; color: var(--red); }
-.tag-preset-grid { display: flex; flex-wrap: wrap; gap: 6px; }
-.tag-preset-btn { cursor: pointer; }
 
 /* ═══ Alerts ═══════════════════════════════════════════════════════════════ */
 
@@ -1414,5 +1412,94 @@ body.hidden, .hidden { display: none !important; }
 .audit-action { font: 11px var(--font-mono); color: var(--accent); letter-spacing: .04em; }
 .audit-cid { color: var(--faint) !important; }
 .audit-detail { color: var(--dim); }
+
+/* ═══ Live body cams ═══════════════════════════════════════════════════════
+   A card per on-duty officer. The thumbnail is not a feed — there is no way to
+   render another player's view into a tile — so it reads as a camera that is
+   on and waiting rather than pretending to show something. */
+
+.live-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+
+.live-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color .12s, transform .12s;
+}
+.live-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+
+.live-feed {
+  position: relative;
+  height: 108px;
+  background:
+    radial-gradient(ellipse at center, #131a22 0%, #080b10 100%);
+  overflow: hidden;
+}
+.live-lines {
+  position: absolute; inset: 0;
+  opacity: .5;
+  background: repeating-linear-gradient(0deg,
+      rgba(255, 255, 255, .035) 0 1px, transparent 1px 3px);
+}
+.live-dot {
+  position: absolute; top: 9px; left: 10px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--red) 70%, transparent);
+  animation: live-blink 1.4s ease-in-out infinite;
+}
+@keyframes live-blink { 0%, 55% { opacity: 1; } 75%, 100% { opacity: .15; } }
+
+.live-label {
+  position: absolute; top: 7px; left: 24px;
+  font: 700 9.5px/1.4 var(--font-mono); letter-spacing: .2em;
+  color: var(--dim);
+}
+
+.live-body { padding: 10px 12px 4px; }
+.live-unit { font: 700 13px/1.2 var(--font-mono); letter-spacing: .1em; }
+.live-name { font-size: 12.5px; font-weight: 550; margin-top: 3px; }
+.live-meta { font: 10.5px var(--font-mono); color: var(--faint); margin-top: 2px; }
+
+.live-watch {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 9px;
+  margin-top: 8px;
+  border-top: 1px solid var(--line-soft);
+  font: 11px var(--font-mono); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--faint);
+}
+.live-card:hover .live-watch { color: var(--accent); background: var(--raised); }
+
+/* The tag picker is positioned by JS and appended to <body>, so it never
+   inherits a panel's styling — it needs its own. */
+
+.tag-picker-popup {
+  position: fixed; z-index: 80;
+  width: 260px; padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 48px -12px rgba(0,0,0,.8);
+}
+.tag-picker-popup input {
+  width: 100%; height: 30px; padding: 0 10px;
+  background: var(--base); border: 1px solid var(--line);
+  border-radius: var(--radius); color: var(--text);
+  font: 12.5px var(--font);
+}
+.tag-picker-popup input:focus { outline: none; border-color: var(--accent); }
+.tag-picker-popup input::placeholder { color: var(--faint); }
+
+.tag-preset-grid { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
+.tag-preset-btn {
+  padding: 3px 9px;
+  background: var(--raised); border: 1px solid var(--line);
+  border-radius: 20px; color: var(--dim);
+  font: 11px var(--font); cursor: pointer;
+}
+.tag-preset-btn:hover { color: var(--text); border-color: var(--accent); }
 
 .tab-panel:not(.active) { display: none !important; }
