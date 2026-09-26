@@ -148,7 +148,7 @@ exports('CreateDispatchCall', function(data)
     }
 
     -- Only the departments Config.CallRouting assigns to this call type.
-    local players = exports['qbx_core']:GetQBPlayers()
+    local players = Framework.GetPlayers()
     for psrc, p in pairs(players) do
         local job = p.PlayerData.job
         if Dept.ReceivesCall(job.name, data.callType) and (not Config.OnDutyOnly or job.onduty) then
@@ -211,7 +211,7 @@ AddEventHandler('XS-MDT:server:autoDispatch', function(data)
         })
         return
     end
-    local player = exports['qbx_core']:GetPlayer(src)
+    local player = Framework.GetPlayer(src)
     if not player then return end
 
     local callType = data.callType or 'CUSTOM'
@@ -265,7 +265,7 @@ AddEventHandler('XS-MDT:server:autoDispatch', function(data)
     }
 
     -- Broadcast to the departments this call type is routed to.
-    local players = exports['qbx_core']:GetQBPlayers()
+    local players = Framework.GetPlayers()
     for psrc, p in pairs(players) do
         local job = p.PlayerData.job
         if Dept.ReceivesCall(job.name, callType) and (not Config.OnDutyOnly or job.onduty) then
@@ -335,7 +335,7 @@ AddEventHandler('XS-MDT:server:manualDispatch', function(data)
     }
 
     -- Manually created calls carry a free-text type, so they route as CUSTOM.
-    local players = exports['qbx_core']:GetQBPlayers()
+    local players = Framework.GetPlayers()
     for psrc, p in pairs(players) do
         local job = p.PlayerData.job
         if Dept.ReceivesCall(job.name, 'CUSTOM') and (not Config.OnDutyOnly or job.onduty) then
@@ -348,7 +348,7 @@ end)
 RegisterNetEvent('XS-MDT:server:panicButton')
 AddEventHandler('XS-MDT:server:panicButton', function(data)
     local src    = source
-    local player = exports['qbx_core']:GetPlayer(src)
+    local player = Framework.GetPlayer(src)
     if not player then return end
     local pd = player.PlayerData
     if not Config.AuthorizedJobs[pd.job.name] then return end
@@ -399,7 +399,7 @@ AddEventHandler('XS-MDT:server:panicButton', function(data)
     }
 
     -- Broadcast to ALL authorized players with high-priority alert
-    local players = exports['qbx_core']:GetQBPlayers()
+    local players = Framework.GetPlayers()
     for psrc, p in pairs(players) do
         if Dept.ReceivesCall(p.PlayerData.job.name, nil) then   -- safety alert: all departments
             TriggerClientEvent('XS-MDT:client:panicAlert', psrc, {
@@ -421,7 +421,7 @@ end)
 RegisterNetEvent('XS-MDT:server:backupRequest')
 AddEventHandler('XS-MDT:server:backupRequest', function(data)
     local src    = source
-    local player = exports['qbx_core']:GetPlayer(src)
+    local player = Framework.GetPlayer(src)
     if not player then return end
     local pd = player.PlayerData
     if not Config.AuthorizedJobs[pd.job.name] then return end
@@ -470,7 +470,7 @@ AddEventHandler('XS-MDT:server:backupRequest', function(data)
         created_at  = os.date('%Y-%m-%dT%H:%M:%SZ'),
     }
 
-    local players = exports['qbx_core']:GetQBPlayers()
+    local players = Framework.GetPlayers()
     for psrc, p in pairs(players) do
         if Dept.ReceivesCall(p.PlayerData.job.name, nil) then   -- safety alert: all departments
             TriggerClientEvent('XS-MDT:client:newCall', psrc, callData)

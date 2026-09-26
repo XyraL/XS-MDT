@@ -149,7 +149,7 @@ lib.callback.register('XS-MDT:server:updateIncident', function(source, data)
     -- Only the author or a supervisor (grade 3+) can edit
     local existing = MySQL.single.await('SELECT created_by FROM mdt_incidents WHERE id = ?', { data.id })
     if not existing then return false end
-    local player = exports['qbx_core']:GetPlayer(source)
+    local player = Framework.GetPlayer(source)
     if existing.created_by ~= officer.citizenid and player.PlayerData.job.grade.level < 3 then
         return false
     end
@@ -174,7 +174,7 @@ lib.callback.register('XS-MDT:server:deleteIncident', function(source, id)
     local officer = exports['XS-MDT']:GetOfficerInfo(source)
     local existing = MySQL.single.await('SELECT created_by FROM mdt_incidents WHERE id = ?', { id })
     if not existing then return false end
-    local player = exports['qbx_core']:GetPlayer(source)
+    local player = Framework.GetPlayer(source)
     if existing.created_by ~= officer.citizenid and player.PlayerData.job.grade.level < 3 then
         return false
     end

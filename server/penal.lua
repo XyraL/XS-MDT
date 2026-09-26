@@ -21,7 +21,7 @@ end)
 -- Admin only: add/edit/remove penal codes
 lib.callback.register('XS-MDT:server:addPenalCode', function(source, data)
     if not HasPanel(source, 'penal') then return false end
-    local player = exports['qbx_core']:GetPlayer(source)
+    local player = Framework.GetPlayer(source)
     if not player or player.PlayerData.job.grade.level < 3 then return false end
 
     MySQL.insert.await([[
@@ -33,7 +33,7 @@ end)
 
 lib.callback.register('XS-MDT:server:updatePenalCode', function(source, data)
     if not HasPanel(source, 'penal') then return false end
-    local player = exports['qbx_core']:GetPlayer(source)
+    local player = Framework.GetPlayer(source)
     if not player or player.PlayerData.job.grade.level < 3 then return false end
 
     MySQL.update.await([[
@@ -45,7 +45,7 @@ end)
 
 lib.callback.register('XS-MDT:server:deletePenalCode', function(source, id)
     if not HasPanel(source, 'penal') then return false end
-    local player = exports['qbx_core']:GetPlayer(source)
+    local player = Framework.GetPlayer(source)
     if not player or player.PlayerData.job.grade.level < 3 then return false end
 
     MySQL.update.await('UPDATE mdt_penal_codes SET active = 0 WHERE id = ?', { id })

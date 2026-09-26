@@ -9,7 +9,7 @@ AddEventHandler('XS-MDT:server:targetOpenProfile', function(targetSrc)
     local src = source
     if not HasPanel(src, 'civilians') then return end
 
-    local targetPlayer = exports['qbx_core']:GetPlayer(targetSrc)
+    local targetPlayer = Framework.GetPlayer(targetSrc)
     if not targetPlayer then
         TriggerClientEvent('XS-MDT:client:targetResult', src, nil, 'profile')
         return
@@ -28,7 +28,7 @@ AddEventHandler('XS-MDT:server:targetQuickCitation', function(targetSrc)
     local src = source
     if not HasPanel(src, 'citations') then return end
 
-    local targetPlayer = exports['qbx_core']:GetPlayer(targetSrc)
+    local targetPlayer = Framework.GetPlayer(targetSrc)
     if not targetPlayer then return end
     local pd = targetPlayer.PlayerData
     TriggerClientEvent('XS-MDT:client:targetResult', src, {
@@ -46,7 +46,7 @@ AddEventHandler('XS-MDT:server:targetRunName', function(targetSrc)
     -- — EMS has the civilian lookup but must not see criminal data.
     if not HasPanel(src, 'warrants') then return end
 
-    local targetPlayer = exports['qbx_core']:GetPlayer(targetSrc)
+    local targetPlayer = Framework.GetPlayer(targetSrc)
     if not targetPlayer then return end
     local pd = targetPlayer.PlayerData
     local fullname = pd.charinfo.firstname .. ' ' .. pd.charinfo.lastname

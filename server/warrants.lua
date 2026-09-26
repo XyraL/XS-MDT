@@ -117,7 +117,7 @@ CreateThread(function()
                     (os.time() - os.time()) + 1  -- approximate; server sends the data
                 ))
 
-                local players = exports['qbx_core']:GetQBPlayers()
+                local players = Framework.GetPlayers()
                 for psrc, p in pairs(players) do
                     local job = p.PlayerData.job
                     if Config.AuthorizedJobs[job.name] and (not Config.OnDutyOnly or job.onduty) then

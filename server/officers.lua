@@ -33,7 +33,7 @@ end)
 lib.callback.register('XS-MDT:server:getRoster', function(source)
     if not IsAuthorized(source) then return nil end
     local roster = {}
-    local players = exports['qbx_core']:GetQBPlayers()
+    local players = Framework.GetPlayers()
     for src, player in pairs(players) do
         local pd = player.PlayerData
         if Config.AuthorizedJobs[pd.job.name] and pd.job.onduty then
@@ -80,7 +80,7 @@ lib.callback.register('XS-MDT:server:searchOfficers', function(source, query)
     if not query or #query < 2 then return {} end
     local search = '%' .. query:lower() .. '%'
     local results = {}
-    local players = exports['qbx_core']:GetQBPlayers()
+    local players = Framework.GetPlayers()
     for src, player in pairs(players) do
         local pd = player.PlayerData
         if Config.AuthorizedJobs[pd.job.name] then
@@ -157,7 +157,7 @@ end
 function BroadcastUnits()
     if not (Config.Blips or {}).Enabled then return end
     local units = LiveUnits()
-    for psrc, p in pairs(exports['qbx_core']:GetQBPlayers()) do
+    for psrc, p in pairs(Framework.GetPlayers()) do
         local viewerJob = p.PlayerData.job and p.PlayerData.job.name
         if Dept.IsTracked(viewerJob) then
             local visible = {}
@@ -173,7 +173,7 @@ RegisterNetEvent('XS-MDT:server:broadcastPosition')
 AddEventHandler('XS-MDT:server:broadcastPosition', function(data)
     if not (Config.Blips or {}).Enabled then return end
     local src    = source
-    local player = exports['qbx_core']:GetPlayer(src)
+    local player = Framework.GetPlayer(src)
     if not player or type(data) ~= 'table' then return end
 
     local pd = player.PlayerData
@@ -203,7 +203,7 @@ end)
 -- Callback for the NUI map to pull the current picture on demand.
 lib.callback.register('XS-MDT:server:getUnits', function(source)
     if not IsAuthorized(source) then return {} end
-    local player = exports['qbx_core']:GetPlayer(source)
+    local player = Framework.GetPlayer(source)
     local viewerJob = player and player.PlayerData.job and player.PlayerData.job.name
     local out = {}
     for _, u in ipairs(LiveUnits()) do
@@ -215,14 +215,14 @@ end)
 -- Clear a unit's position (going off duty or disconnecting)
 RegisterNetEvent('XS-MDT:server:clearPosition')
 AddEventHandler('XS-MDT:server:clearPosition', function()
-    local player = exports['qbx_core']:GetPlayer(source)
+    local player = Framework.GetPlayer(source)
     if not player then return end
     _unitPositions[player.PlayerData.citizenid] = nil
     BroadcastUnits()
 end)
 
 AddEventHandler('playerDropped', function()
-    local player = exports['qbx_core']:GetPlayer(source)
+    local player = Framework.GetPlayer(source)
     if not player then return end
     local cid = player.PlayerData.citizenid
     _unitPositions[cid] = nil

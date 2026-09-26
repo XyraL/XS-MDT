@@ -6,7 +6,7 @@ local mdtOpen = false  -- shadow from main.lua (updated via event)
 -- check: without one every player — civilians included — sees "Issue Citation"
 -- on anyone they aim at.
 local function CanUse(panel)
-    local pd = exports['qbx_core']:GetPlayerData()
+    local pd = Framework.GetPlayerData()
     if not pd or not pd.job then return false end
     if Config.OnDutyOnly and not pd.job.onduty then return false end
     return Dept.HasPanel(pd.job.name, panel)
@@ -108,7 +108,7 @@ RegisterNetEvent('XS-MDT:client:targetResult', function(civData, mode)
         return
     end
 
-    local pd = exports['qbx_core']:GetPlayerData()
+    local pd = Framework.GetPlayerData()
     if not pd or not Config.AuthorizedJobs[pd.job.name] then
         lib.notify({ title = 'XS-MDT', description = 'Access denied', type = 'error' })
         return

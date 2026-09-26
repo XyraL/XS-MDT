@@ -111,7 +111,7 @@ end
 RegisterNetEvent('XS-MDT:client:updateBlips', function(units)
     if not (Config.Blips or {}).Enabled then return ClearAllBlips() end
 
-    local myData = exports['qbx_core']:GetPlayerData()
+    local myData = Framework.GetPlayerData()
     local myCid  = myData and myData.citizenid
     local myJob  = myData and myData.job and myData.job.name
 
@@ -152,7 +152,7 @@ CreateThread(function()
 
     while true do
         Wait(interval)
-        local pd = exports['qbx_core']:GetPlayerData()
+        local pd = Framework.GetPlayerData()
         if pd and pd.job and Dept.IsTracked(pd.job.name)
            and (B.OnDutyOnly == false or pd.job.onduty) then
 

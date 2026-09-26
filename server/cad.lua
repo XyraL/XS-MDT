@@ -224,7 +224,7 @@ AddEventHandler('XS-MDT:server:respondToCall', function(data)
     end
 
     -- Broadcast updated units list to all officers with MDT open
-    local players = exports['qbx_core']:GetQBPlayers()
+    local players = Framework.GetPlayers()
     for psrc, p in pairs(players) do
         if Config.AuthorizedJobs[p.PlayerData.job.name] then
             TriggerClientEvent('XS-MDT:client:callUpdated', psrc, { id = data.callId, units = units })

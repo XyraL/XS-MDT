@@ -4,7 +4,7 @@ local HasPanel = function(src, panel) return exports['XS-MDT']:HasPanel(src, pan
 -- Fine deduction handler — replaceable via exports
 local _fineHandler = function(targetSrc, amount, reason)
     if not Config.FineDeduction.Enabled then return end
-    local target = exports['qbx_core']:GetPlayer(targetSrc)
+    local target = Framework.GetPlayer(targetSrc)
     if target then
         target.Functions.RemoveMoney('bank', amount, reason)
     end
@@ -285,7 +285,7 @@ lib.callback.register('XS-MDT:server:markCitationPaid', function(source, citatio
 
     -- Deduct from bank if target civilian is online
     if Config.FineDeduction.AutoDeductOnMarkPaid and citation.fine and citation.fine > 0 then
-        local players = exports['qbx_core']:GetQBPlayers()
+        local players = Framework.GetPlayers()
         for src, player in pairs(players) do
             if player.PlayerData.citizenid == citation.citizenid then
                 _fineHandler(src, citation.fine, 'XS-MDT-citation-paid')

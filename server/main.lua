@@ -1,8 +1,8 @@
-local QBX = exports['qbx_core']
-
--- Returns the QBCore player object or nil
+-- Every framework call goes through bridge/framework.lua, which is loaded
+-- first. Keeping a local alias here means the rest of this file reads the same
+-- whichever framework is running.
 local function GetPlayer(src)
-    return QBX:GetPlayer(src)
+    return Framework.GetPlayer(src)
 end
 
 -- Checks if the source player has an authorized job and is on duty
@@ -128,7 +128,7 @@ lib.callback.register('XS-MDT:server:searchPlayersByName', function(source, quer
     -- Warrant counts are criminal data — police only.
     local showWarrants = HasPanel(source, 'warrants')
     local results = {}
-    local players = exports['qbx_core']:GetQBPlayers()
+    local players = Framework.GetPlayers()
     for src, player in pairs(players) do
         local pd = player.PlayerData
         local fullname = pd.charinfo.firstname .. ' ' .. pd.charinfo.lastname

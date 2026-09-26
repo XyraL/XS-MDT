@@ -38,7 +38,7 @@ end, false)
 -- Panic button — broadcasts priority alert with officer location to all units
 RegisterKeyMapping('xs_mdt_panic', 'XS-MDT: Panic Button', 'keyboard', 'F11')
 RegisterCommand('xs_mdt_panic', function()
-    local pd = exports['qbx_core']:GetPlayerData()
+    local pd = Framework.GetPlayerData()
     if not pd or not Config.AuthorizedJobs[pd.job.name] then return end
     local ped    = PlayerPedId()
     local coords = GetEntityCoords(ped)
@@ -225,7 +225,7 @@ local qdOpen = false
 
 local function OpenQuickDispatch()
     if mdtOpen or qdOpen then return end
-    local pd = exports['qbx_core']:GetPlayerData()
+    local pd = Framework.GetPlayerData()
     if not pd or not Config.AuthorizedJobs[pd.job.name] then return end
     if Config.OnDutyOnly and not pd.job.onduty then return end
 
@@ -248,7 +248,7 @@ end, false)
 -- Backup request — sends an urgent dispatch call with officer's location
 RegisterKeyMapping('xs_mdt_backup', 'XS-MDT: Request Backup', 'keyboard', 'F12')
 RegisterCommand('xs_mdt_backup', function()
-    local pd = exports['qbx_core']:GetPlayerData()
+    local pd = Framework.GetPlayerData()
     if not pd or not Config.AuthorizedJobs[pd.job.name] then return end
     if Config.OnDutyOnly and not pd.job.onduty then return end
     local ped    = PlayerPedId()

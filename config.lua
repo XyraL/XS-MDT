@@ -1,5 +1,13 @@
 Config = {}
 
+
+-- ═══════════════════════════════════════════════════════════════════════════
+--  FRAMEWORK
+--  'auto' picks whichever of qbx_core or qb-core is started. Force it only if
+--  you run both for a migration and want the MDT pinned to one.
+-- ═══════════════════════════════════════════════════════════════════════════
+Config.Framework = 'auto'   -- auto | qbox | qbcore
+
 -- ═══════════════════════════════════════════════════════════════════════════
 --  DEPARTMENTS
 --  Each department maps a set of jobs to the panels those jobs can open.

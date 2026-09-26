@@ -38,7 +38,7 @@ local function BuildLicences(citizenid)
     -- Online players carry live metadata; offline ones are read from the
     -- players table so a lookup works whether or not they are connected.
     local held = {}
-    local ok, player = pcall(function() return exports.qbx_core:GetPlayerByCitizenId(citizenid) end)
+    local ok, player = pcall(function() return Framework.GetPlayerByCitizenId(citizenid) end)
     if not ok then player = nil end
     local meta = MetaLicences(player)
 
@@ -121,7 +121,7 @@ lib.callback.register('XS-MDT:server:setLicenceStatus', function(source, data)
     -- what the MDT is showing. Only touches players who actually hold one —
     -- reinstating must not hand out a licence that was never earned.
     if Config.Licences.WriteBackToMetadata then
-        local okPlayer, player = pcall(function() return exports.qbx_core:GetPlayerByCitizenId(data.citizenid) end)
+        local okPlayer, player = pcall(function() return Framework.GetPlayerByCitizenId(data.citizenid) end)
         if not okPlayer then player = nil end
         local meta, field = MetaLicences(player)
         if player and meta and meta[data.type] ~= nil then

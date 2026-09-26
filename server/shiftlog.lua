@@ -117,7 +117,7 @@ end)
 -- Auto clock-out if officer disconnects while clocked in
 AddEventHandler('playerDropped', function()
     local src = source
-    local player = exports['qbx_core']:GetPlayer(src)
+    local player = Framework.GetPlayer(src)
     if not player then return end
     local cid = player.PlayerData.citizenid
     if _openShifts[cid] then
