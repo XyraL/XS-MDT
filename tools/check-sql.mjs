@@ -100,3 +100,52 @@ if (stray.length) {
 }
 
 console.log('sql/mdt.sql is tables only, in dependency order');
+
+// ── Columns, not just tables ───────────────────────────────────────────────
+//
+// Checking that a table exists is the easy half. A column that does not is the
+// same runtime error, and it happened: heading and pitch were added to
+// mdt_cad_calls instead of mdt_cameras, because String.replace with a string
+// pattern replaces the FIRST match and both tables have a `coords` column.
+// Everything passed, and the resource asked the database for a column its own
+// schema had never defined.
+//
+// INSERT and UPDATE only — a SELECT with joins, aliases and subqueries cannot
+// be read this way without becoming a SQL parser, and these two carry the
+// column names that get typed by hand.
+
+const colProblems = [];
+
+for (const f of files) {
+  const src = readFileSync(f, 'utf8');
+  const rel = relative(ROOT, f).replace(/\\/g, '/');
+
+  const check = (table, cols, kind) => {
+    const known = tables.get(table);
+    if (!known) return;                       // the table check above reports it
+    for (const c of cols) {
+      if (!known.has(c)) {
+        colProblems.push(`${rel}: ${kind} ${table}.${c} — the schema has no such column`);
+      }
+    }
+  };
+
+  for (const m of src.matchAll(/INSERT\s+(?:IGNORE\s+)?INTO\s+(mdt_\w+)\s*\(([^)]*)\)/gi)) {
+    check(m[1], m[2].split(',').map((c) => c.trim().replace(/`/g, '')).filter(Boolean), 'inserts');
+  }
+
+  for (const m of src.matchAll(/UPDATE\s+(mdt_\w+)\s+SET\s+([\s\S]*?)(?:\sWHERE\s|\]\]|$)/gi)) {
+    const cols = [...m[2].matchAll(/`?(\w+)`?\s*=/g)]
+      .map((c) => c[1])
+      .filter((c) => !/^(VALUES|NOW|CASE|WHEN|THEN|ELSE|END|NULL)$/i.test(c));
+    check(m[1], cols, 'updates');
+  }
+}
+
+if (colProblems.length) {
+  console.log('\nPROBLEMS:');
+  for (const p of [...new Set(colProblems)]) console.log('  ' + p);
+  process.exit(1);
+}
+
+console.log('every column the Lua writes exists');
