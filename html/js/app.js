@@ -157,6 +157,7 @@ const PANELS = {
 
     mugshots   : { label: 'Mugshots',  icon: '<i class="i i-camera"></i>', section: 'Personnel' },
     shiftlog   : { label: 'Shift Log', icon: '<i class="i i-clock"></i>', section: 'Personnel' },
+    management : { label: 'Management',  icon: '<i class="i i-chart"></i>',  section: 'Personnel' },
     ia         : { label: 'Internal Affairs', icon: '<i class="i i-folder"></i>', section: 'Personnel' },
     fto        : { label: 'Field Training',   icon: '<i class="i i-check"></i>',  section: 'Personnel' },
     sop        : { label: 'SOP',              icon: '<i class="i i-archive"></i>', section: 'Personnel' },
@@ -310,6 +311,7 @@ function onTabActivated(tab) {
         case 'ia':          loadIA(); break;
         case 'fto':         loadFTO(); break;
         case 'sop':         loadSOP(); break;
+        case 'management':  loadManagement(); break;
     }
 }
 

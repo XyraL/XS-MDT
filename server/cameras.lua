@@ -26,6 +26,39 @@ local function NextFootageNumber()
     return ('FT-%s-%04d'):format(year, n + 1)
 end
 
+--[[ Seed the camera list from Config.DefaultCameras.
+
+     INSERT IGNORE, so a camera renamed or moved in the panel survives a
+     restart. A camera DELETED in the panel comes back if it is still listed
+     in the config, which is the tradeoff for the list living there: remove it
+     from config.lua instead. ]]
+local function SeedCameras()
+    if Config.SeedCameras == false then return end
+
+    local list = Config.DefaultCameras or {}
+    if #list == 0 then return end
+
+    local rows = {}
+    for _, cam in ipairs(list) do
+        if cam.code and cam.label then
+            rows[#rows + 1] = {
+                cam.code:upper():sub(1, 20), cam.label, cam.area, cam.kind or 'fixed',
+                cam.coords and json.encode(cam.coords) or nil, 'Default',
+            }
+        end
+    end
+    if #rows == 0 then return end
+
+    MySQL.prepare.await([[
+        INSERT IGNORE INTO mdt_cameras (camera_code, label, area, kind, coords, added_by_name)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ]], rows)
+end
+
+AddEventHandler('onResourceStart', function(name)
+    if name == GetCurrentResourceName() then SeedCameras() end
+end)
+
 -- ── Cameras ───────────────────────────────────────────────────────────────
 
 lib.callback.register('XS-MDT:server:getCameras', function(source, filter)

@@ -401,7 +401,7 @@ body.hidden, .hidden { display: none !important; }
   background: var(--raised);
   border-bottom: 1px solid var(--line);
 }
-.card-title { font-size: 12.5px; font-weight: 600; }
+.card-title { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; }
 .card-title-icon { color: var(--faint); display: inline-grid; place-items: center; }
 .card-title-icon svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.6; }
 .card-body { padding: 14px; }
@@ -1369,5 +1369,50 @@ body.hidden, .hidden { display: none !important; }
 .ft-no { font: 11.5px var(--font-mono); color: var(--accent); }
 .ft-src { gap: 6px; color: var(--dim); }
 .ft-label { font-weight: 550; }
+
+/* ═══ Management ═══════════════════════════════════════════════════════════ */
+
+.mgmt-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; align-items: start; }
+.mgmt-wide { grid-column: 1 / -1; }
+
+.mgmt-list { margin-top: 10px; }
+.mgmt-row {
+  display: flex; align-items: center; gap: 9px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 12.5px;
+}
+.mgmt-row:last-child { border-bottom: 0; }
+.mgmt-row .mono { font: 11.5px var(--font-mono); }
+.mgmt-row .record-meta { margin-left: auto; text-align: right; }
+
+.audit-filters { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+
+.audit-table {
+  display: grid;
+  grid-template-columns: 150px 180px minmax(0, 1fr) 150px minmax(0, 1.4fr);
+  border: 1px solid var(--line); border-radius: var(--radius-lg);
+  background: var(--surface); overflow: hidden;
+}
+.audit-head, .audit-row { display: contents; }
+
+.audit-head > span {
+  position: sticky; top: 0; z-index: 2;
+  padding: 9px 11px;
+  background: var(--raised); border-bottom: 1px solid var(--line);
+  font: 10px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--faint);
+}
+.audit-row > span {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 11px;
+  border-bottom: 1px solid var(--line-soft);
+  min-width: 0; font-size: 12px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.audit-row:hover > span { background: var(--raised); }
+.audit-row .mono { font: 11px var(--font-mono); color: var(--dim); }
+.audit-action { font: 11px var(--font-mono); color: var(--accent); letter-spacing: .04em; }
+.audit-cid { color: var(--faint) !important; }
+.audit-detail { color: var(--dim); }
 
 .tab-panel:not(.active) { display: none !important; }

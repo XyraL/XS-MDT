@@ -203,7 +203,7 @@ function renderDashboard() {
             </div>
             <div class="panel-actions">
                 <span class="text-xs text-muted">Press <span class="kbd">Ctrl+1–0</span> to switch tabs</span>
-                ${MDT.officer && MDT.officer.isSupervisor ? `<button class="btn btn-ghost btn-sm" onclick="openAuditLogViewer()"><i class="i i-clipboard"></i> Audit Log</button>` : ''}
+                ${MDT.officer && MDT.officer.isSupervisor ? `<button class="btn btn-ghost btn-sm" onclick="switchTab(&quot;management&quot;)"><i class="i i-chart"></i> Management</button>` : ''}
                 <button class="btn btn-ghost btn-sm" onclick="openBodyCamLog()"><i class="i i-video"></i> Body Cam</button>
                 <button class="btn btn-ghost btn-sm" onclick="renderDashboard()"><i class="i i-refresh"></i> Refresh</button>
             </div>

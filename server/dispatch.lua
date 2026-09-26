@@ -165,6 +165,22 @@ exports('CreateDispatchCall', function(data)
         end
     end
 
+    -- And out to whatever dispatch the server already runs.
+    if MdtDispatchAlerts then
+        MdtDispatchAlerts({
+            callType = data.callType,
+            label = label,
+            code = data.code,
+            description = data.description,
+            coords = data.coords,
+            street = data.street,
+            priority = tonumber(data.priority) or 2,
+            callNumber = callNumber,
+            caller = data.callerName or 'Dispatch',
+            jobs = Dept.JobsForCall(data.callType),
+        })
+    end
+
     return callId
 end)
 

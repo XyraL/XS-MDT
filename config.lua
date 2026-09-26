@@ -38,7 +38,7 @@ Config.Departments = {
             'cases', 'evidence', 'weapons', 'cameras',
             'cad', 'callhistory', 'bulletins',
             'mugshots', 'shiftlog',
-            'ia', 'fto', 'sop',
+            'ia', 'fto', 'sop', 'management',
         },
     },
 
@@ -57,7 +57,7 @@ Config.Departments = {
             'pcr', 'medhistory', 'narclog',
             'cad', 'callhistory', 'bulletins',
             'shiftlog',
-            'ia', 'fto', 'sop',
+            'ia', 'fto', 'sop', 'management',
         },
     },
 
@@ -76,7 +76,7 @@ Config.Departments = {
             'fireincidents', 'hazmat', 'apparatus',
             'cad', 'callhistory', 'bulletins',
             'shiftlog',
-            'ia', 'fto', 'sop',
+            'ia', 'fto', 'sop', 'management',
         },
     },
 }
@@ -170,6 +170,69 @@ Config.Blips = {
 -- editing penal codes, deleting incidents, marking citations paid, viewing body cams.
 -- Per-department overrides live in Config.Departments[dept].supervisorGrade.
 -- ═══════════════════════════════════════════════════════════════════════════
+--  CAMERAS
+--  The places that actually have cameras: shops, banks, forecourts, the
+--  casino. Seeded into mdt_cameras on start with INSERT IGNORE, so a camera
+--  you rename or move in the panel is never overwritten by a restart.
+--
+--  Add your own here rather than only in the panel — a camera added in the
+--  panel is fine, but one DELETED in the panel comes back on the next restart
+--  if it is still listed below. Remove it here instead.
+--
+--  Coordinates are the front of the building, near enough for a waypoint.
+--  kind: fixed | traffic | atm | transit | private
+-- ═══════════════════════════════════════════════════════════════════════════
+Config.SeedCameras = true
+
+Config.DefaultCameras = {
+    -- ── Banks ─────────────────────────────────────────────────────────────
+    { code = 'BNK-01', label = 'Fleeca — Legion Square',        area = 'Downtown',      kind = 'private', coords = { x = 149.1,   y = -1040.2, z = 29.4 } },
+    { code = 'BNK-02', label = 'Fleeca — Hawick Avenue',        area = 'Rockford Hills', kind = 'private', coords = { x = 313.2,   y = -284.5,  z = 54.2 } },
+    { code = 'BNK-03', label = 'Fleeca — Alta Street',          area = 'Burton',        kind = 'private', coords = { x = -351.5,  y = -49.5,   z = 49.0 } },
+    { code = 'BNK-04', label = 'Fleeca — Great Ocean Highway',  area = 'Banham Canyon', kind = 'private', coords = { x = -1212.0, y = -330.8,  z = 37.8 } },
+    { code = 'BNK-05', label = 'Fleeca — Route 68',             area = 'Harmony',       kind = 'private', coords = { x = 1175.0,  y = 2706.6,  z = 38.1 } },
+    { code = 'BNK-06', label = 'Fleeca — Paleto Bay',           area = 'Paleto Bay',    kind = 'private', coords = { x = -2962.6, y = 482.2,   z = 15.7 } },
+    { code = 'BNK-07', label = 'Pacific Standard — main floor', area = 'Pillbox Hill',  kind = 'private', coords = { x = 253.9,   y = 225.4,   z = 101.9 } },
+    { code = 'BNK-08', label = 'Blaine County Savings',         area = 'Paleto Bay',    kind = 'private', coords = { x = -109.3,  y = 6464.1,  z = 31.6 } },
+
+    -- ── Shops ─────────────────────────────────────────────────────────────
+    { code = 'STR-01', label = "24/7 — Strawberry",             area = 'Strawberry',    kind = 'private', coords = { x = 25.7,    y = -1347.3, z = 29.5 } },
+    { code = 'STR-02', label = "24/7 — Little Seoul",           area = 'Little Seoul',  kind = 'private', coords = { x = -709.1,  y = -904.2,  z = 19.2 } },
+    { code = 'STR-03', label = "24/7 — Morningwood",            area = 'Morningwood',   kind = 'private', coords = { x = -1487.0, y = -379.1,  z = 40.2 } },
+    { code = 'STR-04', label = "24/7 — Tataviam Mountains",     area = 'El Burro',      kind = 'private', coords = { x = 1135.8,  y = -982.3,  z = 46.4 } },
+    { code = 'STR-05', label = "24/7 — Richman Glen",           area = 'Richman',       kind = 'private', coords = { x = -2968.2, y = 390.9,   z = 15.0 } },
+    { code = 'STR-06', label = "24/7 — Route 68",               area = 'Harmony',       kind = 'private', coords = { x = 1959.0,  y = 3740.0,  z = 32.3 } },
+    { code = 'STR-07', label = "24/7 — Grapeseed",              area = 'Grapeseed',     kind = 'private', coords = { x = 1729.2,  y = 6414.1,  z = 35.0 } },
+    { code = 'STR-08', label = "24/7 — Mount Chiliad",          area = 'Chiliad',       kind = 'private', coords = { x = 2549.0,  y = 385.1,   z = 108.6 } },
+    { code = 'STR-09', label = 'LTD — Grove Street',            area = 'Davis',         kind = 'private', coords = { x = -47.4,   y = -1757.5, z = 29.4 } },
+    { code = 'STR-10', label = 'LTD — Mirror Park',             area = 'Mirror Park',   kind = 'private', coords = { x = 1163.4,  y = -323.8,  z = 69.2 } },
+    { code = 'STR-11', label = "Rob's Liquor — Prosperity",     area = 'Vespucci',      kind = 'private', coords = { x = -1222.9, y = -906.9,  z = 12.3 } },
+    { code = 'STR-12', label = "Rob's Liquor — Sandy Shores",   area = 'Sandy Shores',  kind = 'private', coords = { x = 1166.0,  y = 2708.9,  z = 38.2 } },
+
+    -- ── Jewellers, guns, gambling ─────────────────────────────────────────
+    { code = 'HVT-01', label = 'Vangelico Jewelers',            area = 'Rockford Hills', kind = 'private', coords = { x = -630.1, y = -238.4,  z = 38.1 } },
+    { code = 'HVT-02', label = 'Ammu-Nation — Pillbox Hill',    area = 'Pillbox Hill',  kind = 'private', coords = { x = 21.7,    y = -1106.7, z = 29.8 } },
+    { code = 'HVT-03', label = 'Ammu-Nation — Sandy Shores',    area = 'Sandy Shores',  kind = 'private', coords = { x = 1692.5,  y = 3759.5,  z = 34.7 } },
+    { code = 'HVT-04', label = 'Diamond Casino — main entrance', area = 'East Vinewood', kind = 'private', coords = { x = 925.3,  y = 46.3,    z = 81.1 } },
+    { code = 'HVT-05', label = 'Vanilla Unicorn — car park',    area = 'Strawberry',    kind = 'private', coords = { x = 127.4,   y = -1298.0, z = 29.2 } },
+
+    -- ── Street and traffic ────────────────────────────────────────────────
+    { code = 'TRF-01', label = 'Legion Square — north corner',  area = 'Downtown',      kind = 'fixed',   coords = { x = 195.4,   y = -933.8,  z = 30.7 } },
+    { code = 'TRF-02', label = 'Alta Street junction',          area = 'Downtown',      kind = 'traffic', coords = { x = 121.3,   y = -740.9,  z = 45.8 } },
+    { code = 'TRF-03', label = 'Vespucci Boulevard',            area = 'Vespucci',      kind = 'traffic', coords = { x = -1210.8, y = -1152.4, z = 7.6 } },
+    { code = 'TRF-04', label = 'Route 68 — eastbound',          area = 'Harmony',       kind = 'traffic', coords = { x = 1163.2,  y = 2664.1,  z = 37.9 } },
+    { code = 'TRF-05', label = 'Great Ocean Highway — Paleto',  area = 'Paleto Bay',    kind = 'traffic', coords = { x = -232.6,  y = 6318.1,  z = 31.5 } },
+    { code = 'TRF-06', label = 'Del Perro Freeway — La Puerta', area = 'La Puerta',     kind = 'traffic', coords = { x = -717.4,  y = -1284.1, z = 5.1 } },
+    { code = 'TRF-07', label = 'Elgin Avenue',                  area = 'Mission Row',   kind = 'traffic', coords = { x = 440.7,   y = -984.9,  z = 30.7 } },
+
+    -- ── Transit ───────────────────────────────────────────────────────────
+    { code = 'TRN-01', label = 'LS Transit — Pillbox Hill',     area = 'Pillbox Hill',  kind = 'transit', coords = { x = -541.1,  y = -1275.9, z = 26.6 } },
+    { code = 'TRN-02', label = 'LS International — terminal',   area = 'LSIA',          kind = 'transit', coords = { x = -1037.7, y = -2737.9, z = 20.2 } },
+    { code = 'TRN-03', label = 'Paleto Bay — transit stop',     area = 'Paleto Bay',    kind = 'transit', coords = { x = -232.6,  y = 6318.1,  z = 31.5 } },
+}
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
 --  CERTIFICATIONS
 --  What a supervisor can issue on the roster. These are labels only — the MDT
 --  records who holds what and who signed it off, and nothing here gates a
@@ -243,6 +306,27 @@ Config.JailResource = false
 -- built-in CAD. A provider can also be forced by its id, or set to 'internal'.
 Config.DispatchProvider = 'auto'
 Config.DisableInternalDispatchDetection = false
+-- ═══════════════════════════════════════════════════════════════════════════
+--  DISPATCH ALERTS (outbound)
+--  The MDT keeps its own CAD, and every call it creates is ALSO pushed to
+--  whatever dispatch resource you already run, because half the department
+--  has that UI open and not this one.
+--
+--    'auto'                  every supported resource that is started
+--    { 'ps-dispatch' }       only the ones you name
+--    false                   off
+--
+--  Supported out of the box: ps-dispatch, qs-dispatch, cd_dispatch,
+--  core_dispatch, linden_outlawalert. Each one is a single function in
+--  server/dispatch-adapters.lua — if your version takes different fields,
+--  that is the one place to change, and a mismatch prints a line rather
+--  than breaking anything.
+--
+--  This is separate from Config.DispatchAdapters below, which is for a
+--  resource that REPLACES the CAD rather than mirroring it.
+-- ═══════════════════════════════════════════════════════════════════════════
+Config.DispatchAlerts = 'auto'
+
 Config.DispatchAdapters = {
     { id = 'XS-Dispatch', resource = 'XS-Dispatch', priority = 100 },
     -- Generic export adapter example:
@@ -285,6 +369,17 @@ Dept = Dept or {}
 function Dept.DepartmentsForCall(callType)
     local routing = Config.CallRouting or {}
     return (routing.Types or {})[callType] or routing.Default or { 'police' }
+end
+
+-- Job names alerted for a call type. Dispatch resources filter by job, not
+-- by department, so this flattens the departments back out.
+function Dept.JobsForCall(callType)
+    local jobs = {}
+    for _, key in ipairs(Dept.DepartmentsForCall(callType)) do
+        local dept = Config.Departments[key]
+        for _, job in ipairs(dept and dept.jobs or {}) do jobs[#jobs + 1] = job end
+    end
+    return jobs
 end
 
 -- Should this job be alerted about this call? `callType` nil means an
