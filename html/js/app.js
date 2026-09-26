@@ -571,9 +571,12 @@ function fmtDateShort(ts) {
     return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+// Charge class has its own three colours rather than borrowing the generic
+// tags, because felony / misdemeanor / infraction means the same thing in
+// every panel that shows it.
 function chargeTypeTag(type) {
-    const map = { felony: 'tag-red', misdemeanor: 'tag-yellow', infraction: 'tag-blue' };
-    return `<span class="tag ${map[type] || 'tag-blue'}">${type}</span>`;
+    const t = String(type || 'infraction').toLowerCase();
+    return `<span class="charge-class charge-class-${t}">${t}</span>`;
 }
 
 function dollarFmt(n) {

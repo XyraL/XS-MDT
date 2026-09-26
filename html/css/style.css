@@ -923,4 +923,87 @@ body.hidden, .hidden { display: none !important; }
 .btn-copy.copied { color: var(--green); }
 
 
+/* ═══ Penal code book ══════════════════════════════════════════════════════
+   One grid for all seven titles, with the title rows inside it, so the code
+   column lines up from the first charge to the last. The header and each row
+   are display:contents wrappers — they exist to group the spans in the markup,
+   the grid places the spans themselves. */
+
+.penal-book {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr) 106px 94px 84px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+.penal-book.admin { grid-template-columns: 100px minmax(0, 1fr) 106px 94px 84px 100px; }
+
+.penal-head, .penal-row { display: contents; }
+
+.penal-head > span {
+  position: sticky; top: 0; z-index: 2;
+  padding: 9px 12px;
+  background: var(--raised);
+  border-bottom: 1px solid var(--line);
+  font: 10px var(--font-mono); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--faint);
+}
+
+.penal-title {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; gap: 8px;
+  padding: 11px 12px 8px;
+  background: var(--base);
+  border-bottom: 1px solid var(--line);
+  font: 10px var(--font-mono); letter-spacing: .13em; text-transform: uppercase;
+  color: var(--dim);
+}
+.penal-title-count {
+  padding: 0 6px; border-radius: 10px;
+  background: var(--raised-2); color: var(--faint);
+  font-size: 9.5px; letter-spacing: .04em;
+}
+
+.penal-row > span {
+  display: flex; align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line-soft);
+  min-width: 0;
+}
+.penal-row:hover > span { background: var(--raised); }
+
+.penal-code { font: 11.5px var(--font-mono); color: var(--accent); white-space: nowrap; letter-spacing: .02em; }
+.penal-name { font-size: 12.5px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block !important; }
+.penal-fine { font: 12px var(--font-mono); font-variant-numeric: tabular-nums; justify-content: flex-end; }
+.penal-jail { font: 12px var(--font-mono); font-variant-numeric: tabular-nums; color: var(--dim); justify-content: flex-end; }
+.penal-actions { gap: 4px; justify-content: flex-end; }
+
+.penal-count { margin-top: 10px; font: 11px var(--font-mono); color: var(--faint); }
+
+/* Charge class. These three read the same wherever they appear. */
+.charge-class {
+  display: inline-block;
+  padding: 1px 7px; border-radius: 3px;
+  font: 600 9.5px/1.7 var(--font-mono); letter-spacing: .09em; text-transform: uppercase;
+  border: 1px solid transparent;
+}
+.charge-class-felony      { color: var(--felony);      border-color: color-mix(in srgb, var(--felony) 34%, transparent);      background: color-mix(in srgb, var(--felony) 11%, transparent); }
+.charge-class-misdemeanor { color: var(--misdemeanor); border-color: color-mix(in srgb, var(--misdemeanor) 34%, transparent); background: color-mix(in srgb, var(--misdemeanor) 11%, transparent); }
+.charge-class-infraction  { color: var(--infraction);  border-color: color-mix(in srgb, var(--infraction) 34%, transparent);  background: color-mix(in srgb, var(--infraction) 11%, transparent); }
+
+/* Segmented filter. */
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; flex: none; }
+.seg-btn {
+  padding: 5px 11px;
+  background: none; border: 0; border-right: 1px solid var(--line);
+  color: var(--faint); font: 11.5px var(--font); cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.seg-btn:last-child { border-right: 0; }
+.seg-btn:hover { color: var(--text); background: var(--raised); }
+.seg-btn.active { color: var(--accent-ink); background: var(--accent); }
+
+.ta-right { text-align: right; }
+
 .tab-panel:not(.active) { display: none !important; }

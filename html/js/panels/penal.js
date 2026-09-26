@@ -123,111 +123,119 @@ function removeCharge(codeId, selectedId) {
 }
 
 // ── Penal Code Browser + Admin Editor ────────────────────────────────────
+let _penalClass = 'all';
+
 function loadPenalCodes() {
     const isAdmin = MDT.officer && MDT.officer.isSupervisor;
     const panel = document.getElementById('tab-penal');
+    _penalClass = 'all';
+
     panel.innerHTML = `
         <div class="panel-header">
             <div class="panel-header-left">
                 <div class="panel-title">Penal Codes</div>
-                <div class="panel-subtitle">San Andreas Penal Code reference${isAdmin ? ' · <span style="color:var(--accent-2);">Admin Mode</span>' : ''}</div>
+                <div class="panel-subtitle">Charge reference${isAdmin ? ' · admin mode' : ''}</div>
             </div>
             <div class="panel-actions">
-                <div class="search-bar" style="width:240px;">
-                    <span class="search-icon"><i class="i i-search"></i></span>
-                    <input type="text" id="penal-filter" placeholder="Search codes or names...">
+                <div class="seg" id="penal-class">
+                    <button class="seg-btn active" data-class="all">All</button>
+                    <button class="seg-btn" data-class="felony">Felony</button>
+                    <button class="seg-btn" data-class="misdemeanor">Misd.</button>
+                    <button class="seg-btn" data-class="infraction">Infraction</button>
                 </div>
-                ${isAdmin ? `<button class="btn btn-primary btn-sm" onclick="openAddPenalCodeModal()">+ Add Code</button>` : ''}
+                <div class="search-bar" style="width:230px;">
+                    <span class="search-icon"><i class="i i-search"></i></span>
+                    <input type="text" id="penal-filter" placeholder="Search code or charge...">
+                </div>
+                ${isAdmin ? `<button class="btn btn-primary btn-sm" onclick="openAddPenalCodeModal()">Add Code</button>` : ''}
             </div>
         </div>
-        <div class="panel-body" id="penal-body">
-            ${Array(3).fill(0).map(() => `<div class="card mb-3">${skeletonLines(4)}</div>`).join('')}
-        </div>`;
+        <div class="panel-body" id="penal-body">${skeletonLines(6)}</div>`;
 
-    const renderPenal = (codes) => {
+    const matches = (c, q) =>
+        (_penalClass === 'all' || c.type === _penalClass) &&
+        (!q || c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
+            || (c.description || '').toLowerCase().includes(q));
+
+    // One grid for the whole book, with the titles as rows inside it. Drawing a
+    // table per title gave every title its own column widths.
+    const render = () => {
         const body = document.getElementById('penal-body');
         if (!body) return;
-        if (!codes.length) {
-            body.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="i i-scale"></i></div><div class="empty-title">No results found</div></div>`;
+
+        const q = (document.getElementById('penal-filter')?.value || '').toLowerCase().trim();
+        const all = MDT.penalCodes || [];
+        const titles = all
+            .map(cat => ({ ...cat, codes: cat.codes.filter(c => matches(c, q)) }))
+            .filter(cat => cat.codes.length);
+
+        const shown = titles.reduce((n, t) => n + t.codes.length, 0);
+        const total = all.reduce((n, t) => n + t.codes.length, 0);
+
+        if (!shown) {
+            body.innerHTML = `<div class="empty-state">
+                <div class="empty-icon"><i class="i i-scale"></i></div>
+                <div class="empty-title">Nothing matched</div>
+                <div class="empty-subtitle">Try a code, a charge name, or clear the class filter.</div>
+            </div>`;
             return;
         }
-        body.innerHTML = codes.map(cat => `
-            <div class="mb-3">
-                <div style="font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--text-muted);
-                            text-transform:uppercase;margin-bottom:8px;padding:0 2px;
-                            display:flex;align-items:center;gap:8px;">
-                    ${cat.category}
-                    <span style="background:var(--bg-card);border:1px solid var(--border);
-                                 border-radius:20px;padding:1px 8px;font-size:10px;color:var(--text-muted);">
-                        ${cat.codes.length}
-                    </span>
+
+        const row = c => `
+            <div class="penal-row">
+                <span class="penal-code">${esc(c.code)}</span>
+                <span class="penal-name">${esc(c.name)}</span>
+                <span>${chargeTypeTag(c.type)}</span>
+                <span class="penal-fine ta-right">${c.fine_amount > 0 ? dollarFmt(c.fine_amount) : '—'}</span>
+                <span class="penal-jail ta-right">${c.jail_time > 0 ? c.jail_time + ' min' : '—'}</span>
+                ${isAdmin ? `<span class="penal-actions">
+                    <button class="btn btn-ghost btn-xs"
+                        onclick="openEditPenalCodeModal(${JSON.stringify(c).replace(/"/g, '&quot;')})">Edit</button>
+                    <button class="btn btn-ghost btn-xs btn-danger"
+                        onclick="deletePenalCode(${c.id},'${c.name.replace(/'/g, "\\'")}')"><i class="i i-trash"></i></button>
+                </span>` : ''}
+            </div>`;
+
+        body.innerHTML = `
+            <div class="penal-book${isAdmin ? ' admin' : ''}">
+                <div class="penal-head">
+                    <span>Code</span><span>Charge</span><span>Class</span>
+                    <span class="ta-right">Fine</span><span class="ta-right">Jail</span>
+                    ${isAdmin ? '<span></span>' : ''}
                 </div>
-                <div class="data-table-wrap">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Code</th><th>Charge</th><th>Type</th><th>Fine</th><th>Jail</th>
-                                ${isAdmin ? '<th style="width:80px;"></th>' : ''}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${cat.codes.map(c => `
-                                <tr style="cursor:default;">
-                                    <td class="font-mono" style="color:var(--accent-2);white-space:nowrap;">${c.code}</td>
-                                    <td>
-                                        <div class="font-bold">${esc(c.name)}</div>
-                                        ${c.description ? `<div class="text-muted text-xs mt-1">${esc(c.description)}</div>` : ''}
-                                    </td>
-                                    <td>${chargeTypeTag(c.type)}</td>
-                                    <td class="font-mono ${c.fine_amount > 0 ? 'text-green' : 'text-muted'}">
-                                        ${c.fine_amount > 0 ? dollarFmt(c.fine_amount) : '—'}
-                                    </td>
-                                    <td class="${c.jail_time > 0 ? 'text-yellow' : 'text-muted'}">
-                                        ${c.jail_time > 0 ? c.jail_time + ' min' : '—'}
-                                    </td>
-                                    ${isAdmin ? `
-                                    <td>
-                                        <div style="display:flex;gap:4px;">
-                                            <button class="btn btn-ghost btn-xs"
-                                                onclick="event.stopPropagation();openEditPenalCodeModal(${JSON.stringify(c).replace(/"/g,'&quot;')})">
-                                                Edit
-                                            </button>
-                                            <button class="btn btn-danger btn-xs"
-                                                onclick="event.stopPropagation();deletePenalCode(${c.id},'${c.name.replace(/'/g,"\\'")}')">
-                                                <i class="i i-x"></i>
-                                            </button>
-                                        </div>
-                                    </td>` : ''}
-                                </tr>`).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            </div>`).join('');
+                ${titles.map(cat => `
+                    <div class="penal-title">${esc(cat.category)}<span class="penal-title-count">${cat.codes.length}</span></div>
+                    ${cat.codes.map(row).join('')}`).join('')}
+            </div>
+            <div class="penal-count">${shown === total ? `${total} charges` : `${shown} of ${total} charges`}</div>`;
     };
 
     nuiFetch('getPenalCodes').then(data => {
         if (!data) return;
         MDT.penalCodes = data;
-        renderPenal(data);
-        document.getElementById('penal-filter')?.addEventListener('input', (e) => {
-            const q = e.target.value.toLowerCase();
-            if (!q) { renderPenal(data); return; }
-            const filtered = data.map(cat => ({
-                ...cat,
-                codes: cat.codes.filter(c =>
-                    c.name.toLowerCase().includes(q) ||
-                    c.code.toLowerCase().includes(q) ||
-                    (c.description || '').toLowerCase().includes(q))
-            })).filter(cat => cat.codes.length > 0);
-            renderPenal(filtered);
+        render();
+
+        document.getElementById('penal-filter')?.addEventListener('input', render);
+
+        document.getElementById('penal-class')?.addEventListener('click', (e) => {
+            const btn = e.target.closest('.seg-btn');
+            if (!btn) return;
+            _penalClass = btn.dataset.class;
+            btn.parentElement.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('active', b === btn));
+            render();
         });
     });
 }
 
 function _penalCodeModalBody(code = {}) {
+    // The seven titles of the book. A server that writes its own charges can
+    // still use any category it likes; this list is only what the dropdown
+    // offers.
     const CATEGORIES = [
-        'Traffic','Crimes Against Persons','Crimes Against Property',
-        'Weapons Offenses','Narcotics','Crimes Against Government','Other'
+        'Offences Against Persons', 'Offences Against Property',
+        'Offences Against Public Order', 'Controlled Substances',
+        'Vehicle and Traffic', 'Weapons and Explosives',
+        'Offences Against the Government',
     ];
     return `
         <div class="form-row">
@@ -240,7 +248,7 @@ function _penalCodeModalBody(code = {}) {
             </div>
             <div class="form-group" style="width:120px;">
                 <label class="form-label">Code</label>
-                <input class="input font-mono" id="pc-code" value="${code.code||''}" placeholder="e.g. 21001">
+                <input class="input font-mono" id="pc-code" value="${code.code||''}" placeholder="PC 5.01 A">
             </div>
         </div>
         <div class="form-group">
