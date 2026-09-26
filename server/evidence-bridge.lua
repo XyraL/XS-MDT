@@ -1,4 +1,4 @@
--- Server-to-server hooks for cipher-evidence (or any resource) to create an
+-- Server-to-server hooks for any resource to create an
 -- incident and attach evidence to it without a player behind the request.
 --
 -- The normal incident/evidence paths are lib.callbacks that need a source and a

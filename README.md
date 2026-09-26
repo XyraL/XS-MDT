@@ -1,10 +1,10 @@
 <h1 align="center">XS-MDT</h1>
 
-<p align="center">A full MDT for <strong>QBox</strong> — Police, EMS and Fire, each with their own panels, sharing one live CAD, map and unit roster.</p>
+<p align="center">A full MDT for <strong>QBox</strong> and <strong>QBCore</strong> — Police, EMS and Fire, each with their own panels, sharing one live CAD, map, unit roster and case file.</p>
 
 <p align="center">
   <a href="https://github.com/XyraL/XS-MDT/releases"><img src="https://img.shields.io/github/v/release/XyraL/XS-MDT?style=flat-square&color=70baff&label=release" alt="Latest release"></a>
-  <img src="https://img.shields.io/badge/framework-QBox-55dcff?style=flat-square" alt="framework">
+  <img src="https://img.shields.io/badge/framework-QBox%20%7C%20QBCore-55dcff?style=flat-square" alt="framework">
   <img src="https://img.shields.io/badge/price-free-30d158?style=flat-square" alt="price">
   <a href="https://xyralscripts.dev/docs-xs-mdt"><img src="https://img.shields.io/badge/docs-xyralscripts.dev-a889ff?style=flat-square" alt="docs"></a>
   <a href="https://discord.gg/XRURAw4TM2"><img src="https://img.shields.io/badge/support-discord-5865F2?style=flat-square" alt="support"></a>
@@ -32,6 +32,24 @@
   unit markers, heading arrows, active CAD calls, follow-a-unit, and click-to-waypoint
 - **Department call routing** — `Config.CallRouting` decides who is alerted: medical goes to EMS, structure fires to Fire *and* EMS, crashes to all three. Panic and backup always reach everyone
 - **Data separation** — EMS and Fire see identity and medical data; criminal history, warrants and officer notes stay with Police
+
+### Records
+
+- **Cases** — the folder everything else goes in. Reports, arrests, citations, warrants, BOLOs, evidence, people, vehicles and firearms attach to a case, and notes go on the case so the story of it is not buried in one officer's report
+- **Evidence locker** — booked when it is collected, not when a report gets written. Its own number, a status, a shelf and a case, and every status change writes a custody row. Releasing or destroying evidence is a supervisor's call
+- **Weapons registry** — serial-first, because that is how a seized firearm is looked up, and a serial that is not on it is an unregistered one. A civilian lookup shows what they are registered to carry
+- **Cameras** — 35 real places seeded on first start: the six Fleecas, Pacific Standard, Blaine County Savings, the 24/7s, LTDs, Rob's Liquor, Vangelico, Ammu-Nation, the casino, plus street and transit cameras. Add your own in `Config.DefaultCameras`. A camera sets a GPS waypoint from its card
+- **Footage** — one row per clip from a street camera, a dashcam or a bodycam, with what it shows, how long it is and the case it belongs to. The MDT does not play video; it points you at the camera and records that somebody looked
+- **Charge book** — 178 charges across seven titles, written as `PC 1.34 A`. One grid with a class filter, and admins add their own in the panel
+
+### Personnel
+
+- **Roster** — the whole department, not just whoever is on duty, with who is on, their rank, callsign and certification count
+- **Officer files** — one modal, five tabs: rank, callsign, certifications, performance reviews and IA history. A rank change goes through the framework, so it is a real job change. A supervisor can only touch officers in their own department, and only ranks at or below their own
+- **Internal Affairs** — complaints, investigations and commendations, supervisors only
+- **Field training** — trainees, phases, hours and sign-offs
+- **SOP** — department policy, written by command and read by everyone
+- **Management** — how the MDT is actually wired: framework, dispatch, which resources are receiving alerts, what every department resolved to, table counts, and the full audit trail
 
 ### EMS
 
@@ -83,13 +101,14 @@
 
 | Resource | Required |
 |---|---|
-| [qbx_core](https://github.com/Qbox-project/qbx_core) | Yes |
+| [qbx_core](https://github.com/Qbox-project/qbx_core) **or** [qb-core](https://github.com/qbcore-framework/qb-core) | Yes — whichever you run |
 | [ox_lib](https://github.com/overextended/ox_lib) | Yes |
 | [oxmysql](https://github.com/overextended/oxmysql) | Yes |
 | [ox_target](https://github.com/overextended/ox_target) **or** [qb-target](https://github.com/qbcore-framework/qb-target) | Optional |
 | [XS-Dispatch](https://github.com/XyraL/XS-Dispatch) *(or any adapter)* | Optional — falls back to the built-in CAD |
 
-> **Note:** qbx_core is required. Standard QBCore (`qb-core`) is not directly supported.
+> **Note:** the MDT detects which of the two is started. Set `Config.Framework`
+> to `'qbox'` or `'qbcore'` only if you have both up during a migration.
 
 ---
 
@@ -341,6 +360,26 @@ Config.BodyCam = {
 
 ---
 
+## Dispatch Alerts
+
+Every call the MDT creates is also pushed to whatever dispatch resource you
+already run, because half the department has that UI open and not this one.
+
+```lua
+Config.DispatchAlerts = 'auto'          -- every supported resource that is started
+-- Config.DispatchAlerts = { 'ps-dispatch' }
+-- Config.DispatchAlerts = false
+```
+
+Supported out of the box: `ps-dispatch`, `qs-dispatch`, `cd_dispatch`,
+`core_dispatch`, `linden_outlawalert`. Each is a single function in
+`server/dispatch-adapters.lua` — if your version takes different fields, that
+is the one place to change it, and a mismatch prints a line naming the adapter
+rather than breaking anything. The console says which ones are live on start.
+
+This is separate from the section below, which is for a resource that
+**replaces** the CAD rather than mirroring it.
+
 ## Dispatch Integration
 
 XS-MDT includes auto-detection for common in-game events (gunshots, vehicle crashes, fights). To send a dispatch call **from another resource**, use any of the methods below.
@@ -444,11 +483,34 @@ exports['XS-MDT']:IsAuthorized(src)           -- returns bool
 exports['XS-MDT']:GetOfficerInfo(src)
 -- returns { citizenid, name, job, grade, gradeLabel, onduty }
 
--- Write to the audit log (also fires Discord webhook if configured)
-exports['XS-MDT']:AuditLog('Action Name', 'Officer Name', 'Details string')
+-- Write to the audit log (also fires the Discord webhook if configured).
+-- Pass the source rather than a name and the row carries their citizenid,
+-- their department, and who the action was about.
+exports['XS-MDT']:AuditLog('RANK_CHANGED', src, 'Cadet → Officer', targetCitizenId)
+exports['XS-MDT']:AuditLog('Action Name', 'Officer Name', 'Details')   -- still works
 
 -- Create a dispatch call from server-side
 exports['XS-MDT']:CreateDispatchCall({ callType, description, coords, ... })
+
+-- Push a call to every dispatch resource that is receiving alerts
+exports['XS-MDT']:SendDispatchAlert({ label, description, coords, jobs, ... })
+exports['XS-MDT']:GetDispatchAlertTargets()   -- which ones are live
+
+-- Publish a camera list into the MDT, keyed by code. Calling it again after a
+-- config change updates the rows rather than duplicating them.
+exports['XS-MDT']:RegisterCameras({
+    { code = 'CAM-050', label = 'Pier, east walkway', area = 'Del Perro',
+      kind = 'fixed', coords = { x = -1850.2, y = -1240.7, z = 8.6 } },
+})
+
+-- File a clip with no player behind the call. Returns the footage number.
+exports['XS-MDT']:RegisterFootage({
+    source = 'dashcam', unit_name = '1-ADAM-12',
+    label = 'Traffic stop, Route 68', duration = 214,
+})
+
+-- Every firearm registered to one person
+exports['XS-MDT']:GetWeaponsFor(citizenid)
 ```
 
 ---

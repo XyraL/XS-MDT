@@ -3,7 +3,7 @@ game 'gta5'
 
 name 'XS-MDT'
 description 'Multi-department MDT (Police / EMS / Fire) with CAD integration for QBox and QBCore'
-version '2.1.0'
+version '3.0.0'
 author 'XyraL'
 
 shared_scripts {

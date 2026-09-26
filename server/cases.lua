@@ -324,6 +324,14 @@ lib.callback.register('XS-MDT:server:getWeaponsFor', function(source, citizenid)
         'SELECT * FROM mdt_weapons WHERE owner_citizenid = ? ORDER BY status, model', { citizenid }) or {}
 end)
 
+-- Same list, for another resource. A weapon shop checking whether somebody is
+-- registered should not have to query our tables itself.
+exports('GetWeaponsFor', function(citizenid)
+    if not citizenid then return {} end
+    return MySQL.query.await(
+        'SELECT * FROM mdt_weapons WHERE owner_citizenid = ? ORDER BY status, model', { citizenid }) or {}
+end)
+
 lib.callback.register('XS-MDT:server:saveWeapon', function(source, data)
     if not HasPanel(source, 'weapons') then return false, 'No access' end
     local me = GetOfficerInfo(source)
