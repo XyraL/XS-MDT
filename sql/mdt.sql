@@ -3,6 +3,13 @@
 
 -- ── Upgrade scripts (run these if updating from an older version) ──────────
 -- v2.x → v3.0
+-- ALTER TABLE mdt_audit_log ADD COLUMN IF NOT EXISTS citizenid        VARCHAR(50)  DEFAULT NULL;
+-- ALTER TABLE mdt_audit_log ADD COLUMN IF NOT EXISTS department       VARCHAR(50)  DEFAULT NULL;
+-- ALTER TABLE mdt_audit_log ADD COLUMN IF NOT EXISTS target_citizenid VARCHAR(50)  DEFAULT NULL;
+-- ALTER TABLE mdt_audit_log ADD COLUMN IF NOT EXISTS target_name      VARCHAR(100) DEFAULT NULL;
+-- Six new tables (mdt_certifications, mdt_ia_cases, mdt_ppr, mdt_fto,
+-- mdt_sop, mdt_personnel_log) come from re-running this file. Nothing
+-- existing is touched by them.
 -- ALTER TABLE mdt_penal_codes ADD COLUMN IF NOT EXISTS title_no   TINYINT UNSIGNED  DEFAULT NULL;
 -- ALTER TABLE mdt_penal_codes ADD COLUMN IF NOT EXISTS section_no SMALLINT UNSIGNED DEFAULT NULL;
 -- ALTER TABLE mdt_penal_codes ADD COLUMN IF NOT EXISTS subsection VARCHAR(4)        DEFAULT NULL;
@@ -248,8 +255,17 @@ CREATE TABLE IF NOT EXISTS `mdt_audit_log` (
     `action`       VARCHAR(100) NOT NULL,
     `officer_name` VARCHAR(100) NOT NULL,
     `details`      TEXT DEFAULT NULL,
+    -- Who, by citizenid rather than by name: two officers with the same
+    -- display name were indistinguishable in this table.
+    `citizenid`        VARCHAR(50)  DEFAULT NULL,
+    `department`       VARCHAR(50)  DEFAULT NULL,
+    -- Who it was done to, when the action had a subject.
+    `target_citizenid` VARCHAR(50)  DEFAULT NULL,
+    `target_name`      VARCHAR(100) DEFAULT NULL,
     `created_at`   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     KEY `idx_action`  (`action`),
+    KEY `idx_citizenid` (`citizenid`),
+    KEY `idx_target`    (`target_citizenid`),
     KEY `idx_officer` (`officer_name`),
     KEY `idx_created` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -444,4 +460,107 @@ CREATE TABLE IF NOT EXISTS `mdt_evidence` (
     KEY `idx_incident` (`incident_id`),
     CONSTRAINT `fk_evidence_incident` FOREIGN KEY (`incident_id`)
         REFERENCES `mdt_incidents` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ── Personnel ───────────────────────────────────────────────────────────────
+-- Everything a supervisor manages about an officer. Kept in separate tables
+-- rather than columns on mdt_officers because each one is a history: who
+-- issued a certification, who opened an IA case, who signed off a phase.
+
+-- Certifications an officer holds. One row per certification so it carries the
+-- supervisor who issued it. The list of certifications a department offers is
+-- Config.Certifications; this table only records who holds what.
+CREATE TABLE IF NOT EXISTS `mdt_certifications` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `citizenid` VARCHAR(50) NOT NULL,
+    `cert` VARCHAR(60) NOT NULL,
+    `issued_by` VARCHAR(50) NOT NULL,
+    `issued_by_name` VARCHAR(100) NOT NULL,
+    `issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY `uk_officer_cert` (`citizenid`, `cert`),
+    KEY `idx_citizenid` (`citizenid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Internal affairs. Complaints, investigations and commendations all live here
+-- so an officer's file reads in one list.
+CREATE TABLE IF NOT EXISTS `mdt_ia_cases` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `case_number` VARCHAR(20) NOT NULL UNIQUE,
+    `citizenid` VARCHAR(50) NOT NULL,
+    `officer_name` VARCHAR(100) NOT NULL,
+    `kind` ENUM('complaint', 'investigation', 'commendation') DEFAULT 'complaint',
+    `title` VARCHAR(200) NOT NULL,
+    `detail` TEXT DEFAULT NULL,
+    `outcome` TEXT DEFAULT NULL,
+    `status` ENUM('open', 'investigating', 'sustained', 'unfounded', 'closed') DEFAULT 'open',
+    `opened_by` VARCHAR(50) NOT NULL,
+    `opened_by_name` VARCHAR(100) NOT NULL,
+    `closed_at` TIMESTAMP NULL DEFAULT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY `idx_citizenid` (`citizenid`),
+    KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Performance reviews.
+CREATE TABLE IF NOT EXISTS `mdt_ppr` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `citizenid` VARCHAR(50) NOT NULL,
+    `period` VARCHAR(60) DEFAULT NULL,
+    `rating` TINYINT DEFAULT 3,
+    `strengths` TEXT DEFAULT NULL,
+    `improve` TEXT DEFAULT NULL,
+    `notes` TEXT DEFAULT NULL,
+    `reviewed_by` VARCHAR(50) NOT NULL,
+    `reviewed_by_name` VARCHAR(100) NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_citizenid` (`citizenid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Field training. One row per trainee per phase.
+CREATE TABLE IF NOT EXISTS `mdt_fto` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `citizenid` VARCHAR(50) NOT NULL,
+    `trainee_name` VARCHAR(100) NOT NULL,
+    `phase` VARCHAR(40) NOT NULL,
+    `status` ENUM('in_progress', 'passed', 'failed') DEFAULT 'in_progress',
+    `hours` DECIMAL(6,1) DEFAULT 0,
+    `trainer_id` VARCHAR(50) DEFAULT NULL,
+    `trainer_name` VARCHAR(100) DEFAULT NULL,
+    `notes` TEXT DEFAULT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY `idx_citizenid` (`citizenid`),
+    KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Standard operating procedures. Plain documents, grouped by department and
+-- category, with a version so a change is visible without a diff.
+CREATE TABLE IF NOT EXISTS `mdt_sop` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `department` VARCHAR(50) NOT NULL,
+    `category` VARCHAR(60) DEFAULT 'General',
+    `title` VARCHAR(200) NOT NULL,
+    `body` MEDIUMTEXT NOT NULL,
+    `version` VARCHAR(20) DEFAULT '1.0',
+    `pinned` TINYINT(1) DEFAULT 0,
+    `updated_by` VARCHAR(50) DEFAULT NULL,
+    `updated_by_name` VARCHAR(100) DEFAULT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY `idx_department` (`department`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Every change a supervisor makes to someone's file. Separate from the general
+-- audit log because this one is meant to be read on the officer's own card.
+CREATE TABLE IF NOT EXISTS `mdt_personnel_log` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `citizenid` VARCHAR(50) NOT NULL,
+    `field` VARCHAR(40) NOT NULL,
+    `old_value` VARCHAR(255) DEFAULT NULL,
+    `new_value` VARCHAR(255) DEFAULT NULL,
+    `changed_by` VARCHAR(50) NOT NULL,
+    `changed_by_name` VARCHAR(100) NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_citizenid` (`citizenid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -385,68 +385,8 @@ function renderDashboard() {
     });
 }
 
-// ── Roster ────────────────────────────────────────────────────────────────
-function loadRoster() {
-    const panel = document.getElementById('tab-roster');
-    panel.innerHTML = `
-        <div class="panel-header">
-            <div class="panel-header-left">
-                <div class="panel-title">Officer Roster</div>
-                <div class="panel-subtitle">All on-duty personnel</div>
-            </div>
-            <div class="panel-actions">
-                <button class="btn btn-ghost btn-sm" onclick="loadRoster()"><i class="i i-refresh"></i> Refresh</button>
-            </div>
-        </div>
-        <div class="panel-body">
-            <div class="roster-grid" id="roster-grid">
-                ${Array(6).fill(0).map(() => `<div class="card">${skeletonLines(3)}</div>`).join('')}
-            </div>
-        </div>`;
-
-    nuiFetch('getRoster').then(roster => {
-        const grid = document.getElementById('roster-grid');
-        if (!roster || roster.length === 0) {
-            grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon"><i class="i i-badge"></i></div><div class="empty-title">No officers on duty</div></div>`;
-            return;
-        }
-        grid.innerHTML = roster.map(o => {
-            const statusCfg = getStatusConfig(o.status || '10-8');
-            return `
-            <div class="roster-card">
-                <div class="roster-card-header">
-                    <div class="roster-avatar"><i class="i i-badge"></i></div>
-                    <div style="flex:1;min-width:0;">
-                        <div class="roster-name">${esc(o.name)}</div>
-                        <div class="roster-meta">${o.grade}</div>
-                    </div>
-                </div>
-                <div class="info-grid" style="gap:4px 12px;">
-                    <div class="info-row" style="border:none;padding:3px 0;">
-                        <div class="info-key">Badge</div>
-                        <div class="info-val font-mono text-sm">#${o.badge}</div>
-                    </div>
-                    <div class="info-row" style="border:none;padding:3px 0;">
-                        <div class="info-key">Callsign</div>
-                        <div class="info-val font-mono text-sm">${o.callsign || 'N/A'}</div>
-                    </div>
-                </div>
-                <div class="roster-footer" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                    <span class="status-badge on-duty">On Duty</span>
-                    <span style="
-                        font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;
-                        background:${statusCfg.color}22;color:${statusCfg.color};
-                        border:1px solid ${statusCfg.color}55;">
-                        ${statusCfg.code} — ${esc(statusCfg.label)}
-                    </span>
-                    ${MDT.officer && MDT.officer.isSupervisor
-                        ? `<button class="btn btn-ghost btn-xs ml-auto" onclick="openBodyCamLog('${o.citizenid}')"><i class="i i-video"></i></button>`
-                        : ''}
-                </div>
-            </div>`;
-        }).join('');
-    });
-}
+// The roster moved to panels/personnel.js in 3.0, where it grew officer
+// files. getStatusConfig and the status vocabulary still live in app.js.
 
 // ── Profile Editor ────────────────────────────────────────────────────────
 function openProfileEditor() {
@@ -616,7 +556,6 @@ function clearAuditSearch() {
 
 window.loadDeptStats = loadDeptStats;
 window.renderDashboard   = renderDashboard;
-window.loadRoster        = loadRoster;
 window.openProfileEditor = openProfileEditor;
 window.openBodyCamLog    = openBodyCamLog;
 window.openAuditLogViewer = openAuditLogViewer;

@@ -28,7 +28,7 @@ Config.Departments = {
         short     = 'PD',
         color     = '#6366f1',   -- NUI accent
         blipColor = 3,           -- GTA blip colour (3 = blue)
-        icon      = '⬡',
+        icon      = 'shield',   -- an icon name from html/css/icons.css
         jobs      = { 'police', 'sheriff', 'swat', 'statepolice' },
         supervisorGrade = 3,
         panels = {
@@ -37,6 +37,7 @@ Config.Departments = {
             'warrants', 'bolos', 'arrests', 'citations', 'incidents', 'penal',
             'cad', 'callhistory', 'bulletins',
             'mugshots', 'shiftlog',
+            'ia', 'fto', 'sop',
         },
     },
 
@@ -45,7 +46,7 @@ Config.Departments = {
         short     = 'EMS',
         color     = '#22c55e',
         blipColor = 5,           -- yellow
-        icon      = '✚',
+        icon      = 'cross',
         jobs      = { 'ambulance', 'ems' },
         supervisorGrade = 3,
         panels = {
@@ -54,6 +55,7 @@ Config.Departments = {
             'pcr', 'medhistory', 'narclog',
             'cad', 'callhistory', 'bulletins',
             'shiftlog',
+            'ia', 'fto', 'sop',
         },
     },
 
@@ -62,7 +64,7 @@ Config.Departments = {
         short     = 'FD',
         color     = '#ef4444',
         blipColor = 1,           -- red
-        icon      = '🔥',
+        icon      = 'flame',
         jobs      = { 'fire', 'firefighter' },
         supervisorGrade = 3,
         panels = {
@@ -71,6 +73,7 @@ Config.Departments = {
             'fireincidents', 'hazmat', 'apparatus',
             'cad', 'callhistory', 'bulletins',
             'shiftlog',
+            'ia', 'fto', 'sop',
         },
     },
 }
@@ -163,6 +166,41 @@ Config.Blips = {
 -- Grade level (numeric) required for supervisor features:
 -- editing penal codes, deleting incidents, marking citations paid, viewing body cams.
 -- Per-department overrides live in Config.Departments[dept].supervisorGrade.
+-- ═══════════════════════════════════════════════════════════════════════════
+--  CERTIFICATIONS
+--  What a supervisor can issue on the roster. These are labels only — the MDT
+--  records who holds what and who signed it off, and nothing here gates a
+--  weapon or a vehicle. Keyed by department.
+-- ═══════════════════════════════════════════════════════════════════════════
+Config.Certifications = {
+    police = {
+        'Field Training Officer', 'Firearms Instructor', 'Taser', 'Less Lethal',
+        'Rifle', 'Air Unit', 'Marine Unit', 'K9 Handler', 'Motorcycle',
+        'Pursuit Driving', 'SWAT', 'Negotiator', 'Detective', 'Evidence Technician',
+        'Accident Reconstruction', 'Drone Operator',
+    },
+    ems = {
+        'EMT Basic', 'EMT Advanced', 'Paramedic', 'Flight Medic',
+        'Field Training Officer', 'Trauma', 'Pediatrics', 'Ambulance Driving',
+    },
+    fire = {
+        'Firefighter I', 'Firefighter II', 'Driver Operator', 'Engineer',
+        'Hazmat Technician', 'Rescue Technician', 'Fire Investigator',
+        'Field Training Officer', 'Aerial Operator',
+    },
+}
+
+-- ═══════════════════════════════════════════════════════════════════════════
+--  FIELD TRAINING
+--  The phases a trainee moves through. A phase is passed or failed by a
+--  trainer on the FTO panel; the names are yours to change.
+-- ═══════════════════════════════════════════════════════════════════════════
+Config.FTOPhases = {
+    police = { 'Phase 1 — Observation', 'Phase 2 — Primary', 'Phase 3 — Solo Evaluation', 'Sign Off' },
+    ems    = { 'Phase 1 — Ride Along', 'Phase 2 — Primary Care', 'Phase 3 — Lead Medic', 'Sign Off' },
+    fire   = { 'Phase 1 — Probationary', 'Phase 2 — Engine', 'Phase 3 — Truck', 'Sign Off' },
+}
+
 Config.SupervisorGrade = 3
 
 -- Fine deduction from player bank accounts

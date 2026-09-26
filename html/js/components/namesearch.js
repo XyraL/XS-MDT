@@ -12,7 +12,8 @@
  * person object: { citizenid, name, firstname, lastname, dob, gender, phone, online, warrants }
  */
 class NameSearch {
-    constructor({ container, placeholder = 'Search by name…', onSelect, allowClear = true, label = null }) {
+    constructor({ container, placeholder = 'Search by name…', onSelect, allowClear = true, label = null, endpoint = 'searchPlayersByName' }) {
+        this.endpoint    = endpoint;
         this.onSelect    = onSelect;
         this.selected    = null;
         this.debounce    = null;
@@ -63,7 +64,7 @@ class NameSearch {
     }
 
     async _search(q) {
-        const data = await nuiFetch('searchPlayersByName', q);
+        const data = await nuiFetch(this.endpoint, q);
         this.results = Array.isArray(data) ? data : [];
         this.focusIndex = -1;
         if (!this.results.length) {

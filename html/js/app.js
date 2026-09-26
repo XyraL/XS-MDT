@@ -153,6 +153,9 @@ const PANELS = {
 
     mugshots   : { label: 'Mugshots',  icon: '<i class="i i-camera"></i>', section: 'Personnel' },
     shiftlog   : { label: 'Shift Log', icon: '<i class="i i-clock"></i>', section: 'Personnel' },
+    ia         : { label: 'Internal Affairs', icon: '<i class="i i-folder"></i>', section: 'Personnel' },
+    fto        : { label: 'Field Training',   icon: '<i class="i i-check"></i>',  section: 'Personnel' },
+    sop        : { label: 'SOP',              icon: '<i class="i i-archive"></i>', section: 'Personnel' },
 };
 
 // Order sections appear in the sidebar. Anything unlisted lands at the end.
@@ -215,7 +218,10 @@ function applyDepartmentTheme(officer) {
         root.style.setProperty('--accent-glow', officer.departmentColor + '26'); // ~15% alpha
     }
     const logo = document.querySelector('.logo-hex');
-    if (logo && officer.departmentIcon) logo.textContent = officer.departmentIcon;
+    // Config gives an icon name, not markup. Anything that is not a plain
+    // name is ignored rather than written into the page.
+    const icon = String(officer.departmentIcon || '').toLowerCase();
+    if (logo && /^[a-z-]{2,24}$/.test(icon)) logo.innerHTML = `<i class="i i-${icon}"></i>`;
     const ver = document.querySelector('.logo-version');
     if (ver) ver.textContent = `${officer.departmentShort || '--'} · LIVE`;
 }
@@ -293,6 +299,9 @@ function onTabActivated(tab) {
         case 'fireincidents': loadFireIncidents(); break;
         case 'hazmat':      loadHazmat(); break;
         case 'apparatus':   loadApparatus(); break;
+        case 'ia':          loadIA(); break;
+        case 'fto':         loadFTO(); break;
+        case 'sop':         loadSOP(); break;
     }
 }
 
@@ -424,6 +433,9 @@ window.addEventListener('message', (e) => {
         case 'close':
             if (typeof stopMap === 'function') stopMap();
             document.getElementById('mdt-overlay').classList.add('hidden');
+            break;
+        case 'refused':
+            showToast('Not allowed', data.reason, 'error', 5000);
             break;
         case 'warrantAlert':
             showToast('WARRANT ISSUED', `${data.data.subject} — ${data.data.charges.length} charge(s)`, 'error', 9000);

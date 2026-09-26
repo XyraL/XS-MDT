@@ -103,9 +103,15 @@ end)
 -- nil still becomes `{}` — plenty of callbacks return nothing on purpose and
 -- the panel expects an object from those.
 RegisterNUICallback('request', function(data, cb)
-    local result = lib.callback.await('XS-MDT:server:' .. data.endpoint, false, data.payload)
+    local result, reason = lib.callback.await('XS-MDT:server:' .. data.endpoint, false, data.payload)
 
     if result == false then
+        -- The panel still gets plain `false`, which is what every existing one
+        -- was written against. A refusal that came with a reason sends it on as
+        -- a toast, so the officer is told why instead of nothing happening.
+        if type(reason) == 'string' and reason ~= '' then
+            SendNUIMessage({ action = 'refused', reason = reason })
+        end
         cb(false)
     else
         cb(result or {})

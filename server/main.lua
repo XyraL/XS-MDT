@@ -57,26 +57,56 @@ local function IsSupervisor(src)
     return pd.job.grade.level >= Dept.SupervisorGrade(pd.job.name)
 end
 
--- Audit log helper — saves to DB and optionally posts to Discord webhook
-local function AuditLog(action, officer, details)
+--[[ Audit.
+
+     Call sites written before 3.0 pass the officer's display name as a string,
+     which is all this table used to store — and why two officers called
+     J. Reyes produced rows nobody could tell apart. Those still work. New call
+     sites pass the source instead, and the row then carries their citizenid,
+     their department, and the person the action was about.
+
+       AuditLog('ARREST_LOGGED', officer.name, details)      -- old, still fine
+       AuditLog('RANK_CHANGED', source, details, citizenid)  -- new ]]
+local function AuditLog(action, officer, details, target)
+    local name, citizenid, department = officer, nil, nil
+
+    if type(officer) == 'number' then
+        local info = GetOfficerInfo(officer)
+        name       = info and info.name or ('source ' .. officer)
+        citizenid  = info and info.citizenid or nil
+        department = info and info.department or nil
+    end
+
+    local targetId, targetName
+    if type(target) == 'table' then
+        targetId, targetName = target.citizenid, target.name
+    elseif type(target) == 'string' then
+        targetId = target
+    end
+
     if Config.AuditWebhook ~= '' then
+        local fields = {
+            { name = 'Action', value = action, inline = true },
+            { name = 'Officer', value = name, inline = true },
+            { name = 'Details', value = details or 'N/A', inline = false },
+        }
+        if targetId then
+            fields[#fields + 1] = { name = 'Subject', value = targetName or targetId, inline = true }
+        end
         PerformHttpRequest(Config.AuditWebhook, function() end, 'POST', json.encode({
             embeds = {{
-                title = '📋 XS-MDT Audit',
+                title = 'XS-MDT Audit',
                 color = 3447003,
-                fields = {
-                    { name = 'Action', value = action, inline = true },
-                    { name = 'Officer', value = officer, inline = true },
-                    { name = 'Details', value = details or 'N/A', inline = false },
-                },
+                fields = fields,
                 timestamp = os.date('!%Y-%m-%dT%H:%M:%SZ'),
             }}
         }), { ['Content-Type'] = 'application/json' })
     end
-    -- Always persist to DB for in-game viewer (non-blocking)
-    MySQL.insert('INSERT INTO mdt_audit_log (action, officer_name, details) VALUES (?, ?, ?)', {
-        action, officer, details
-    })
+
+    MySQL.insert([[
+        INSERT INTO mdt_audit_log (action, officer_name, details, citizenid, department, target_citizenid, target_name)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ]], { action, name, details, citizenid, department, targetId, targetName })
 end
 
 -- Audit log retrieval (supervisor-only, with optional filters)

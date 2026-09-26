@@ -723,7 +723,7 @@ body.hidden, .hidden { display: none !important; }
 
 /* ═══ Modal ════════════════════════════════════════════════════════════════ */
 
-.modal-overlay, #modal-root > div {
+.modal-backdrop, .modal-overlay, #modal-root > div {
   position: fixed; inset: 0; z-index: 60;
   background: rgba(4,6,10,.74);
   display: grid; place-items: center;
@@ -740,7 +740,7 @@ body.hidden, .hidden { display: none !important; }
 .modal-header-icon { color: var(--faint); }
 
 .dot {
-  display: inline-block; width: 6px; height: 6px;
+  display: inline-block; flex: none; width: 6px; height: 6px;
   border-radius: 50%; background: currentColor;
   margin-right: 6px; vertical-align: .08em;
 }
@@ -1005,5 +1005,195 @@ body.hidden, .hidden { display: none !important; }
 .seg-btn.active { color: var(--accent-ink); background: var(--accent); }
 
 .ta-right { text-align: right; }
+
+/* ═══ Records ══════════════════════════════════════════════════════════════
+   A record card is the shape every written-down thing uses: IA cases, reviews,
+   training notes. One header line you can scan, then the body. */
+
+.record-card {
+  padding: 11px 14px;
+  margin-bottom: 9px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-2);
+  border-radius: var(--radius);
+}
+.record-card.clickable { cursor: pointer; }
+.record-card.clickable:hover { background: var(--raised); border-color: var(--line-2); }
+
+.record-card.ia-complaint    { border-left-color: var(--yellow); }
+.record-card.ia-investigation { border-left-color: var(--blue); }
+.record-card.ia-commendation { border-left-color: var(--green); }
+
+.record-head { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.record-icon { color: var(--faint); display: inline-grid; place-items: center; }
+.record-no { font-size: 11px; color: var(--faint); letter-spacing: .04em; }
+.record-title { font-size: 13px; font-weight: 600; }
+.record-meta { margin-left: auto; font: 10.5px var(--font-mono); color: var(--faint); }
+.record-line { margin-top: 7px; font-size: 12.5px; color: var(--dim); line-height: 1.55; }
+.record-key {
+  display: inline-block; min-width: 82px;
+  font: 10px var(--font-mono); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--faint);
+}
+
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* ═══ Roster ═══════════════════════════════════════════════════════════════ */
+
+.roster-table {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) 150px 84px 108px 150px 54px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+.roster-table.manage { grid-template-columns: 26px minmax(0, 1fr) 150px 84px 108px 150px 54px 96px; }
+
+.roster-head, .roster-line { display: contents; }
+
+.roster-head > span {
+  position: sticky; top: 0; z-index: 2;
+  padding: 9px 10px;
+  background: var(--raised);
+  border-bottom: 1px solid var(--line);
+  font: 10px var(--font-mono); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--faint);
+}
+
+.roster-line > span {
+  display: flex; align-items: center;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--line-soft);
+  min-width: 0;
+  cursor: pointer;
+  font-size: 12.5px;
+}
+.roster-line:hover > span { background: var(--raised); }
+.roster-line > span.mono { font: 12px var(--font-mono); font-variant-numeric: tabular-nums; }
+
+.roster-state { justify-content: center; padding-left: 8px; padding-right: 0; }
+.roster-state .dot { margin-right: 0; }
+.roster-who { gap: 7px; }
+.roster-name { font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.roster-rank, .roster-status { color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.roster-manage { justify-content: flex-end; }
+
+/* The duty light, in the three states a roster actually has. */
+.dot.duty-on   { color: var(--on-duty); box-shadow: 0 0 0 3px color-mix(in srgb, var(--on-duty) 16%, transparent); }
+.dot.duty-off  { color: var(--yellow); }
+.dot.duty-away { color: var(--faint); }
+
+/* ═══ Officer file ═════════════════════════════════════════════════════════ */
+
+.modal-lg { width: min(880px, 94vw); }
+.modal-subtitle { margin-top: 2px; font: 11px var(--font-mono); color: var(--faint); font-weight: 400; letter-spacing: .02em; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+
+.officer-file .profile-tabs { padding: 0 18px; margin-bottom: 0; }
+.officer-file .modal-body { padding-top: 16px; }
+
+.rank-list { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.rank-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 12.5px;
+}
+.rank-row:last-child { border-bottom: 0; }
+.rank-row.current { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.rank-row.locked { opacity: .5; }
+.rank-no {
+  width: 22px; height: 22px; flex: none;
+  display: grid; place-items: center;
+  border-radius: var(--radius);
+  background: var(--raised-2); color: var(--dim);
+  font: 600 10.5px var(--font-mono);
+}
+.rank-label { font-weight: 550; }
+.rank-action { margin-left: auto; }
+
+.cert-grid { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.cert-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 12.5px;
+  color: var(--faint);
+}
+.cert-row:last-child { border-bottom: 0; }
+.cert-row.held { color: var(--text); }
+.cert-row.held .cert-check { color: var(--green); }
+.cert-check { display: inline-grid; place-items: center; width: 16px; }
+.cert-name { font-weight: 500; }
+.cert-meta { margin-left: auto; font: 10.5px var(--font-mono); color: var(--faint); }
+.cert-row button { margin-left: 8px; }
+.cert-row.held .cert-meta + button { margin-left: 8px; }
+
+.rating { letter-spacing: 2px; color: var(--yellow); font-size: 11px; }
+.rating-off { color: var(--line-2); }
+
+.file-history { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 10px; }
+.file-history-head {
+  font: 10px var(--font-mono); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--faint); margin-bottom: 6px;
+}
+.file-history-row {
+  display: grid; grid-template-columns: 96px minmax(0, 1fr) 140px;
+  gap: 10px; padding: 4px 0;
+  font-size: 11.5px; color: var(--dim);
+}
+.file-history-row .mono { font-size: 10.5px; color: var(--faint); }
+
+/* ═══ Field training ═══════════════════════════════════════════════════════ */
+
+.fto-phases { border-top: 1px solid var(--line-soft); }
+.fto-row {
+  display: grid; align-items: center;
+  grid-template-columns: minmax(0, 1fr) 110px 70px 150px minmax(0, 1.2fr);
+  gap: 10px;
+  padding: 8px 2px;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.fto-row:last-child { border-bottom: 0; }
+.fto-row:hover { background: var(--raised); }
+.fto-phase { font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fto-row .mono { font: 11.5px var(--font-mono); color: var(--dim); }
+.fto-note { color: var(--faint); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ═══ SOP ══════════════════════════════════════════════════════════════════ */
+
+.sop-group { margin-bottom: 18px; }
+.sop-cat {
+  font: 10px var(--font-mono); letter-spacing: .13em; text-transform: uppercase;
+  color: var(--faint); margin-bottom: 7px;
+}
+.sop-doc {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  margin-bottom: 7px;
+  overflow: hidden;
+}
+.sop-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 13px;
+  cursor: pointer;
+}
+.sop-head:hover { background: var(--raised); }
+.sop-pin { color: var(--accent); }
+.sop-title { font-size: 13px; font-weight: 600; }
+.sop-ver { font-size: 10.5px; color: var(--faint); }
+.sop-chevron { color: var(--faint); display: inline-grid; place-items: center; }
+.sop-chevron .i { transition: transform .15s; }
+.sop-doc.open .sop-chevron .i { transform: rotate(90deg); }
+
+.sop-body { display: none; padding: 0 14px 14px; font-size: 12.5px; color: var(--dim); line-height: 1.65; }
+.sop-doc.open .sop-body { display: block; }
+
+.check-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--dim); cursor: pointer; }
 
 .tab-panel:not(.active) { display: none !important; }
