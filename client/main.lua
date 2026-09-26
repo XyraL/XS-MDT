@@ -91,6 +91,13 @@ RegisterNUICallback('setWaypoint', function(data, cb)
     cb({ ok = x ~= nil and y ~= nil })
 end)
 
+-- Where the officer is standing. The camera editor uses it so a camera is
+-- placed by walking to it rather than by typing coordinates.
+RegisterNUICallback('myPosition', function(_, cb)
+    local c = GetEntityCoords(PlayerPedId())
+    cb({ x = c.x, y = c.y, z = c.z })
+end)
+
 -- Forward all data requests from NUI to server callbacks.
 --
 -- `false` is passed straight through instead of being folded into `{}`.

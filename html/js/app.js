@@ -141,6 +141,7 @@ const PANELS = {
     cases      : { label: 'Cases',       icon: '<i class="i i-folder"></i>', section: 'Records' },
     evidence   : { label: 'Evidence',    icon: '<i class="i i-box"></i>',    section: 'Records' },
     weapons    : { label: 'Weapons',     icon: '<i class="i i-alert"></i>',  section: 'Records' },
+    cameras    : { label: 'Cameras',     icon: '<i class="i i-video"></i>',  section: 'Records' },
 
     pcr        : { label: 'Patient Care',    icon: '<i class="i i-cross"></i>', section: 'Medical' },
     medhistory : { label: 'Medical Records', icon: '<i class="i i-heart"></i>', section: 'Medical' },
@@ -305,6 +306,7 @@ function onTabActivated(tab) {
         case 'cases':       loadCases(); break;
         case 'evidence':    loadEvidence(); break;
         case 'weapons':     loadWeapons(); break;
+        case 'cameras':     loadCameras(); break;
         case 'ia':          loadIA(); break;
         case 'fto':         loadFTO(); break;
         case 'sop':         loadSOP(); break;

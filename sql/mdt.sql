@@ -9,8 +9,9 @@
 -- ALTER TABLE mdt_evidence ADD COLUMN IF NOT EXISTS evidence_number VARCHAR(20) DEFAULT NULL;
 -- ALTER TABLE mdt_evidence ADD COLUMN IF NOT EXISTS status ENUM('booked','checked_out','released','destroyed','lost') DEFAULT 'booked';
 -- ALTER TABLE mdt_evidence ADD COLUMN IF NOT EXISTS location        VARCHAR(120) DEFAULT NULL;
--- Five more tables (mdt_cases, mdt_case_links, mdt_case_notes,
--- mdt_evidence_custody, mdt_weapons) come from re-running this file.
+-- Seven more tables (mdt_cases, mdt_case_links, mdt_case_notes,
+-- mdt_evidence_custody, mdt_weapons, mdt_cameras, mdt_footage) come from
+-- re-running this file.
 -- ALTER TABLE mdt_audit_log ADD COLUMN IF NOT EXISTS citizenid        VARCHAR(50)  DEFAULT NULL;
 -- ALTER TABLE mdt_audit_log ADD COLUMN IF NOT EXISTS department       VARCHAR(50)  DEFAULT NULL;
 -- ALTER TABLE mdt_audit_log ADD COLUMN IF NOT EXISTS target_citizenid VARCHAR(50)  DEFAULT NULL;
@@ -663,4 +664,51 @@ CREATE TABLE IF NOT EXISTS `mdt_weapons` (
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     KEY `idx_owner` (`owner_citizenid`),
     KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ── Cameras and footage ─────────────────────────────────────────────────────
+-- The MDT does not play video. What it does is know which cameras exist, where
+-- they are, and what footage has been pulled from them — which is what an
+-- officer actually needs from a camera system: somewhere to look, and a record
+-- that somebody looked.
+
+CREATE TABLE IF NOT EXISTS `mdt_cameras` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `camera_code` VARCHAR(20) NOT NULL UNIQUE,
+    `label` VARCHAR(120) NOT NULL,
+    `area` VARCHAR(80) DEFAULT NULL,
+    `kind` ENUM('fixed', 'traffic', 'atm', 'transit', 'private') DEFAULT 'fixed',
+    `coords` JSON DEFAULT NULL,
+    `status` ENUM('online', 'offline', 'maintenance') DEFAULT 'online',
+    `notes` TEXT DEFAULT NULL,
+    `added_by` VARCHAR(50) DEFAULT NULL,
+    `added_by_name` VARCHAR(100) DEFAULT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY `idx_area` (`area`),
+    KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- One row per clip. Dashcam and bodycam entries carry the unit they came from
+-- and no camera; a street camera pull carries the camera and no unit.
+CREATE TABLE IF NOT EXISTS `mdt_footage` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `footage_number` VARCHAR(20) NOT NULL UNIQUE,
+    `source` ENUM('camera', 'dashcam', 'bodycam') DEFAULT 'camera',
+    `camera_id` INT DEFAULT NULL,
+    `camera_code` VARCHAR(20) DEFAULT NULL,
+    `unit_citizenid` VARCHAR(50) DEFAULT NULL,
+    `unit_name` VARCHAR(100) DEFAULT NULL,
+    `case_id` INT DEFAULT NULL,
+    `label` VARCHAR(200) NOT NULL,
+    `detail` TEXT DEFAULT NULL,
+    `recorded_at` TIMESTAMP NULL DEFAULT NULL,
+    `duration` INT DEFAULT NULL,
+    `status` ENUM('requested', 'available', 'archived', 'purged') DEFAULT 'available',
+    `logged_by` VARCHAR(50) NOT NULL,
+    `logged_by_name` VARCHAR(100) NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_case` (`case_id`),
+    KEY `idx_source` (`source`),
+    KEY `idx_camera` (`camera_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

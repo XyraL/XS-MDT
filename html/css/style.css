@@ -1313,4 +1313,61 @@ body.hidden, .hidden { display: none !important; }
    it is a grid cell in a table row. */
 .ev-row .record-meta, .w-row .record-meta, .roster-line .record-meta { margin-left: 0; }
 
+/* ═══ Cameras ══════════════════════════════════════════════════════════════ */
+
+.cam-group { margin-bottom: 18px; }
+.cam-area {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px;
+  font: 10px var(--font-mono); letter-spacing: .13em; text-transform: uppercase;
+  color: var(--faint);
+}
+
+.cam-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 9px; }
+
+.cam-card {
+  padding: 11px 13px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--on-duty);
+  border-radius: var(--radius);
+}
+.cam-card.cam-offline     { border-left-color: var(--red); }
+.cam-card.cam-maintenance { border-left-color: var(--yellow); }
+
+.cam-card-head { display: flex; align-items: center; gap: 8px; }
+.cam-code { font-size: 11px; color: var(--accent); letter-spacing: .05em; }
+.cam-card-head .tag { margin-left: auto; }
+.cam-label { margin-top: 5px; font-size: 12.5px; font-weight: 550; }
+.cam-meta { font: 10.5px var(--font-mono); color: var(--faint); margin-top: 2px; }
+.cam-actions { display: flex; gap: 5px; margin-top: 9px; flex-wrap: wrap; }
+
+/* ═══ Footage ══════════════════════════════════════════════════════════════ */
+
+.ft-table {
+  display: grid;
+  grid-template-columns: 116px 108px minmax(0, 1.6fr) 130px 118px 78px 110px;
+  border: 1px solid var(--line); border-radius: var(--radius-lg);
+  background: var(--surface); overflow: hidden;
+}
+.ft-head, .ft-row { display: contents; }
+
+.ft-head > span {
+  position: sticky; top: 0; z-index: 2;
+  padding: 9px 11px;
+  background: var(--raised); border-bottom: 1px solid var(--line);
+  font: 10px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--faint);
+}
+.ft-row > span {
+  display: flex; align-items: center;
+  padding: 8px 11px;
+  border-bottom: 1px solid var(--line-soft);
+  min-width: 0; font-size: 12.5px; cursor: pointer;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ft-row:hover > span { background: var(--raised); }
+.ft-no { font: 11.5px var(--font-mono); color: var(--accent); }
+.ft-src { gap: 6px; color: var(--dim); }
+.ft-label { font-weight: 550; }
+
 .tab-panel:not(.active) { display: none !important; }

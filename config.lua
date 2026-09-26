@@ -35,7 +35,7 @@ Config.Departments = {
             'dashboard', 'roster', 'map',
             'civilians', 'vehicles',
             'warrants', 'bolos', 'arrests', 'citations', 'incidents', 'penal',
-            'cases', 'evidence', 'weapons',
+            'cases', 'evidence', 'weapons', 'cameras',
             'cad', 'callhistory', 'bulletins',
             'mugshots', 'shiftlog',
             'ia', 'fto', 'sop',
