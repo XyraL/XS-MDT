@@ -34,7 +34,9 @@ local function Read()
             end
         end
 
-        local create = raw:match('(CREATE TABLE IF NOT EXISTS `' .. name .. '`.-\n%) ENGINE[^;]*;')
+        -- The closing paren has to be a real one. `%)` is an escaped literal,
+        -- so it does not close the capture this opens with.
+        local create = raw:match('(CREATE TABLE IF NOT EXISTS `' .. name .. '`.-\n%) ENGINE[^;]*;)')
 
         tables[name] = { columns = columns, order = colOrder, sql = create }
         order[#order + 1] = name
@@ -89,55 +91,63 @@ CreateThread(function()
     -- Let oxmysql finish connecting.
     Wait(2000)
 
-    local wanted, order = Read()
-    if not wanted then
-        print('^1[XS-MDT] Could not read sql/mdt.sql. It ships with the resource — check it was not deleted.^7')
-        return
-    end
+    local ran, err = pcall(function()
+        local wanted, order = Read()
+        if not wanted then
+            print('^1[XS-MDT] Could not read sql/mdt.sql. It ships with the resource — check it was not deleted.^7')
+            return
+        end
 
-    local have = Existing()
-    local createdTables, addedColumns = {}, {}
+        local have = Existing()
+        local createdTables, addedColumns = {}, {}
 
-    for _, name in ipairs(order) do
-        local spec = wanted[name]
+        for _, name in ipairs(order) do
+            local spec = wanted[name]
 
-        if not have[name] then
-            if spec.sql then
-                local ok = pcall(function() MySQL.query.await(spec.sql) end)
-                if ok then
-                    createdTables[#createdTables + 1] = name
-                    have[name] = {}
-                    for _, c in ipairs(spec.order) do have[name][c] = true end
+            if not have[name] then
+                if spec.sql then
+                    local ok = pcall(function() MySQL.query.await(spec.sql) end)
+                    if ok then
+                        createdTables[#createdTables + 1] = name
+                        have[name] = {}
+                        for _, c in ipairs(spec.order) do have[name][c] = true end
+                    end
                 end
-            end
-        else
-            for _, col in ipairs(spec.order) do
-                if not have[name][col] then
-                    local ok = pcall(function()
-                        MySQL.query.await(('ALTER TABLE `%s` ADD COLUMN `%s` %s'):format(name, col, spec.columns[col]))
-                    end)
-                    if ok then addedColumns[#addedColumns + 1] = name .. '.' .. col end
+            else
+                for _, col in ipairs(spec.order) do
+                    if not have[name][col] then
+                        local ok = pcall(function()
+                            MySQL.query.await(('ALTER TABLE `%s` ADD COLUMN `%s` %s'):format(name, col, spec.columns[col]))
+                        end)
+                        if ok then addedColumns[#addedColumns + 1] = name .. '.' .. col end
+                    end
                 end
             end
         end
-    end
 
-    pcall(FixUps)
+        pcall(FixUps)
 
-    if #createdTables > 0 then
-        print(('[XS-MDT] created %d table(s): %s'):format(#createdTables, table.concat(createdTables, ', ')))
-    end
-    if #addedColumns > 0 then
-        print(('[XS-MDT] added %d column(s): %s'):format(#addedColumns, table.concat(addedColumns, ', ')))
-    end
-    if #createdTables == 0 and #addedColumns == 0 then
-        print('[XS-MDT] database is up to date')
-    end
+        if #createdTables > 0 then
+            print(('[XS-MDT] created %d table(s): %s'):format(#createdTables, table.concat(createdTables, ', ')))
+        end
+        if #addedColumns > 0 then
+            print(('[XS-MDT] added %d column(s): %s'):format(#addedColumns, table.concat(addedColumns, ', ')))
+        end
+        if #createdTables == 0 and #addedColumns == 0 then
+            print('[XS-MDT] database is up to date')
+        end
 
-    -- The charge book is data, not schema, so it is only seeded when the table
-    -- is genuinely empty. A server that cleared it out meant to.
-    local charges = MySQL.scalar.await('SELECT COUNT(*) FROM mdt_penal_codes') or 0
-    if charges == 0 then
-        print('^3[XS-MDT] No charges on file — import sql/penal-codes.sql for the default book.^7')
+        -- The charge book is data, not schema, so it is only seeded when the table
+        -- is genuinely empty. A server that cleared it out meant to.
+        local ok, charges = pcall(function()
+            return MySQL.scalar.await('SELECT COUNT(*) FROM mdt_penal_codes') or 0
+        end)
+        if ok and charges == 0 then
+            print('^3[XS-MDT] No charges on file — import sql/penal-codes.sql for the default book.^7')
+        end
+    end)
+
+    if not ran then
+        print(('^1[XS-MDT] Schema update failed: %s^7'):format(err))
     end
 end)
