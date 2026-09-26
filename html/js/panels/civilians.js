@@ -73,14 +73,14 @@ function initCivilianPanel() {
         </div>
         <div class="search-wrap">
             <div class="search-bar">
-                <span class="search-icon">🔍</span>
+                <span class="search-icon"><i class="i i-search"></i></span>
                 <input type="text" id="civ-search" placeholder="Search name, date of birth, or citizen ID..." autocomplete="off">
             </div>
             <span class="search-shortcut">↵ Enter</span>
         </div>
         <div class="panel-body" id="civ-results">
             <div class="empty-state">
-                <div class="empty-icon">👤</div>
+                <div class="empty-icon"><i class="i i-user"></i></div>
                 <div class="empty-title">Search for a civilian</div>
                 <div class="empty-subtitle">Enter a name or DOB above to begin</div>
             </div>
@@ -93,7 +93,7 @@ function initCivilianPanel() {
         if (q.length < 2) {
             document.getElementById('civ-results').innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-icon">👤</div>
+                    <div class="empty-icon"><i class="i i-user"></i></div>
                     <div class="empty-title">Type at least 2 characters</div>
                 </div>`;
             return;
@@ -112,7 +112,7 @@ function searchCivilians(query) {
         if (!results || results.length === 0) {
             el.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-icon">🔍</div>
+                    <div class="empty-icon"><i class="i i-search"></i></div>
                     <div class="empty-title">No results found</div>
                     <div class="empty-subtitle">Try a different name or Citizen ID</div>
                 </div>`;
@@ -135,13 +135,13 @@ function searchCivilians(query) {
                             <tr onclick="openCivilianProfile('${c.citizenid}')">
                                 <td>
                                     <div class="font-bold">${esc(c.firstname)} ${esc(c.lastname)}</div>
-                                    ${showCriminal && c.active_warrants > 0 ? '<div class="text-xs text-red mt-1">⚠ Active Warrant</div>' : ''}
+                                    ${showCriminal && c.active_warrants > 0 ? '<div class="text-xs text-red mt-1"><i class="i i-alert"></i> Active Warrant</div>' : ''}
                                 </td>
                                 <td class="font-mono">${c.dob || '—'}</td>
                                 <td class="font-mono text-muted text-sm">${c.citizenid}</td>
                                 ${showCriminal ? `
                                 <td>${c.active_warrants > 0
-                                    ? `<span class="tag tag-red">⚠ ${c.active_warrants} Active</span>`
+                                    ? `<span class="tag tag-red"><i class="i i-alert"></i> ${c.active_warrants} Active</span>`
                                     : '<span class="tag tag-green">None</span>'}</td>
                                 <td><span class="tag tag-gray">${c.arrest_count || 0} records</span></td>`
                                 : `<td class="font-mono text-muted text-sm">${c.phone || '—'}</td>`}
@@ -177,7 +177,7 @@ function openCivilianProfile(citizenid) {
     nuiFetch('getCivilianProfile', citizenid).then(data => {
         if (!data) {
             document.getElementById('civ-profile-body').innerHTML =
-                `<div class="empty-state"><div class="empty-icon">⚠</div><div class="empty-title">Civilian not found</div></div>`;
+                `<div class="empty-state"><div class="empty-icon"><i class="i i-alert"></i></div><div class="empty-title">Civilian not found</div></div>`;
             return;
         }
         renderCivilianProfile(data);
@@ -185,9 +185,9 @@ function openCivilianProfile(citizenid) {
         if (data.canSeeCriminal) {
             const bar = document.getElementById('civ-profile-actions');
             if (bar) bar.insertAdjacentHTML('beforeend', `
-                <button class="btn btn-warning btn-sm" onclick="openIssueWarrantModal('${citizenid}')">⚖ Issue Warrant</button>
-                <button class="btn btn-success btn-sm" onclick="openNewCitationModal('${citizenid}')">📄 Citation</button>
-                <button class="btn btn-danger btn-sm" onclick="openNewArrestModal('${citizenid}')">🔒 Log Arrest</button>`);
+                <button class="btn btn-warning btn-sm" onclick="openIssueWarrantModal('${citizenid}')"><i class="i i-scale"></i> Issue Warrant</button>
+                <button class="btn btn-success btn-sm" onclick="openNewCitationModal('${citizenid}')"><i class="i i-file"></i> Citation</button>
+                <button class="btn btn-danger btn-sm" onclick="openNewArrestModal('${citizenid}')"><i class="i i-lock"></i> Log Arrest</button>`);
         }
     });
 }
@@ -221,7 +221,7 @@ function civSummaryCards(data) {
                 <div class="stat-label">Allergies</div>
                 <div style="font-size:22px;font-weight:800;color:${allergies ? 'var(--orange)' : 'var(--text-primary)'};">${allergies}</div>
             </div>
-            ${Number(med.dnr) ? '<span class="tag tag-orange">⚠ DNR ON FILE</span>' : ''}`;
+            ${Number(med.dnr) ? '<span class="tag tag-orange"><i class="i i-alert"></i> DNR ON FILE</span>' : ''}`;
     }
     return '';
 }
@@ -272,7 +272,7 @@ function civProfileBodies(data) {
         wrap('civ-medhist', renderCivMedHistory(data));
     }
     if (!out.length) {
-        out.push('<div class="empty-state"><div class="empty-icon">🔒</div>' +
+        out.push('<div class="empty-state"><div class="empty-icon"><i class="i i-lock"></i></div>' +
                  '<div class="empty-title">No records available</div>' +
                  '<div class="empty-subtitle">Your department can only see identity details</div></div>');
     }
@@ -282,7 +282,7 @@ function civProfileBodies(data) {
 function renderCivMedical(data) {
     const med = data.medical;
     if (!med) {
-        return '<div class="empty-state"><div class="empty-icon">❤</div>' +
+        return '<div class="empty-state"><div class="empty-icon"><i class="i i-heart"></i></div>' +
                '<div class="empty-title">No medical record on file</div></div>';
     }
     const block = (title, items, tagClass) => (items && items.length) ? `
@@ -300,8 +300,8 @@ function renderCivMedical(data) {
                 <button class="btn btn-ghost btn-sm" onclick="switchTab('medhistory')">Open in Medical Records →</button>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-                ${med.blood_type ? `<span class="tag tag-red">🩸 ${med.blood_type}</span>` : ''}
-                ${Number(med.dnr) ? '<span class="tag tag-orange">⚠ DNR</span>' : ''}
+                ${med.blood_type ? `<span class="tag tag-red"><i class="i i-droplet"></i> ${med.blood_type}</span>` : ''}
+                ${Number(med.dnr) ? '<span class="tag tag-orange"><i class="i i-alert"></i> DNR</span>' : ''}
                 ${Number(med.organ_donor) ? '<span class="tag tag-green">ORGAN DONOR</span>' : ''}
             </div>
             ${block('Allergies', med.allergies, 'tag-red')}
@@ -315,7 +315,7 @@ function renderCivMedical(data) {
 function renderCivMedHistory(data) {
     const rows = data.medical_history || [];
     if (!rows.length) {
-        return '<div class="empty-state"><div class="empty-icon">📋</div>' +
+        return '<div class="empty-state"><div class="empty-icon"><i class="i i-clipboard"></i></div>' +
                '<div class="empty-title">No history entries</div></div>';
     }
     return `<div class="card">${rows.map(h => `
@@ -339,8 +339,8 @@ function renderCivilianProfile(data) {
             <div class="mugshot-wrap" onclick="openMugshotModal('${data.citizenid}','${(data.image||'').replace(/'/g,"\\'")}')">
                 ${data.image
                     ? `<img src="${esc(data.image)}" class="mugshot-img" alt="Mugshot">`
-                    : '<span class="mugshot-placeholder">👤</span>'}
-                <div class="mugshot-edit-btn">📷</div>
+                    : '<span class="mugshot-placeholder"><i class="i i-user"></i></span>'}
+                <div class="mugshot-edit-btn"><i class="i i-camera"></i></div>
             </div>
             <div class="profile-info">
                 <div class="profile-name">
@@ -353,10 +353,10 @@ function renderCivilianProfile(data) {
                     aka ${data.aliases.map(a => `<strong>${esc(a)}</strong>`).join(', ')}
                 </div>` : ''}
                 <div class="profile-meta">
-                    <span>📅 DOB: ${data.dob || '—'}</span>
-                    <span>⚧ ${data.gender || '—'}</span>
-                    <span>📍 ${esc(data.address || 'No address')}</span>
-                    <span>📞 ${data.phone || 'No phone'}</span>
+                    <span><i class="i i-calendar"></i> DOB: ${data.dob || '—'}</span>
+                    <span>${data.gender || '—'}</span>
+                    <span><i class="i i-map-pin"></i> ${esc(data.address || 'No address')}</span>
+                    <span><i class="i i-phone"></i> ${data.phone || 'No phone'}</span>
                 </div>
             </div>
             <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0;">
@@ -366,7 +366,7 @@ function renderCivilianProfile(data) {
 
         ${(data.canSeeCriminal && data.notes) ? `
             <div class="alert alert-warn">
-                <span>📌</span>
+                <span><i class="i i-pin"></i></span>
                 <div><strong>Officer Notes:</strong> ${esc(data.notes)}</div>
             </div>` : ''}
 
@@ -411,7 +411,7 @@ function showCivTab(el, id) {
 }
 
 function renderVehiclesList(vehicles) {
-    if (!vehicles || !vehicles.length) return `<div class="empty-state"><div class="empty-icon">🚗</div><div class="empty-title">No registered vehicles</div></div>`;
+    if (!vehicles || !vehicles.length) return `<div class="empty-state"><div class="empty-icon"><i class="i i-car"></i></div><div class="empty-title">No registered vehicles</div></div>`;
     const stateMap = { 0: ['Out', 'tag-yellow'], 1: ['Garaged', 'tag-green'], 2: ['Impounded', 'tag-red'] };
     return `
         <div class="data-table-wrap">
@@ -443,7 +443,7 @@ function renderVehiclesList(vehicles) {
 }
 
 function renderWarrantsList(warrants, citizenid) {
-    if (!warrants.length) return `<div class="empty-state"><div class="empty-icon">⚖</div><div class="empty-title">No warrants on file</div></div>`;
+    if (!warrants.length) return `<div class="empty-state"><div class="empty-icon"><i class="i i-scale"></i></div><div class="empty-title">No warrants on file</div></div>`;
     return warrants.map(w => `
         <div class="record-item warrant-item">
             <div class="record-item-header">
@@ -458,7 +458,7 @@ function renderWarrantsList(warrants, citizenid) {
 }
 
 function renderCivArrestsList(arrests) {
-    if (!arrests.length) return `<div class="empty-state"><div class="empty-icon">🔒</div><div class="empty-title">No arrest records</div></div>`;
+    if (!arrests.length) return `<div class="empty-state"><div class="empty-icon"><i class="i i-lock"></i></div><div class="empty-title">No arrest records</div></div>`;
     return arrests.map(a => `
         <div class="record-item arrest-item">
             <div class="record-item-header">
@@ -469,12 +469,12 @@ function renderCivArrestsList(arrests) {
             </div>
             <div class="record-charges">${(a.charges||[]).map(c=>`<span class="tag tag-red">${c.code} — ${esc(c.name)}</span>`).join('')}</div>
             ${a.narrative ? `<div class="record-narrative">${esc(a.narrative)}</div>` : ''}
-            <div class="record-officer">Arresting Officer: <strong>${esc(a.officer_name)}</strong>${a.location ? ` · 📍 ${esc(a.location)}` : ''}</div>
+            <div class="record-officer">Arresting Officer: <strong>${esc(a.officer_name)}</strong>${a.location ? ` · <i class="i i-map-pin"></i> ${esc(a.location)}` : ''}</div>
         </div>`).join('');
 }
 
 function renderCivCitationsList(citations) {
-    if (!citations.length) return `<div class="empty-state"><div class="empty-icon">📄</div><div class="empty-title">No citations on file</div></div>`;
+    if (!citations.length) return `<div class="empty-state"><div class="empty-icon"><i class="i i-file"></i></div><div class="empty-title">No citations on file</div></div>`;
     return citations.map(c => `
         <div class="record-item citation-item">
             <div class="record-item-header">
@@ -484,7 +484,7 @@ function renderCivCitationsList(citations) {
             </div>
             <div class="record-charges">${(c.charges||[]).map(ch=>`<span class="tag tag-yellow">${ch.code} — ${esc(ch.name)}</span>`).join('')}</div>
             <div style="margin-top:6px;font-size:13px;">Fine: <strong class="text-green">${dollarFmt(c.fine)}</strong></div>
-            <div class="record-officer">Officer: <strong>${esc(c.officer_name)}</strong>${c.location ? ` · 📍 ${esc(c.location)}` : ''}</div>
+            <div class="record-officer">Officer: <strong>${esc(c.officer_name)}</strong>${c.location ? ` · <i class="i i-map-pin"></i> ${esc(c.location)}` : ''}</div>
         </div>`).join('');
 }
 
@@ -536,7 +536,7 @@ function openMugshotModal(citizenid, currentImage) {
         </div>
         <button class="btn btn-ghost btn-sm w-full" style="margin-top:4px;"
                 onclick="document.getElementById('mugshot-url').value='';previewMugshot()">
-            ✕ Remove Photo
+            <i class="i i-x"></i> Remove Photo
         </button>`,
         async () => {
             const url = document.getElementById('mugshot-url')?.value.trim() || null;
@@ -548,7 +548,7 @@ function openMugshotModal(citizenid, currentImage) {
             } else {
                 showToast('Error', 'Could not update photo.', 'error');
             }
-        }, 'Save Photo', '📷');
+        }, 'Save Photo', '<i class="i i-camera"></i>');
 }
 
 function previewMugshot() {
@@ -594,7 +594,7 @@ const LICENCE_LOOK = {
 function renderLicences(data) {
     const list = data.licences || [];
     if (!list.length) {
-        return `<div class="empty-state"><div class="empty-icon">🪪</div><div class="empty-title">No licence records</div></div>`;
+        return `<div class="empty-state"><div class="empty-icon"><i class="i i-id"></i></div><div class="empty-title">No licence records</div></div>`;
     }
 
     return `

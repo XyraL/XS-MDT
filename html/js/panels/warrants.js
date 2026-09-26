@@ -26,7 +26,7 @@ function loadWarrants(filter = 'active') {
         const body = document.getElementById('warrants-body');
         if (!body) return;
         if (!warrants || warrants.length === 0) {
-            body.innerHTML = `<div class="empty-state"><div class="empty-icon">⚖</div><div class="empty-title">No ${filter} warrants</div></div>`;
+            body.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="i i-scale"></i></div><div class="empty-title">No ${filter} warrants</div></div>`;
             return;
         }
         body.innerHTML = `
@@ -55,7 +55,7 @@ function loadWarrants(filter = 'active') {
                                 <td class="text-secondary">${w.issued_by_name}</td>
                                 <td class="font-mono text-sm text-muted">${fmtDateShort(w.created_at)}</td>
                                 <td class="font-mono text-sm ${isExpiringSoon?'text-red font-bold':'text-muted'}">
-                                    ${w.expires_at ? fmtDateShort(w.expires_at) + (isExpiringSoon?' ⚠':'') : '—'}
+                                    ${w.expires_at ? fmtDateShort(w.expires_at) + (isExpiringSoon?' <i class="i i-alert"></i>':'') : '—'}
                                 </td>
                                 <td><span class="tag ${w.status==='active'?'tag-red':w.status==='expired'?'tag-orange':'tag-green'}">${w.status.toUpperCase()}</span></td>
                                 <td>
@@ -117,7 +117,7 @@ function openIssueWarrantModal(prefillPerson = null) {
             </div>
         </div>
         <div class="alert alert-warn">
-            <span>⚠</span>
+            <span><i class="i i-alert"></i></span>
             <span>Issuing a warrant will notify all on-duty officers and appear on the subject's record.</span>
         </div>`,
         async () => {
@@ -139,7 +139,7 @@ function openIssueWarrantModal(prefillPerson = null) {
                 showToast('Error', 'Could not issue warrant.', 'error');
                 btn.textContent = 'Issue Warrant'; btn.disabled = false;
             }
-        }, 'Issue Warrant', '⚖');
+        }, 'Issue Warrant', '<i class="i i-scale"></i>');
 
     new NameSearch({
         container: '#warrant-person-search',

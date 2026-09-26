@@ -2,7 +2,7 @@ fx_version 'cerulean'
 game 'gta5'
 
 name 'XS-MDT'
-description 'Multi-department MDT (Police / EMS / Fire) with CAD integration for QBox'
+description 'Multi-department MDT (Police / EMS / Fire) with CAD integration for QBox and QBCore'
 version '2.1.0'
 author 'XyraL'
 
@@ -11,13 +11,16 @@ shared_scripts {
     'config.lua',
 }
 
+-- qbx_core is NOT listed: naming it here makes it required, and this now
+-- runs on either framework. bridge/framework.lua picks whichever is started
+-- and says so loudly if neither is.
 dependencies {
     'ox_lib',
-    'qbx_core',
     'oxmysql',
 }
 
 client_scripts {
+    'bridge/framework.lua',
     'client/main.lua',
     'client/cad.lua',
     'client/blips.lua',
@@ -28,6 +31,7 @@ client_scripts {
 
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
+    'bridge/framework.lua',
     'server/main.lua',
     'server/integrations.lua',
     'server/evidence-bridge.lua',
@@ -55,6 +59,7 @@ ui_page 'html/index.html'
 files {
     'html/index.html',
     'html/css/style.css',
+    'html/css/icons.css',
     'html/js/app.js',
     'html/js/panels/officer.js',
     'html/js/panels/civilians.js',

@@ -15,22 +15,22 @@ function statCard(cls, icon, label, id, trend) {
 
 function dashStatCards() {
     const cards = [];
-    if (hasPanel('cad')) cards.push(statCard('accent', '📻', 'Active Calls', 'stat-calls', 'Loading...'));
+    if (hasPanel('cad')) cards.push(statCard('accent', '<i class="i i-radio"></i>', 'Active Calls', 'stat-calls', 'Loading...'));
 
-    if (hasPanel('warrants')) cards.push(statCard('red', '⚖', 'Active Warrants', 'stat-warrants', 'Currently open'));
-    if (hasPanel('bolos'))    cards.push(statCard('yellow', '📡', 'Active BOLOs', 'stat-bolos', 'Person &amp; vehicle'));
+    if (hasPanel('warrants')) cards.push(statCard('red', '<i class="i i-scale"></i>', 'Active Warrants', 'stat-warrants', 'Currently open'));
+    if (hasPanel('bolos'))    cards.push(statCard('yellow', '<i class="i i-signal"></i>', 'Active BOLOs', 'stat-bolos', 'Person &amp; vehicle'));
 
     if (hasPanel('pcr')) {
-        cards.push(statCard('green', '✚', 'PCRs Today', 'stat-pcrs', 'Reports filed'));
-        cards.push(statCard('yellow', '📋', 'Open Reports', 'stat-open-pcrs', 'Awaiting completion'));
+        cards.push(statCard('green', '<i class="i i-cross"></i>', 'PCRs Today', 'stat-pcrs', 'Reports filed'));
+        cards.push(statCard('yellow', '<i class="i i-clipboard"></i>', 'Open Reports', 'stat-open-pcrs', 'Awaiting completion'));
     }
 
     if (hasPanel('fireincidents')) {
-        cards.push(statCard('red', '🔥', 'Incidents Today', 'stat-fires', 'Runs logged'));
-        cards.push(statCard('yellow', '☣', 'Active Hazmat', 'stat-hazmat', 'Not yet contained'));
+        cards.push(statCard('red', '<i class="i i-flame"></i>', 'Incidents Today', 'stat-fires', 'Runs logged'));
+        cards.push(statCard('yellow', '<i class="i i-hazard"></i>', 'Active Hazmat', 'stat-hazmat', 'Not yet contained'));
     }
 
-    cards.push(statCard('green', '◉', 'Units On Duty', 'stat-officers', 'Currently active'));
+    cards.push(statCard('green', '<i class="i i-roster"></i>', 'Units On Duty', 'stat-officers', 'Currently active'));
     return cards.join('');
 }
 
@@ -41,24 +41,24 @@ function dashQuickActions() {
             : '';
 
     return [
-        btn('civilians', 'btn-ghost', '🔍', 'Lookup Civilian', "switchTab('civilians')"),
-        btn('vehicles',  'btn-ghost', '🚗', 'Plate Lookup',    "switchTab('vehicles')"),
-        btn('map',       'btn-ghost', '🗺', 'Live Map',        "switchTab('map')"),
-        btn('cad',       'btn-ghost', '📻', 'CAD Dispatch',    "switchTab('cad')"),
+        btn('civilians', 'btn-ghost', '<i class="i i-search"></i>', 'Lookup Civilian', "switchTab('civilians')"),
+        btn('vehicles',  'btn-ghost', '<i class="i i-car"></i>', 'Plate Lookup',    "switchTab('vehicles')"),
+        btn('map',       'btn-ghost', '<i class="i i-map"></i>', 'Live Map',        "switchTab('map')"),
+        btn('cad',       'btn-ghost', '<i class="i i-radio"></i>', 'CAD Dispatch',    "switchTab('cad')"),
 
-        btn('warrants',  'btn-ghost', '⚖', 'Warrants',  "switchTab('warrants')"),
-        btn('bolos',     'btn-ghost', '📡', 'BOLOs',     "switchTab('bolos')"),
-        btn('incidents', 'btn-ghost', '📋', 'Reports',   "switchTab('incidents')"),
-        btn('citations', 'btn-success', '📄', 'Issue Citation', 'openNewCitationModal()'),
-        btn('arrests',   'btn-danger',  '🔒', 'Log Arrest',     'openNewArrestModal()'),
+        btn('warrants',  'btn-ghost', '<i class="i i-scale"></i>', 'Warrants',  "switchTab('warrants')"),
+        btn('bolos',     'btn-ghost', '<i class="i i-signal"></i>', 'BOLOs',     "switchTab('bolos')"),
+        btn('incidents', 'btn-ghost', '<i class="i i-clipboard"></i>', 'Reports',   "switchTab('incidents')"),
+        btn('citations', 'btn-success', '<i class="i i-file"></i>', 'Issue Citation', 'openNewCitationModal()'),
+        btn('arrests',   'btn-danger',  '<i class="i i-lock"></i>', 'Log Arrest',     'openNewArrestModal()'),
 
-        btn('medhistory', 'btn-ghost',  '❤', 'Medical Records', "switchTab('medhistory')"),
-        btn('narclog',    'btn-ghost',  '💊', 'Narcotics Log',   "switchTab('narclog')"),
-        btn('pcr',        'btn-success', '✚', 'New PCR',         'openNewPCR()'),
+        btn('medhistory', 'btn-ghost',  '<i class="i i-heart"></i>', 'Medical Records', "switchTab('medhistory')"),
+        btn('narclog',    'btn-ghost',  '<i class="i i-pill"></i>', 'Narcotics Log',   "switchTab('narclog')"),
+        btn('pcr',        'btn-success', '<i class="i i-cross"></i>', 'New PCR',         'openNewPCR()'),
 
-        btn('apparatus',     'btn-ghost',  '🚒', 'Apparatus',     "switchTab('apparatus')"),
-        btn('hazmat',        'btn-ghost',  '☣', 'Hazmat',        "switchTab('hazmat')"),
-        btn('fireincidents', 'btn-danger', '🔥', 'New Incident',  'openNewFireIncident()'),
+        btn('apparatus',     'btn-ghost',  '<i class="i i-truck"></i>', 'Apparatus',     "switchTab('apparatus')"),
+        btn('hazmat',        'btn-ghost',  '<i class="i i-hazard"></i>', 'Hazmat',        "switchTab('hazmat')"),
+        btn('fireincidents', 'btn-danger', '<i class="i i-flame"></i>', 'New Incident',  'openNewFireIncident()'),
     ].filter(Boolean).join('');
 }
 
@@ -111,58 +111,75 @@ function loadDeptStats(range) {
 
         const rankClass = i => ['gold', 'silver', 'bronze'][i] || '';
 
-        // The chart is plain divs. The shape of a week is the point — spikes
-        // and dead days — not exact values, which sit right above it anyway.
+        // Plain divs, no chart library. Bars sit on one baseline with the day
+        // labels in their own row underneath, so a flat week reads as flat
+        // instead of as bars floating at random heights.
         const series = stats.series || [];
         const peak = Math.max(1, ...series.map(d => d.arrests + d.citations));
-        const chart = series.map(d => {
+
+        const bars = series.map(d => {
             const total = d.arrests + d.citations;
-            const h = Math.round((total / peak) * 46);
+            const h = total ? Math.max(3, Math.round((total / peak) * 56)) : 0;
+            const arrests = total ? Math.round((d.arrests / total) * h) : 0;
+            const plural = (n, word) => n + ' ' + word + (n === 1 ? '' : 's');
+            return `
+                <div class="chart-col" title="${d.day} — ${plural(d.arrests, 'arrest')}, ${plural(d.citations, 'citation')}">
+                    <div class="chart-bar${total ? '' : ' empty'}" style="height:${total ? h : 2}px;">
+                        <div class="chart-bar-arrests" style="height:${arrests}px;"></div>
+                    </div>
+                </div>`;
+        }).join('');
+
+        const days = series.map(d => {
             const day = new Date(d.day + 'T00:00:00');
             const label = series.length <= 7
                 ? day.toLocaleDateString('en-US', { weekday: 'short' })
                 : (day.getDate() === 1 || d === series[0] ? day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '');
-            return `
-                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;" title="${d.day}: ${d.arrests} arrests, ${d.citations} citations">
-                    <div style="width:70%;max-width:26px;height:${Math.max(2, h)}px;border-radius:3px 3px 0 0;background:linear-gradient(180deg,var(--accent),var(--accent-2));opacity:${total ? 1 : .18};"></div>
-                    <div style="font-size:8.5px;color:var(--text-muted);white-space:nowrap;overflow:hidden;">${label}</div>
-                </div>`;
+            return `<div class="chart-day">${label}</div>`;
         }).join('');
 
         el.innerHTML = `
             <div class="sup-stat-row">
                 <div class="sup-stat-cell">
-                    <div class="sup-stat-num" style="color:var(--red);">${stats.arrests}</div>
+                    <div class="sup-stat-num">${stats.arrests}</div>
                     <div class="sup-stat-lbl">Arrests</div>
                     <div class="sup-stat-sub">${stats.arrests_today} today</div>
                 </div>
                 <div class="sup-stat-cell">
-                    <div class="sup-stat-num" style="color:var(--accent-2);">${stats.citations}</div>
+                    <div class="sup-stat-num">${stats.citations}</div>
                     <div class="sup-stat-lbl">Citations</div>
                     <div class="sup-stat-sub">${stats.citations_today} today</div>
                 </div>
                 <div class="sup-stat-cell">
-                    <div class="sup-stat-num" style="color:var(--purple);">${stats.incidents}</div>
+                    <div class="sup-stat-num">${stats.incidents}</div>
                     <div class="sup-stat-lbl">Reports</div>
                     <div class="sup-stat-sub">last ${stats.range} days</div>
                 </div>
                 <div class="sup-stat-cell">
-                    <div class="sup-stat-num" style="color:var(--yellow);">${stats.warrants_active}</div>
+                    <div class="sup-stat-num">${stats.warrants_active}</div>
                     <div class="sup-stat-lbl">Warrants</div>
                     <div class="sup-stat-sub">active now</div>
                 </div>
                 <div class="sup-stat-cell">
-                    <div class="sup-stat-num" style="color:var(--green);">${dollarFmt(stats.fines)}</div>
+                    <div class="sup-stat-num">${dollarFmt(stats.fines)}</div>
                     <div class="sup-stat-lbl">Fines Issued</div>
                     <div class="sup-stat-sub">arrests + citations</div>
                 </div>
             </div>
 
-            <div style="display:flex;align-items:flex-end;gap:2px;height:62px;padding:6px 2px 0;margin-bottom:12px;">${chart}</div>
+            <div class="stat-chart">
+                <div class="chart-plot">${bars}</div>
+                <div class="chart-days">${days}</div>
+                <div class="chart-key">
+                    <span><i class="key-swatch arrests"></i>Arrests</span>
+                    <span><i class="key-swatch citations"></i>Citations</span>
+                    <span class="chart-peak">peak ${peak}/day</span>
+                </div>
+            </div>
 
             ${stats.isSupervisor ? (stats.top_officers && stats.top_officers.length ? `
             <div style="font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px;">
-                🏆 Top Arresting Officers <span class="tag tag-purple" style="font-size:9px;margin-left:4px;">Supervisor</span>
+                <i class="i i-trophy"></i> Top Arresting Officers <span class="tag tag-purple" style="font-size:9px;margin-left:4px;">Supervisor</span>
             </div>
             ${stats.top_officers.map((o, i) => `
                 <div class="top-officer-row">
@@ -186,9 +203,9 @@ function renderDashboard() {
             </div>
             <div class="panel-actions">
                 <span class="text-xs text-muted">Press <span class="kbd">Ctrl+1–0</span> to switch tabs</span>
-                ${MDT.officer && MDT.officer.isSupervisor ? `<button class="btn btn-ghost btn-sm" onclick="openAuditLogViewer()">📋 Audit Log</button>` : ''}
-                <button class="btn btn-ghost btn-sm" onclick="openBodyCamLog()">📹 Body Cam</button>
-                <button class="btn btn-ghost btn-sm" onclick="renderDashboard()">↻ Refresh</button>
+                ${MDT.officer && MDT.officer.isSupervisor ? `<button class="btn btn-ghost btn-sm" onclick="openAuditLogViewer()"><i class="i i-clipboard"></i> Audit Log</button>` : ''}
+                <button class="btn btn-ghost btn-sm" onclick="openBodyCamLog()"><i class="i i-video"></i> Body Cam</button>
+                <button class="btn btn-ghost btn-sm" onclick="renderDashboard()"><i class="i i-refresh"></i> Refresh</button>
             </div>
         </div>
         <div class="panel-body">
@@ -200,7 +217,7 @@ function renderDashboard() {
             <div class="card" id="dash-sup-stats" style="margin-bottom:16px;">
                 <div class="card-header">
                     <div class="card-title">
-                        <div class="card-title-icon" style="background:var(--purple-glow);color:var(--purple);">📊</div>
+                        <div class="card-title-icon"><i class="i i-chart"></i></div>
                         Department Statistics
                     </div>
                     <div style="display:flex;gap:6px;">
@@ -217,7 +234,7 @@ function renderDashboard() {
                     <div class="card accent-border">
                         <div class="card-header">
                             <div class="card-title">
-                                <div class="card-title-icon" style="background:var(--accent-glow);color:var(--accent-2);">👮</div>
+                                <div class="card-title-icon"><i class="i i-badge"></i></div>
                                 My Profile
                             </div>
                             <button class="btn btn-ghost btn-sm" onclick="openProfileEditor()">Edit</button>
@@ -228,7 +245,7 @@ function renderDashboard() {
                     <div class="card">
                         <div class="card-header">
                             <div class="card-title">
-                                <div class="card-title-icon" style="background:var(--green-glow);color:var(--green);">⚡</div>
+                                <div class="card-title-icon"><i class="i i-bolt"></i></div>
                                 Quick Actions
                             </div>
                         </div>
@@ -243,7 +260,7 @@ function renderDashboard() {
                     <div class="card" style="flex:1;">
                         <div class="card-header">
                             <div class="card-title">
-                                <div class="card-title-icon" style="background:var(--accent-glow);color:var(--accent-2);">📻</div>
+                                <div class="card-title-icon"><i class="i i-radio"></i></div>
                                 Active CAD Calls
                             </div>
                             <button class="btn btn-ghost btn-sm" onclick="switchTab('cad')">View All →</button>
@@ -253,7 +270,7 @@ function renderDashboard() {
                     <div class="card">
                         <div class="card-header">
                             <div class="card-title">
-                                <div class="card-title-icon" style="background:rgba(99,102,241,.12);color:var(--accent-2);">⚡</div>
+                                <div class="card-title-icon"><i class="i i-bolt"></i></div>
                                 Department Activity
                             </div>
                         </div>
@@ -274,7 +291,7 @@ function renderDashboard() {
 
         const callsEl = document.getElementById('dash-recent-calls');
         if (calls.length === 0) {
-            callsEl.innerHTML = `<div class="empty-state"><div class="empty-icon">📻</div><div class="empty-title">No active calls</div><div class="empty-subtitle">All clear</div></div>`;
+            callsEl.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="i i-radio"></i></div><div class="empty-title">No active calls</div><div class="empty-subtitle">All clear</div></div>`;
         } else {
             callsEl.innerHTML = calls.slice(0, 6).map(c => `
                 <div class="call-card status-${c.status}" onclick="switchTab('cad')" style="margin-bottom:8px;">
@@ -283,7 +300,7 @@ function renderDashboard() {
                         <span class="tag tag-${statusColor(c.status)}" style="margin-left:auto;">${c.status.toUpperCase()}</span>
                     </div>
                     <div class="call-type">${c.call_type || c.type}</div>
-                    <div class="call-location">📍 ${esc(c.location)}</div>
+                    <div class="call-location"><i class="i i-map-pin"></i> ${esc(c.location)}</div>
                     <div class="call-units">
                         ${(c.units||[]).map(u=>`<span class="call-unit-chip">${esc(u.name.split(' ')[0])}</span>`).join('')}
                         ${(!c.units||c.units.length===0)?'<span class="text-xs text-muted">No units assigned</span>':''}
@@ -342,12 +359,12 @@ function renderDashboard() {
         if (!feedEl) return;
         const items = [];
         (arrests || []).slice(0, 6).forEach(a => items.push({
-            ts: a.created_at, icon: '🔒', iconBg: 'rgba(239,68,68,.12)',
+            ts: a.created_at, icon: '<i class="i i-lock"></i>', iconBg: 'rgba(239,68,68,.12)',
             title: (a.civilian_name || a.citizenid) + ' — Arrested',
             sub: 'by ' + a.officer_name + (a.charges?.length ? ' · ' + a.charges.length + ' charge(s)' : ''),
         }));
         (citations || []).slice(0, 6).forEach(c => items.push({
-            ts: c.created_at, icon: '📄', iconBg: 'rgba(99,102,241,.12)',
+            ts: c.created_at, icon: '<i class="i i-file"></i>', iconBg: 'rgba(99,102,241,.12)',
             title: (c.civilian_name || c.citizenid) + ' — Citation',
             sub: 'by ' + c.officer_name + (c.fine ? ' · ' + dollarFmt(c.fine) : ''),
         }));
@@ -378,7 +395,7 @@ function loadRoster() {
                 <div class="panel-subtitle">All on-duty personnel</div>
             </div>
             <div class="panel-actions">
-                <button class="btn btn-ghost btn-sm" onclick="loadRoster()">↻ Refresh</button>
+                <button class="btn btn-ghost btn-sm" onclick="loadRoster()"><i class="i i-refresh"></i> Refresh</button>
             </div>
         </div>
         <div class="panel-body">
@@ -390,7 +407,7 @@ function loadRoster() {
     nuiFetch('getRoster').then(roster => {
         const grid = document.getElementById('roster-grid');
         if (!roster || roster.length === 0) {
-            grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">👮</div><div class="empty-title">No officers on duty</div></div>`;
+            grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon"><i class="i i-badge"></i></div><div class="empty-title">No officers on duty</div></div>`;
             return;
         }
         grid.innerHTML = roster.map(o => {
@@ -398,7 +415,7 @@ function loadRoster() {
             return `
             <div class="roster-card">
                 <div class="roster-card-header">
-                    <div class="roster-avatar">👮</div>
+                    <div class="roster-avatar"><i class="i i-badge"></i></div>
                     <div style="flex:1;min-width:0;">
                         <div class="roster-name">${esc(o.name)}</div>
                         <div class="roster-meta">${o.grade}</div>
@@ -423,7 +440,7 @@ function loadRoster() {
                         ${statusCfg.code} — ${esc(statusCfg.label)}
                     </span>
                     ${MDT.officer && MDT.officer.isSupervisor
-                        ? `<button class="btn btn-ghost btn-xs ml-auto" onclick="openBodyCamLog('${o.citizenid}')">📹</button>`
+                        ? `<button class="btn btn-ghost btn-xs ml-auto" onclick="openBodyCamLog('${o.citizenid}')"><i class="i i-video"></i></button>`
                         : ''}
                 </div>
             </div>`;
@@ -447,7 +464,7 @@ function openProfileEditor() {
                 </div>
             </div>
             <div class="alert alert-info">
-                <span>ℹ</span>
+                <span><i class="i i-info"></i></span>
                 <span>Badge number must be unique. Your callsign is visible to all on-duty officers.</span>
             </div>`,
             async () => {
@@ -466,27 +483,27 @@ function openProfileEditor() {
                     showToast('Error', 'Badge may already be in use.', 'error');
                     btn.textContent = 'Save'; btn.disabled = false;
                 }
-            }, 'Save Changes', '👮');
+            }, 'Save Changes', '<i class="i i-badge"></i>');
     });
 }
 
 // ── Body Camera Log ───────────────────────────────────────────────────────
 async function openBodyCamLog(targetCitizenid) {
     const ACTION_LABELS = {
-        MDT_OPENED:       { icon: '📂', label: 'MDT Opened',        color: 'var(--text-muted)' },
-        ARREST_LOGGED:    { icon: '🔒', label: 'Arrest Logged',     color: 'var(--red)' },
-        CITATION_ISSUED:  { icon: '📄', label: 'Citation Issued',   color: 'var(--yellow)' },
-        WARRANT_ISSUED:   { icon: '⚖',  label: 'Warrant Issued',    color: 'var(--red)' },
+        MDT_OPENED:       { icon: '<i class="i i-folder"></i>', label: 'MDT Opened',        color: 'var(--text-muted)' },
+        ARREST_LOGGED:    { icon: '<i class="i i-lock"></i>', label: 'Arrest Logged',     color: 'var(--red)' },
+        CITATION_ISSUED:  { icon: '<i class="i i-file"></i>', label: 'Citation Issued',   color: 'var(--yellow)' },
+        WARRANT_ISSUED:   { icon: '<i class="i i-scale"></i>',  label: 'Warrant Issued',    color: 'var(--red)' },
         WARRANT_CLEARED:  { icon: '✓',  label: 'Warrant Cleared',   color: 'var(--green)' },
-        CALL_RESPONDED:   { icon: '📻', label: 'Responded to Call', color: 'var(--accent-2)' },
-        PANIC_BUTTON:     { icon: '🚨', label: 'Panic Button',      color: 'var(--red)' },
+        CALL_RESPONDED:   { icon: '<i class="i i-radio"></i>', label: 'Responded to Call', color: 'var(--accent-2)' },
+        PANIC_BUTTON:     { icon: '<i class="i i-siren"></i>', label: 'Panic Button',      color: 'var(--red)' },
     };
 
     const titleSuffix = targetCitizenid ? ' (Officer Log)' : ' (My Log)';
-    const modal = createModal('📹 Body Camera Log' + titleSuffix, `
+    const modal = createModal('<i class="i i-video"></i> Body Camera Log' + titleSuffix, `
         <div id="bodycam-log-body" style="max-height:460px;overflow-y:auto;">
             ${skeletonLines(5)}
-        </div>`, () => closeModal(modal), 'Close', '📹');
+        </div>`, () => closeModal(modal), 'Close', '<i class="i i-video"></i>');
 
     modal.querySelector('#modal-cancel').style.display = 'none';
 
@@ -495,7 +512,7 @@ async function openBodyCamLog(targetCitizenid) {
     if (!body) return;
 
     if (!logs || !logs.length) {
-        body.innerHTML = '<div class="empty-state"><div class="empty-icon">📹</div><div class="empty-title">No body cam entries</div></div>';
+        body.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="i i-video"></i></div><div class="empty-title">No body cam entries</div></div>';
         return;
     }
 
@@ -530,9 +547,9 @@ const AUDIT_ACTIONS = [
     'Penal Code Added','Penal Code Deleted',
 ];
 const AUDIT_ICONS = {
-    'Arrest Logged':'🔒','Citation Issued':'📄','Warrant Issued':'⚖',
-    'Warrant Cleared':'✓','BOLO Created':'📡','BOLO Cleared':'✓',
-    'Incident Created':'📋','CAD Call Created':'📻','Bulletin Posted':'📌',
+    'Arrest Logged':'<i class="i i-lock"></i>','Citation Issued':'<i class="i i-file"></i>','Warrant Issued':'<i class="i i-scale"></i>',
+    'Warrant Cleared':'✓','BOLO Created':'<i class="i i-signal"></i>','BOLO Cleared':'✓',
+    'Incident Created':'<i class="i i-clipboard"></i>','CAD Call Created':'<i class="i i-radio"></i>','Bulletin Posted':'<i class="i i-pin"></i>',
 };
 
 function openAuditLogViewer() {
@@ -551,7 +568,7 @@ function openAuditLogViewer() {
             <button class="btn btn-ghost btn-sm" onclick="clearAuditSearch()">Clear</button>
         </div>
         <div id="audit-results" style="max-height:460px;overflow-y:auto;">${skeletonLines(5)}</div>`,
-        () => closeModal(modal), 'Close', '📋');
+        () => closeModal(modal), 'Close', '<i class="i i-clipboard"></i>');
     modal.querySelector('#modal-cancel').style.display = 'none';
     setTimeout(runAuditSearch, 60);
 }
@@ -567,7 +584,7 @@ async function runAuditSearch() {
     });
     if (!body) return;
     if (!logs || !logs.length) {
-        body.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No entries found</div></div>';
+        body.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="i i-clipboard"></i></div><div class="empty-title">No entries found</div></div>';
         return;
     }
     body.innerHTML = `

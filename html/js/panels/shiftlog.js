@@ -31,7 +31,7 @@ function loadShiftLog() {
                         <button class="btn btn-ghost btn-sm" onclick="loadWeeklyHours()">↻</button>
                     </div>
                     <div class="card-body" id="weekly-hours-list" style="padding:8px 16px">
-                        <div class="empty-state" style="padding:20px 0"><div class="empty-icon" style="font-size:20px">⏱</div><div class="empty-title">Loading...</div></div>
+                        <div class="empty-state" style="padding:20px 0"><div class="empty-icon" style="font-size:20px"><i class="i i-clock"></i></div><div class="empty-title">Loading...</div></div>
                     </div>
                 </div>
             </div>
@@ -47,7 +47,7 @@ function loadShiftLog() {
                     </div>
                 </div>
                 <div id="shift-history-table">
-                    <div class="empty-state"><div class="empty-icon">⏱</div><div class="empty-title">Enter filters to search history</div></div>
+                    <div class="empty-state"><div class="empty-icon"><i class="i i-clock"></i></div><div class="empty-title">Enter filters to search history</div></div>
                 </div>
             </div>
         </div>
@@ -73,7 +73,7 @@ function _updateShiftUI() {
     const btn   = document.getElementById('shift-btn');
     if (!label || !btn) return;
     if (_shiftClockedIn) {
-        label.textContent = '● Currently On Duty';
+        label.innerHTML = '<i class="dot"></i>Currently On Duty';
         label.style.color = '#22c55e';
         btn.textContent   = 'Clock Out';
         btn.className     = 'btn btn-danger';
@@ -154,7 +154,7 @@ async function loadWeeklyHours() {
 
 async function searchShiftHistory() {
     const el = document.getElementById('shift-history-table');
-    if (el) el.innerHTML = '<div class="empty-state"><div class="empty-icon">⏱</div><div class="empty-title">Searching...</div></div>';
+    if (el) el.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="i i-clock"></i></div><div class="empty-title">Searching...</div></div>';
 
     const data = await nuiFetch('getShiftHistory', {
         officerName: (document.getElementById('sh-officer') || {}).value || '',
@@ -169,7 +169,7 @@ function renderShiftHistory(rows) {
     const el = document.getElementById('shift-history-table');
     if (!el) return;
     if (!rows.length) {
-        el.innerHTML = '<div class="empty-state"><div class="empty-icon">⏱</div><div class="empty-title">No shifts found</div></div>';
+        el.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="i i-clock"></i></div><div class="empty-title">No shifts found</div></div>';
         return;
     }
     el.innerHTML = `
@@ -187,7 +187,7 @@ function renderShiftHistory(rows) {
                 ${rows.map(function(r) {
                     const dur  = r.duration_minutes != null
                         ? Math.floor(r.duration_minutes / 60) + 'h ' + (r.duration_minutes % 60) + 'm'
-                        : '<span style="color:var(--accent-2)">● Active</span>';
+                        : '<span style="color:var(--accent)"><i class="dot"></i>Active</span>';
                     const cin  = r.clock_in  ? new Date(r.clock_in).toLocaleString([], { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
                     const cout = r.clock_out ? new Date(r.clock_out).toLocaleString([], { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
                     return `<tr>

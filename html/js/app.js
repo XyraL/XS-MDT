@@ -98,7 +98,7 @@ function closeMDT() {
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────
-const TOAST_ICONS = { info: 'ℹ', success: '✓', error: '✕', warning: '⚠' };
+const TOAST_ICONS = { info: '<i class="i i-info"></i>', success: '✓', error: '<i class="i i-x"></i>', warning: '<i class="i i-alert"></i>' };
 
 function showToast(title, body = '', type = 'info', duration = 5000) {
     const soundMap = { success:'success', error:'error', warning:'alert', info:'notify' };
@@ -106,7 +106,7 @@ function showToast(title, body = '', type = 'info', duration = 5000) {
     const el = document.createElement('div');
     el.className = `toast ${type}`;
     el.innerHTML = `
-        <div class="toast-icon">${TOAST_ICONS[type] || 'ℹ'}</div>
+        <div class="toast-icon">${TOAST_ICONS[type] || '<i class="i i-info"></i>'}</div>
         <div class="toast-content">
             <div class="toast-title">${title}</div>
             ${body ? `<div class="toast-body">${body}</div>` : ''}
@@ -125,34 +125,34 @@ function showToast(title, body = '', type = 'info', duration = 5000) {
 // actually gets is decided server-side by Config.Departments[dept].panels —
 // this table only says how to label and group them.
 const PANELS = {
-    dashboard  : { label: 'Dashboard',   icon: '▦', section: 'Overview' },
-    roster     : { label: 'Roster',      icon: '◉', section: 'Overview' },
-    map        : { label: 'Live Map',    icon: '🗺', section: 'Overview' },
+    dashboard  : { label: 'Dashboard',   icon: '<i class="i i-dashboard"></i>', section: 'Overview' },
+    roster     : { label: 'Roster',      icon: '<i class="i i-roster"></i>', section: 'Overview' },
+    map        : { label: 'Live Map',    icon: '<i class="i i-map"></i>', section: 'Overview' },
 
-    civilians  : { label: 'Civilians',   icon: '◎', section: 'Lookups' },
-    vehicles   : { label: 'Vehicles',    icon: '◈', section: 'Lookups' },
+    civilians  : { label: 'Civilians',   icon: '<i class="i i-user"></i>', section: 'Lookups' },
+    vehicles   : { label: 'Vehicles',    icon: '<i class="i i-car"></i>', section: 'Lookups' },
 
-    warrants   : { label: 'Warrants',    icon: '⚖', section: 'Records', badge: 'red' },
-    bolos      : { label: 'BOLOs',       icon: '◉', section: 'Records', badge: 'yellow' },
-    arrests    : { label: 'Arrests',     icon: '⬡', section: 'Records' },
-    citations  : { label: 'Citations',   icon: '◧', section: 'Records' },
-    incidents  : { label: 'Incidents',   icon: '◫', section: 'Records' },
-    penal      : { label: 'Penal Codes', icon: '≡', section: 'Records' },
+    warrants   : { label: 'Warrants',    icon: '<i class="i i-scale"></i>', section: 'Records', badge: 'red' },
+    bolos      : { label: 'BOLOs',       icon: '<i class="i i-eye"></i>', section: 'Records', badge: 'yellow' },
+    arrests    : { label: 'Arrests',     icon: '<i class="i i-lock"></i>', section: 'Records' },
+    citations  : { label: 'Citations',   icon: '<i class="i i-file"></i>', section: 'Records' },
+    incidents  : { label: 'Incidents',   icon: '<i class="i i-clipboard"></i>', section: 'Records' },
+    penal      : { label: 'Penal Codes', icon: '<i class="i i-list"></i>', section: 'Records' },
 
-    pcr        : { label: 'Patient Care',    icon: '✚', section: 'Medical' },
-    medhistory : { label: 'Medical Records', icon: '❤', section: 'Medical' },
-    narclog    : { label: 'Narcotics Log',   icon: '💊', section: 'Medical' },
+    pcr        : { label: 'Patient Care',    icon: '<i class="i i-cross"></i>', section: 'Medical' },
+    medhistory : { label: 'Medical Records', icon: '<i class="i i-heart"></i>', section: 'Medical' },
+    narclog    : { label: 'Narcotics Log',   icon: '<i class="i i-pill"></i>', section: 'Medical' },
 
-    fireincidents: { label: 'Fire Incidents', icon: '🔥', section: 'Fire Ops' },
-    hazmat       : { label: 'Hazmat',         icon: '☣', section: 'Fire Ops', badge: 'yellow' },
-    apparatus    : { label: 'Apparatus',      icon: '🚒', section: 'Fire Ops' },
+    fireincidents: { label: 'Fire Incidents', icon: '<i class="i i-flame"></i>', section: 'Fire Ops' },
+    hazmat       : { label: 'Hazmat',         icon: '<i class="i i-hazard"></i>', section: 'Fire Ops', badge: 'yellow' },
+    apparatus    : { label: 'Apparatus',      icon: '<i class="i i-truck"></i>', section: 'Fire Ops' },
 
-    cad        : { label: 'CAD',          icon: '◈', section: 'Dispatch', badge: 'blue' },
-    callhistory: { label: 'Call History', icon: '◷', section: 'Dispatch' },
-    bulletins  : { label: 'Bulletins',    icon: '📌', section: 'Dispatch' },
+    cad        : { label: 'CAD',          icon: '<i class="i i-signal"></i>', section: 'Dispatch', badge: 'blue' },
+    callhistory: { label: 'Call History', icon: '<i class="i i-clock"></i>', section: 'Dispatch' },
+    bulletins  : { label: 'Bulletins',    icon: '<i class="i i-pin"></i>', section: 'Dispatch' },
 
-    mugshots   : { label: 'Mugshots',  icon: '📷', section: 'Personnel' },
-    shiftlog   : { label: 'Shift Log', icon: '⏱', section: 'Personnel' },
+    mugshots   : { label: 'Mugshots',  icon: '<i class="i i-camera"></i>', section: 'Personnel' },
+    shiftlog   : { label: 'Shift Log', icon: '<i class="i i-clock"></i>', section: 'Personnel' },
 };
 
 // Order sections appear in the sidebar. Anything unlisted lands at the end.
@@ -498,15 +498,15 @@ document.getElementById('mdt-nav').addEventListener('click', (e) => {
 });
 
 // ── Modal Factory ─────────────────────────────────────────────────────────
-function createModal(title, bodyHTML, onConfirm, confirmLabel = 'Save', iconEmoji = '◈') {
+function createModal(title, bodyHTML, onConfirm, confirmLabel = 'Save', icon = '<i class="i i-file"></i>') {
     const backdrop = document.createElement('div');
     backdrop.className = 'modal-backdrop';
     backdrop.innerHTML = `
         <div class="modal">
             <div class="modal-header">
-                <div class="modal-header-icon" style="background:var(--accent-glow);color:var(--accent-2);">${iconEmoji}</div>
+                <div class="modal-header-icon">${icon}</div>
                 <div class="modal-title">${title}</div>
-                <button class="modal-close" title="Close">✕</button>
+                <button class="modal-close" title="Close"><i class="i i-x"></i></button>
             </div>
             <div class="modal-body">${bodyHTML}</div>
             <div class="modal-footer">
@@ -603,13 +603,13 @@ function showPanicAlert(data) {
         padding:18px 28px;display:flex;align-items:center;gap:20px;
         animation:panicSlideIn .3s ease;box-shadow:0 8px 40px rgba(239,68,68,.5);`;
     el.innerHTML = `
-        <div style="font-size:28px;animation:panicPulse 1s infinite;">🚨</div>
+        <div style="font-size:28px;animation:panicPulse 1s infinite;"><i class="i i-siren"></i></div>
         <div style="flex:1;">
             <div style="font-size:14px;font-weight:900;letter-spacing:.08em;color:#fca5a5;
                         text-transform:uppercase;">Officer Needs Assistance</div>
             <div style="font-size:16px;font-weight:700;color:#fff;margin:3px 0;">
                 ${data.officerName} · Badge #${data.badge}</div>
-            <div style="font-size:13px;color:#fca5a5;">📍 ${esc(data.location)}</div>
+            <div style="font-size:13px;color:#fca5a5;"><i class="i i-map-pin"></i> ${esc(data.location)}</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
             <span style="font-size:11px;font-weight:800;letter-spacing:.1em;color:#fca5a5;">${data.callNumber}</span>
@@ -710,7 +710,7 @@ function renderSearchHistory(containerEl) {
                     border-radius:6px;transition:background .1s;"
              onmouseenter="this.style.background='var(--bg-hover)'"
              onmouseleave="this.style.background=''">
-            <span style="font-size:13px;opacity:.6;">${h.type === 'plate' ? '🚗' : '👤'}</span>
+            <span style="font-size:13px;opacity:.6;">${h.type === 'plate' ? '<i class="i i-car"></i>' : '<i class="i i-user"></i>'}</span>
             <span style="font-size:13px;font-family:var(--font-mono);color:var(--text-secondary);">${esc(h.query)}</span>
             <span style="margin-left:auto;font-size:10px;color:var(--text-muted);">${timeAgo(h.ts)}</span>
         </div>`).join('');
@@ -731,7 +731,7 @@ function copyToClipboard(text, label = 'Copied') {
     } else { fallback(); }
 }
 
-function copyBtn(text, label = '⎘') {
+function copyBtn(text, label = '<i class="i i-copy"></i>') {
     // A row missing the field would otherwise throw and take down the whole
     // list render, so render nothing rather than blowing up the panel.
     if (text === undefined || text === null || text === '') return '';
@@ -740,8 +740,8 @@ function copyBtn(text, label = '⎘') {
 function _doCopy(btn, text) {
     copyToClipboard(text);
     btn.classList.add('copied');
-    btn.textContent = '✓';
-    setTimeout(() => { btn.classList.remove('copied'); btn.textContent = '⎘'; }, 1500);
+    btn.innerHTML = '<i class="i i-check"></i>';
+    setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = '<i class="i i-copy"></i>'; }, 1500);
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────

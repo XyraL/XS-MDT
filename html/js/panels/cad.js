@@ -21,7 +21,7 @@ function startCADTimer() {
     _cadTimerInterval = setInterval(() => {
         document.querySelectorAll('.elapsed-chip[data-created]').forEach(el => {
             const mins = elapsedMins(el.dataset.created);
-            el.textContent = '⏱ ' + formatElapsed(mins);
+            el.innerHTML = `<i class="i i-clock"></i> ${formatElapsed(mins)}`;
             el.className = 'elapsed-chip ' + elapsedClass(mins);
         });
     }, 30000);
@@ -55,8 +55,8 @@ function loadCAD() {
                 <div class="panel-subtitle">Live call management</div>
             </div>
             <div class="panel-actions">
-                <button class="btn btn-ghost btn-sm" onclick="loadCAD()">↻ Refresh</button>
-                <button class="btn btn-ghost btn-sm" onclick="showCADHistory()">📋 History</button>
+                <button class="btn btn-ghost btn-sm" onclick="loadCAD()"><i class="i i-refresh"></i> Refresh</button>
+                <button class="btn btn-ghost btn-sm" onclick="showCADHistory()"><i class="i i-clipboard"></i> History</button>
                 <button class="btn btn-primary btn-sm" onclick="openNewCallModal()">+ Create Call</button>
             </div>
         </div>
@@ -74,7 +74,7 @@ function loadCAD() {
             </div>
             <div class="cad-detail" id="cad-call-detail">
                 <div class="empty-state" style="height:100%;">
-                    <div class="empty-icon">📻</div>
+                    <div class="empty-icon"><i class="i i-radio"></i></div>
                     <div class="empty-title">Select a call</div>
                     <div class="empty-subtitle">Click any active call to view details and respond</div>
                 </div>
@@ -101,7 +101,7 @@ function renderCallList(calls) {
     if (!calls.length) {
         el.innerHTML = `
             <div class="empty-state">
-                <div class="empty-icon">📻</div>
+                <div class="empty-icon"><i class="i i-radio"></i></div>
                 <div class="empty-title">No active calls</div>
             </div>`;
         return;
@@ -114,13 +114,13 @@ function renderCallList(calls) {
              id="call-card-${c.id}" onclick='openCallDetail(${JSON.stringify(c.id)})'>
             <div class="call-card-top">
                 <span class="call-number">${c.call_number}</span>
-                <span class="priority-badge priority-${pri(c)}" style="margin-left:6px;">${pri(c) === 1 ? '🔴' : pri(c) === 3 ? '🟢' : '🟡'} P${pri(c)}</span>
+                <span class="priority-badge priority-${pri(c)}" style="margin-left:6px;">P${pri(c)}</span>
                 <span class="tag tag-${statusColor(c.status)} ml-auto" style="font-size:9.5px;">${STATUS_LABELS[c.status]||c.status}</span>
             </div>
             <div class="call-type">${c.call_type || c.type}</div>
             <div class="call-location" style="display:flex;align-items:center;gap:8px;">
-                <span>📍 ${esc(c.location)}</span>
-                <span class="elapsed-chip ${elapsedClass(mins)}" data-created="${c.created_at}">⏱ ${formatElapsed(mins)}</span>
+                <span><i class="i i-map-pin"></i> ${esc(c.location)}</span>
+                <span class="elapsed-chip ${elapsedClass(mins)}" data-created="${c.created_at}"><i class="i i-clock"></i> ${formatElapsed(mins)}</span>
             </div>
             <div class="call-units">
                 ${(c.units||[]).map(u=>`<span class="call-unit-chip">${esc(u.name.split(' ')[0])}</span>`).join('')}
@@ -145,13 +145,13 @@ function openCallDetail(callId) {
             <div>
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
                     <div class="font-mono text-muted text-xs">${call.call_number}</div>
-                    <span class="priority-badge priority-${call.priority||2}">${call.priority===1?'🔴':call.priority===3?'🟢':'🟡'} ${PRIORITY_LABELS[call.priority||2]}</span>
+                    <span class="priority-badge priority-${call.priority||2}">${PRIORITY_LABELS[call.priority||2]}</span>
                 </div>
                 <div style="font-size:22px;font-weight:800;margin-bottom:4px;">${call.call_type || call.type}</div>
-                <div style="font-size:13px;color:var(--text-secondary);">📍 ${esc(call.location)}</div>
+                <div style="font-size:13px;color:var(--text-secondary);"><i class="i i-map-pin"></i> ${esc(call.location)}</div>
                 <div style="font-size:11px;color:var(--text-muted);margin-top:4px;display:flex;align-items:center;gap:10px;">
                     <span>Created by ${esc(call.created_by_name||'CAD')} · ${timeAgo(call.created_at)}</span>
-                    <span class="elapsed-chip ${elapsedClass(elapsedMins(call.created_at))}" data-created="${call.created_at}">⏱ ${formatElapsed(elapsedMins(call.created_at))}</span>
+                    <span class="elapsed-chip ${elapsedClass(elapsedMins(call.created_at))}" data-created="${call.created_at}"><i class="i i-clock"></i> ${formatElapsed(elapsedMins(call.created_at))}</span>
                 </div>
             </div>
             <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
@@ -159,7 +159,7 @@ function openCallDetail(callId) {
                     ${STATUS_LABELS[call.status]||call.status}
                 </span>
                 <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
-                    ${call.coords ? `<button class="btn btn-ghost btn-sm" onclick="routeToCall(${JSON.stringify(call.coords).replace(/"/g,"'")}, '${esc(call.location)}')">🗺 GPS Route</button>` : ''}
+                    ${call.coords ? `<button class="btn btn-ghost btn-sm" onclick="routeToCall(${JSON.stringify(call.coords).replace(/"/g,"'")}, '${esc(call.location)}')"><i class="i i-map"></i> GPS Route</button>` : ''}
                     <button class="btn btn-success btn-sm" onclick='respondToCall(${JSON.stringify(callId)})'>✓ Respond</button>
                     <button class="btn btn-ghost btn-sm" onclick='openUpdateStatusModal(${JSON.stringify(callId)},${JSON.stringify(call.status)})'>Update Status</button>
                 </div>
@@ -214,7 +214,7 @@ function openCallDetail(callId) {
             <button class="btn btn-ghost btn-sm" onclick='openAddNoteModal(${JSON.stringify(callId)})'>Add Note</button>
             ${call.status !== 'completed' && call.status !== 'cancelled'
                 ? `<button class="btn btn-success btn-sm ml-auto" onclick='quickClose(${JSON.stringify(callId)},"completed")'>✓ Complete Call</button>
-                   <button class="btn btn-danger btn-sm" onclick='quickClose(${JSON.stringify(callId)},"cancelled")'>✕ Cancel Call</button>`
+                   <button class="btn btn-danger btn-sm" onclick='quickClose(${JSON.stringify(callId)},"cancelled")'><i class="i i-x"></i> Cancel Call</button>`
                 : ''}
         </div>`;
 }
@@ -264,10 +264,10 @@ function openUpdateStatusModal(callId, currentStatus) {
                     MDT.activeCalls = calls || [];
                     renderCallList(MDT.activeCalls);
                     if (status !== 'completed' && status !== 'cancelled') openCallDetail(callId);
-                    else { _selectedCallId = null; document.getElementById('cad-call-detail').innerHTML = '<div class="empty-state"><div class="empty-icon">📻</div><div class="empty-title">Select a call</div></div>'; }
+                    else { _selectedCallId = null; document.getElementById('cad-call-detail').innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="i i-radio"></i></div><div class="empty-title">Select a call</div></div>'; }
                 });
             }
-        }, 'Update Status', '📻');
+        }, 'Update Status', '<i class="i i-radio"></i>');
 }
 
 function openAddNoteModal(callId) {
@@ -282,7 +282,7 @@ function openAddNoteModal(callId) {
             const result = await nuiFetch('addCallNote', { callId, text });
             if (result) { showToast('Note Added', '', 'success'); closeModal(modal); openCallDetail(callId); }
             else showToast('Error', 'Could not add note.', 'error');
-        }, 'Add Note', '📝');
+        }, 'Add Note', '<i class="i i-edit"></i>');
 }
 
 function openNewCallModal() {
@@ -297,9 +297,9 @@ function openNewCallModal() {
             <div class="form-group" style="flex:1;">
                 <label class="form-label">Priority</label>
                 <select class="select" id="call-priority">
-                    <option value="1">🔴 Priority 1 — Emergency</option>
-                    <option value="2" selected>🟡 Priority 2 — Urgent</option>
-                    <option value="3">🟢 Priority 3 — Routine</option>
+                    <option value="1">Priority 1 — Emergency</option>
+                    <option value="2" selected>Priority 2 — Urgent</option>
+                    <option value="3">Priority 3 — Routine</option>
                 </select>
             </div>
         </div>
@@ -330,7 +330,7 @@ function openNewCallModal() {
                 showToast('Error', 'Could not create call.', 'error');
                 btn.textContent = 'Create Call'; btn.disabled = false;
             }
-        }, 'Create Call', '📻');
+        }, 'Create Call', '<i class="i i-radio"></i>');
 }
 
 async function showCADHistory() {
@@ -338,7 +338,7 @@ async function showCADHistory() {
     detail.innerHTML = `<div>${Array(4).fill(0).map(() => `<div class="card mb-2">${skeletonLines(2)}</div>`).join('')}</div>`;
     const calls = await nuiFetch('getCallHistory');
     if (!calls || !calls.length) {
-        detail.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No call history</div></div>`;
+        detail.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="i i-clipboard"></i></div><div class="empty-title">No call history</div></div>`;
         return;
     }
     detail.innerHTML = `

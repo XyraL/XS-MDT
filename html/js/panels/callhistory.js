@@ -27,7 +27,7 @@ function loadCallHistory() {
                 <button class="btn btn-ghost btn-sm" onclick="clearCallHistoryFilters()">Clear</button>
             </div>
             <div id="ch-results">
-                <div class="empty-state"><div class="empty-icon">◷</div><div class="empty-title">Enter filters and press Search</div></div>
+                <div class="empty-state"><div class="empty-icon"><i class="i i-clock"></i></div><div class="empty-title">Enter filters and press Search</div></div>
             </div>
         </div>
     `;
@@ -35,7 +35,7 @@ function loadCallHistory() {
 
 async function searchCallHistory() {
     const el = document.getElementById('ch-results');
-    if (el) el.innerHTML = '<div class="empty-state"><div class="empty-icon">◷</div><div class="empty-title">Searching...</div></div>';
+    if (el) el.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="i i-clock"></i></div><div class="empty-title">Searching...</div></div>';
 
     const data = await nuiFetch('searchCallHistory', {
         callType: (document.getElementById('ch-type')   || {}).value || '',
@@ -53,14 +53,14 @@ function clearCallHistoryFilters() {
         if (el) el.value = '';
     });
     var res = document.getElementById('ch-results');
-    if (res) res.innerHTML = '<div class="empty-state"><div class="empty-icon">◷</div><div class="empty-title">Enter filters and press Search</div></div>';
+    if (res) res.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="i i-clock"></i></div><div class="empty-title">Enter filters and press Search</div></div>';
 }
 
 function renderCallHistory(calls) {
     var el = document.getElementById('ch-results');
     if (!el) return;
     if (!calls.length) {
-        el.innerHTML = '<div class="empty-state"><div class="empty-icon">◷</div><div class="empty-title">No calls found</div></div>';
+        el.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="i i-clock"></i></div><div class="empty-title">No calls found</div></div>';
         return;
     }
     var STATUS_COLORS = {

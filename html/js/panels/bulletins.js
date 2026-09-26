@@ -21,7 +21,7 @@ function loadBulletins() {
         if (!bulletins || bulletins.length === 0) {
             body.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-icon">📌</div>
+                    <div class="empty-icon"><i class="i i-pin"></i></div>
                     <div class="empty-title">No active bulletins</div>
                     <div class="empty-subtitle">Check back later for department notices</div>
                 </div>`;
@@ -38,7 +38,7 @@ function renderBulletinCard(b) {
         <div class="bulletin-card bulletin-${b.priority}">
             <div class="bulletin-header">
                 <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
-                    ${b.pinned ? '<span class="bulletin-pin" title="Pinned">📌</span>' : ''}
+                    ${b.pinned ? '<span class="bulletin-pin" title="Pinned"><i class="i i-pin"></i></span>' : ''}
                     <span class="bulletin-priority-badge bulletin-badge-${b.priority}">${priLabel}</span>
                     <span class="bulletin-title">${esc(b.title)}</span>
                 </div>
@@ -46,9 +46,9 @@ function renderBulletinCard(b) {
                     <span class="bulletin-meta">${timeAgo(b.created_at)}</span>
                     ${isSup ? `
                         <button class="btn btn-ghost btn-xs" onclick="toggleBulletinPin(${b.id},${b.pinned ? 0 : 1})" title="${b.pinned ? 'Unpin' : 'Pin to top'}">
-                            ${b.pinned ? 'Unpin' : '📌 Pin'}
+                            ${b.pinned ? 'Unpin' : '<i class="i i-pin"></i> Pin'}
                         </button>
-                        <button class="btn btn-danger btn-xs" onclick="deleteBulletin(${b.id})">✕</button>
+                        <button class="btn btn-danger btn-xs" onclick="deleteBulletin(${b.id})"><i class="i i-x"></i></button>
                     ` : ''}
                 </div>
             </div>
@@ -108,7 +108,7 @@ function openNewBulletinModal() {
             } else {
                 showToast('Error', 'Could not post bulletin. Supervisor rank required.', 'error');
             }
-        }, 'Post Bulletin', '📌');
+        }, 'Post Bulletin', '<i class="i i-pin"></i>');
 }
 
 async function deleteBulletin(id) {

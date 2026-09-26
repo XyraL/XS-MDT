@@ -34,7 +34,7 @@ function qdRender() {
         const priorityClass = c.priority <= 1 ? 'qd-p1' : c.priority === 2 ? 'qd-p2' : 'qd-p3';
         return `<div class="qd-row ${i === QD.selected ? 'qd-selected' : ''} ${priorityClass}" onclick="qdSelect(${i})">
             <div class="qd-row-left">
-                <span class="qd-icon">${c.icon || '📡'}</span>
+                <span class="qd-icon">${c.icon || '<i class="i i-signal"></i>'}</span>
                 <div class="qd-row-info">
                     <div class="qd-row-type">${c.call_type || 'Call'}</div>
                     <div class="qd-row-loc">${esc(c.location || 'Unknown')}</div>

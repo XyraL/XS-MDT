@@ -120,7 +120,7 @@ function callPopup(c) {
         <div class="cmap-pop">
             <div class="cmap-pop-name">${c.call_number || ('#' + c.id)}</div>
             <div class="cmap-pop-meta">${c.call_type || c.type || 'Call'}</div>
-            <div class="cmap-pop-meta">📍 ${esc(c.location || 'Unknown')}</div>
+            <div class="cmap-pop-meta"><i class="i i-map-pin"></i> ${esc(c.location || 'Unknown')}</div>
             <div class="cmap-pop-actions">
                 <button onclick="switchTab('cad')">Open in CAD</button>
                 ${c.coords ? `<button onclick="mapRouteTo(${c.coords.x||0},${c.coords.y||0})">Route</button>` : ''}
@@ -141,9 +141,9 @@ function initMapPanel() {
             </div>
             <div class="panel-actions">
                 <button class="btn btn-ghost btn-sm" id="map-follow-off" style="display:none;"
-                        onclick="mapFollow(null)">✕ Stop following</button>
-                <button class="btn btn-ghost btn-sm" onclick="mapResetView()">⤢ Reset</button>
-                <button class="btn btn-ghost btn-sm" onclick="refreshMapData()">↻ Refresh</button>
+                        onclick="mapFollow(null)"><i class="i i-x"></i> Stop following</button>
+                <button class="btn btn-ghost btn-sm" onclick="mapResetView()"><i class="i i-refresh"></i> Reset</button>
+                <button class="btn btn-ghost btn-sm" onclick="refreshMapData()"><i class="i i-refresh"></i> Refresh</button>
             </div>
         </div>
         <div class="cmap-body">

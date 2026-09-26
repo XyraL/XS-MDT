@@ -38,7 +38,7 @@ function loadFireIncidents(filter) {
                 <div class="panel-subtitle">Type, cause, response and loss for every run</div>
             </div>
             <div class="panel-actions">
-                <button class="btn btn-ghost btn-sm" onclick="loadFireIncidents()">↻ Refresh</button>
+                <button class="btn btn-ghost btn-sm" onclick="loadFireIncidents()"><i class="i i-refresh"></i> Refresh</button>
                 <button class="btn btn-primary btn-sm" onclick="openNewFireIncident()">+ New Report</button>
             </div>
         </div>
@@ -71,7 +71,7 @@ function fetchFireIncidents(search) {
         if (!rows || rows.length === 0) {
             body.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-icon">🔥</div>
+                    <div class="empty-icon"><i class="i i-flame"></i></div>
                     <div class="empty-title">No incident reports</div>
                     <div class="empty-subtitle">File one after your next run</div>
                 </div>`;
@@ -97,7 +97,7 @@ function fireIncidentCard(r) {
                 <span class="text-xs text-muted font-mono">#${r.id}</span>
             </div>
             <div style="font-size:13.5px;font-weight:600;color:var(--text-primary);margin-bottom:5px;">
-                📍 ${esc(r.address)}
+                <i class="i i-map-pin"></i> ${esc(r.address)}
             </div>
             <div style="font-size:11px;color:var(--text-muted);display:flex;gap:12px;flex-wrap:wrap;">
                 <span>Cause: <strong class="text-secondary">${r.cause}</strong></span>
@@ -214,7 +214,7 @@ function openNewFireIncident() {
         const id = await nuiFetch('createFireIncident', data);
         if (id) { showToast('Report Filed', `Incident #${id} created`, 'success'); loadFireIncidents(); }
         else showToast('Error', 'Could not file the report.', 'error');
-    }, 'File Report', '🔥');
+    }, 'File Report', '<i class="i i-flame"></i>');
 }
 
 async function openFireIncident(id) {
@@ -227,7 +227,7 @@ async function openFireIncident(id) {
         const ok = await nuiFetch('updateFireIncident', data);
         if (ok) { showToast('Report Updated', `Incident #${r.id} saved`, 'success'); loadFireIncidents(); }
         else showToast('Error', 'Could not save — you may not be the author.', 'error');
-    }, 'Save Changes', '🔥');
+    }, 'Save Changes', '<i class="i i-flame"></i>');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -248,7 +248,7 @@ function loadHazmat(filter) {
                 <div class="panel-subtitle">Substance releases, containment and evacuation</div>
             </div>
             <div class="panel-actions">
-                <button class="btn btn-ghost btn-sm" onclick="loadHazmat()">↻ Refresh</button>
+                <button class="btn btn-ghost btn-sm" onclick="loadHazmat()"><i class="i i-refresh"></i> Refresh</button>
                 <button class="btn btn-primary btn-sm" onclick="openNewHazmat()">+ Log Hazmat</button>
             </div>
         </div>
@@ -268,7 +268,7 @@ function loadHazmat(filter) {
         updateHazmatBadge((rows || []).filter(h => h.status !== 'closed').length);
 
         if (!rows || !rows.length) {
-            body.innerHTML = `<div class="empty-state"><div class="empty-icon">☣</div>
+            body.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="i i-hazard"></i></div>
                 <div class="empty-title">No hazmat incidents</div>
                 <div class="empty-subtitle">Nothing active right now</div></div>`;
             return;
@@ -280,7 +280,7 @@ function loadHazmat(filter) {
                 <div class="card-header" style="margin-bottom:8px;">
                     <div style="display:flex;gap:8px;align-items:center;flex:1;flex-wrap:wrap;">
                         <span class="tag ${STATUS_TAG[h.status] || 'tag-gray'}">${h.status.toUpperCase()}</span>
-                        <span class="font-bold" style="font-size:14px;">☣ ${h.substance}</span>
+                        <span class="font-bold" style="font-size:14px;"><i class="i i-hazard"></i> ${h.substance}</span>
                         ${h.un_number ? `<span class="tag tag-gray font-mono">UN${h.un_number}</span>` : ''}
                         ${h.hazard_class ? `<span class="tag tag-orange">Class ${h.hazard_class}</span>` : ''}
                     </div>
@@ -288,7 +288,7 @@ function loadHazmat(filter) {
                         ? `<button class="btn btn-success btn-xs" onclick="closeHazmat(${h.id})">Mark Contained</button>`
                         : ''}
                 </div>
-                <div style="font-size:13px;color:var(--text-primary);margin-bottom:5px;">📍 ${esc(h.location)}</div>
+                <div style="font-size:13px;color:var(--text-primary);margin-bottom:5px;"><i class="i i-map-pin"></i> ${esc(h.location)}</div>
                 <div style="font-size:11px;color:var(--text-muted);display:flex;gap:12px;flex-wrap:wrap;">
                     ${h.quantity ? `<span>Qty: <strong class="text-secondary">${h.quantity}</strong></span>` : ''}
                     <span>Containment: <strong class="text-secondary">${h.containment}</strong></span>
@@ -361,7 +361,7 @@ function openNewHazmat() {
         });
         if (id) { showToast('Hazmat Logged', '', 'success'); loadHazmat(); }
         else showToast('Error', 'Could not log the incident.', 'error');
-    }, 'Log Incident', '☣');
+    }, 'Log Incident', '<i class="i i-hazard"></i>');
 }
 
 async function closeHazmat(id) {
@@ -393,7 +393,7 @@ function loadApparatus() {
                 <div class="panel-subtitle">Fleet status and inspection log</div>
             </div>
             <div class="panel-actions" id="app-actions">
-                <button class="btn btn-ghost btn-sm" onclick="loadApparatus()">↻ Refresh</button>
+                <button class="btn btn-ghost btn-sm" onclick="loadApparatus()"><i class="i i-refresh"></i> Refresh</button>
             </div>
         </div>
         <div class="panel-body" id="app-body">${skeletonLines(3)}</div>`;
@@ -412,7 +412,7 @@ function loadApparatus() {
         }
 
         if (!d.apparatus.length) {
-            body.innerHTML = `<div class="empty-state"><div class="empty-icon">🚒</div>
+            body.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="i i-truck"></i></div>
                 <div class="empty-title">No apparatus on the roster</div>
                 <div class="empty-subtitle">${d.isSupervisor ? 'Add your first unit' : 'A supervisor needs to add units'}</div></div>`;
             return;
@@ -425,7 +425,7 @@ function loadApparatus() {
                 <div class="card mb-2">
                     <div class="card-header" style="margin-bottom:8px;">
                         <div style="display:flex;gap:8px;align-items:center;flex:1;flex-wrap:wrap;">
-                            <span class="font-bold" style="font-size:15px;">🚒 ${a.unit_id}</span>
+                            <span class="font-bold" style="font-size:15px;"><i class="i i-truck"></i> ${a.unit_id}</span>
                             <span class="tag tag-gray">${a.type}</span>
                             <span class="tag ${esc(st.tag)}">${esc(st.label)}</span>
                             ${a.station ? `<span class="text-xs text-muted">${a.station}</span>` : ''}
@@ -492,7 +492,7 @@ function openApparatusForm(a) {
         });
         if (ok) { showToast('Apparatus Saved', '', 'success'); loadApparatus(); }
         else showToast('Error', 'Supervisor access required.', 'error');
-    }, 'Save', '🚒');
+    }, 'Save', '<i class="i i-truck"></i>');
 }
 
 async function deleteApparatus(id) {
@@ -544,7 +544,7 @@ function openInspection(apparatusId, unitLabel) {
         });
         if (ok) { showToast('Inspection Logged', '', 'success'); loadApparatus(); }
         else showToast('Error', 'Could not log the inspection.', 'error');
-    }, 'Log Check', '🚒');
+    }, 'Log Check', '<i class="i i-truck"></i>');
 }
 
 async function viewApparatusLog(apparatusId, unitLabel) {
@@ -565,5 +565,5 @@ async function viewApparatusLog(apparatusId, unitLabel) {
                     ${l.notes ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${esc(l.notes)}</div>` : ''}
                 </div>`).join('')
             : '<div class="text-xs text-muted">No inspections logged for this unit.</div>',
-        () => closeModal(m), 'Close', '🚒');
+        () => closeModal(m), 'Close', '<i class="i i-truck"></i>');
 }

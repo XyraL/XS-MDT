@@ -13,16 +13,16 @@ function loadMugshots() {
             </div>
             <div class="panel-actions">
                 <div class="search-wrap" style="width:260px">
-                    <span class="search-icon">⌕</span>
+                    <span class="search-icon"><i class="i i-search"></i></span>
                     <input class="search-input" id="mugshot-search" placeholder="Search by name..."
                         oninput="filterMugshots(this.value)" value="${_mugshotSearch}">
                 </div>
-                <button class="btn btn-ghost btn-sm" onclick="loadMugshots()">↻ Refresh</button>
+                <button class="btn btn-ghost btn-sm" onclick="loadMugshots()"><i class="i i-refresh"></i> Refresh</button>
             </div>
         </div>
         <div class="panel-body">
             <div id="mugshot-grid" class="mugshot-grid">
-                <div class="empty-state"><div class="empty-icon">📷</div><div class="empty-title">Loading mugshots...</div></div>
+                <div class="empty-state"><div class="empty-icon"><i class="i i-camera"></i></div><div class="empty-title">Loading mugshots...</div></div>
             </div>
         </div>
     `;
@@ -46,7 +46,7 @@ function renderMugshotGrid(items) {
     const el = document.getElementById('mugshot-grid');
     if (!el) return;
     if (!items || !items.length) {
-        el.innerHTML = '<div class="empty-state"><div class="empty-icon">📷</div><div class="empty-title">No mugshots on file</div></div>';
+        el.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="i i-camera"></i></div><div class="empty-title">No mugshots on file</div></div>';
         return;
     }
     el.innerHTML = items.map(function(c) {
@@ -54,13 +54,13 @@ function renderMugshotGrid(items) {
         const arrests  = c.arrest_count || 0;
         const warrants = c.active_warrants || 0;
         const wBadge   = warrants > 0
-            ? `<span class="badge" style="background:rgba(239,68,68,0.15);color:#ef4444;font-size:10px">⚖ ${warrants}w</span>`
+            ? `<span class="badge" style="background:rgba(239,68,68,0.15);color:#ef4444;font-size:10px"><i class="i i-scale"></i> ${warrants}w</span>`
             : '';
         return `<div class="mugshot-card" onclick="switchTab('civilians');setTimeout(function(){openCivilianProfile('${c.citizenid}')},80)">
             <div class="mugshot-img-wrap">
                 <img src="${esc(c.image)}" alt="${esc(name)}" class="mugshot-img"
                      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                <div class="mugshot-fallback" style="display:none">👤</div>
+                <div class="mugshot-fallback" style="display:none"><i class="i i-user"></i></div>
             </div>
             <div class="mugshot-info">
                 <div class="mugshot-name">${name}</div>

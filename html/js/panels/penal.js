@@ -15,14 +15,14 @@ function renderChargePicker(pickerId, selectedId) {
     container.innerHTML = `
         <div class="charge-picker">
             <div class="charge-picker-search">
-                <input id="${pickerId}-search" placeholder="🔍  Filter charges by name or code..." autocomplete="off">
+                <input id="${pickerId}-search" placeholder="Filter charges by name or code..." autocomplete="off">
             </div>
             <div class="charge-picker-list" id="${pickerId}-list">
                 ${MDT.penalCodes.map(cat => `
                     <div class="charge-category">
                         <div class="charge-cat-header" onclick="toggleChargeCategory(this)">
                             <span>${cat.category}</span>
-                            <span style="opacity:0.5;font-size:11px;">${cat.codes.length} charges ▸</span>
+                            <span class="charge-cat-count">${cat.codes.length} charges<i class="i i-chevron"></i></span>
                         </div>
                         <div class="charge-list">
                             ${cat.codes.map(code => `
@@ -56,12 +56,8 @@ function renderChargePicker(pickerId, selectedId) {
 }
 
 function toggleChargeCategory(header) {
-    const list = header.nextElementSibling;
-    list.classList.toggle('open');
-    const arrow = header.querySelector('span:last-child');
-    if (arrow) arrow.textContent = list.classList.contains('open')
-        ? `${header.querySelector('span').nextElementSibling?.textContent?.split(' ')[0] || ''} charges ▾`
-        : `${header.querySelector('span').nextElementSibling?.textContent?.split(' ')[0] || ''} charges ▸`;
+    header.nextElementSibling.classList.toggle("open");
+    header.classList.toggle("open");
 }
 
 function toggleCharge(itemEl, pickerId, selectedId) {
@@ -138,7 +134,7 @@ function loadPenalCodes() {
             </div>
             <div class="panel-actions">
                 <div class="search-bar" style="width:240px;">
-                    <span class="search-icon">🔍</span>
+                    <span class="search-icon"><i class="i i-search"></i></span>
                     <input type="text" id="penal-filter" placeholder="Search codes or names...">
                 </div>
                 ${isAdmin ? `<button class="btn btn-primary btn-sm" onclick="openAddPenalCodeModal()">+ Add Code</button>` : ''}
@@ -152,7 +148,7 @@ function loadPenalCodes() {
         const body = document.getElementById('penal-body');
         if (!body) return;
         if (!codes.length) {
-            body.innerHTML = `<div class="empty-state"><div class="empty-icon">⚖</div><div class="empty-title">No results found</div></div>`;
+            body.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="i i-scale"></i></div><div class="empty-title">No results found</div></div>`;
             return;
         }
         body.innerHTML = codes.map(cat => `
@@ -198,7 +194,7 @@ function loadPenalCodes() {
                                             </button>
                                             <button class="btn btn-danger btn-xs"
                                                 onclick="event.stopPropagation();deletePenalCode(${c.id},'${c.name.replace(/'/g,"\\'")}')">
-                                                ✕
+                                                <i class="i i-x"></i>
                                             </button>
                                         </div>
                                     </td>` : ''}
@@ -304,7 +300,7 @@ function openAddPenalCodeModal() {
                 showToast('Error', 'Could not add penal code. Check your grade.', 'error');
                 btn.textContent = 'Add Code'; btn.disabled = false;
             }
-        }, 'Add Code', '⚖');
+        }, 'Add Code', '<i class="i i-scale"></i>');
 }
 
 function openEditPenalCodeModal(code) {
@@ -324,13 +320,13 @@ function openEditPenalCodeModal(code) {
                 showToast('Error', 'Could not update penal code.', 'error');
                 btn.textContent = 'Save Changes'; btn.disabled = false;
             }
-        }, 'Save Changes', '⚖');
+        }, 'Save Changes', '<i class="i i-scale"></i>');
 }
 
 async function deletePenalCode(id, name) {
     const modal = createModal('Delete Penal Code', `
         <div class="alert alert-danger">
-            <span>⚠</span>
+            <span><i class="i i-alert"></i></span>
             <div>
                 <strong>Delete "${name}"?</strong><br>
                 <span style="font-size:12px;">This will permanently remove the code from all charge pickers.
@@ -347,7 +343,7 @@ async function deletePenalCode(id, name) {
             } else {
                 showToast('Error', 'Could not delete penal code.', 'error');
             }
-        }, 'Delete', '🗑');
+        }, 'Delete', '<i class="i i-trash"></i>');
 }
 
 window.renderChargePicker = renderChargePicker;

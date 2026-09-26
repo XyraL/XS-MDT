@@ -84,7 +84,7 @@ function loadIncidents(filter = 'all') {
                 <button class="btn btn-ghost btn-sm ${filter==='drafts'?'active':''}" onclick="loadIncidents('drafts')">Drafts</button>
                 <button class="btn btn-ghost btn-sm ${filter==='open'?'active':''}" onclick="loadIncidents('open')">Open</button>
                 <button class="btn btn-ghost btn-sm ${filter==='review'?'active':''}" onclick="loadIncidents('review')">Review</button>
-                <input class="input input-sm" id="inc-search" placeholder="🔍 Search reports…" style="width:190px;"
+                <input class="input input-sm" id="inc-search" placeholder="Search reports…" style="width:190px;"
                        oninput="queueIncidentSearch()">
                 <button class="btn btn-primary btn-sm" onclick="openNewIncidentModal()">+ New Report</button>
             </div>
@@ -102,7 +102,7 @@ function loadIncidents(filter = 'all') {
     nuiFetch('getIncidents', query).then(incidents => {
         const body = document.getElementById('incidents-body');
         if (!incidents || incidents.length === 0) {
-            body.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No incident reports found</div></div>';
+            body.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="i i-clipboard"></i></div><div class="empty-title">No incident reports found</div></div>';
             return;
         }
         body.innerHTML = incidentCards(incidents);
@@ -118,7 +118,7 @@ function incidentCards(incidents) {
         <div class="card mb-2" onclick="openIncidentDetail(${i.id})" style="cursor:pointer;">
             <div class="card-header">
                 <div class="card-title">
-                    <div class="card-title-icon" style="background:rgba(99,102,241,.12);color:var(--accent-2);">📋</div>
+                    <div class="card-title-icon"><i class="i i-clipboard"></i></div>
                     <span class="font-bold">${esc(i.title)}</span>
                     ${sev ? `<span class="tag ${esc(sev.tag)}" style="margin-left:8px;">${esc(sev.label)}</span>` : ''}
                     ${statusTag(i.status)}
@@ -128,8 +128,8 @@ function incidentCards(incidents) {
                 </div>
             </div>
             <div style="display:flex;align-items:center;gap:12px;font-size:11.5px;color:var(--text-muted);">
-                <span>👮 ${(i.involved_officers||[]).length} officer(s)</span>
-                <span>👤 ${(i.involved_civilians||[]).length} civilian(s)</span>
+                <span><i class="i i-badge"></i> ${(i.involved_officers||[]).length} officer(s)</span>
+                <span><i class="i i-user"></i> ${(i.involved_civilians||[]).length} civilian(s)</span>
                 <span style="margin-left:auto;" class="font-mono">${fmtDateShort(i.created_at)}</span>
             </div>
             ${renderRecordTags('incident', i.id, i.tags)}
@@ -161,7 +161,7 @@ async function runIncidentSearch() {
     if (input.value.trim() !== query) return;   // they kept typing
 
     if (!results || !results.length) {
-        body.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">Nothing matched "${esc(query)}"</div><div class="empty-subtitle">Case numbers, titles, narratives and officers are all searched.</div></div>`;
+        body.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="i i-search"></i></div><div class="empty-title">Nothing matched "${esc(query)}"</div><div class="empty-subtitle">Case numbers, titles, narratives and officers are all searched.</div></div>`;
         return;
     }
     body.innerHTML = incidentCards(results);
@@ -180,7 +180,7 @@ async function openIncidentDetail(id) {
 
     const incident = await nuiFetch('getIncident', id);
     if (!incident) {
-        document.getElementById('incident-detail').innerHTML = '<div class="empty-state"><div class="empty-icon">⚠</div><div class="empty-text">Incident not found</div></div>';
+        document.getElementById('incident-detail').innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="i i-alert"></i></div><div class="empty-text">Incident not found</div></div>';
         return;
     }
 
@@ -193,14 +193,14 @@ async function openIncidentDetail(id) {
     if (actions && canEdit) {
         actions.innerHTML = `
             <button class="btn btn-ghost btn-sm" onclick="loadIncidents()">← Back</button>
-            <button class="btn btn-ghost btn-sm" onclick="printIncidentReport(${id})">🖨 Print</button>
-            <button class="btn btn-ghost btn-sm" onclick="openEditIncidentModal(${id})">✏ Edit</button>
+            <button class="btn btn-ghost btn-sm" onclick="printIncidentReport(${id})"><i class="i i-printer"></i> Print</button>
+            <button class="btn btn-ghost btn-sm" onclick="openEditIncidentModal(${id})"><i class="i i-edit"></i> Edit</button>
             ${statusControl(incident)}
-            <button class="btn btn-danger btn-sm" onclick="deleteIncident(${id})">🗑 Delete</button>`;
+            <button class="btn btn-danger btn-sm" onclick="deleteIncident(${id})"><i class="i i-trash"></i> Delete</button>`;
     } else if (actions) {
         actions.innerHTML = `
             <button class="btn btn-ghost btn-sm" onclick="loadIncidents()">← Back</button>
-            <button class="btn btn-ghost btn-sm" onclick="printIncidentReport(${id})">🖨 Print</button>`;
+            <button class="btn btn-ghost btn-sm" onclick="printIncidentReport(${id})"><i class="i i-printer"></i> Print</button>`;
     }
 
     document.getElementById('incident-detail').innerHTML = `
@@ -228,7 +228,7 @@ async function openIncidentDetail(id) {
         <div class="card" style="margin-bottom:14px;">
             <div class="card-header">
                 <div class="card-title">
-                    <div class="card-title-icon" style="background:rgba(245,165,36,.12);color:var(--yellow);">🗃</div>
+                    <div class="card-title-icon"><i class="i i-archive"></i></div>
                     Evidence (${(incident.evidence || []).length})
                 </div>
                 <button class="btn btn-ghost btn-sm" onclick="openEvidenceModal(${incident.id})">+ Log Evidence</button>
@@ -574,7 +574,7 @@ function openNewIncidentModal() {
             <textarea class="textarea" id="inc-narrative" style="min-height:240px;" placeholder="Write a detailed account of the incident. Include timeline of events, actions taken, evidence collected, etc." oninput="queueDraftAutosave()"></textarea>
             <div class="form-hint" id="inc-autosave-note">Saved to this machine as you type, so a misclick cannot lose it.</div>
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="saveIncidentDraft()">💾 Save as draft</button>
+        <button class="btn btn-ghost btn-sm" onclick="saveIncidentDraft()"><i class="i i-save"></i> Save as draft</button>
         <div class="form-row">
             <div class="form-group" style="flex:1;">
                 <label class="form-label">Link Civilians</label>
@@ -855,7 +855,7 @@ function openEditIncidentModal(id) {
 async function deleteIncident(id) {
     const modal = createModal('Delete Incident Report', `
         <div class="alert alert-danger">
-            <span>⚠</span>
+            <span><i class="i i-alert"></i></span>
             <div>
                 <strong>Permanently delete Report #${id}?</strong><br>
                 <span style="font-size:12px;">This cannot be undone. The report will be removed from the system entirely.</span>
@@ -870,7 +870,7 @@ async function deleteIncident(id) {
             } else {
                 showToast('Error', 'Could not delete report. Check your permissions.', 'error');
             }
-        }, 'Delete Report', '🗑');
+        }, 'Delete Report', '<i class="i i-trash"></i>');
 }
 
 function openCaseNumberModal(incidentId, currentCase) {
@@ -896,7 +896,7 @@ function openCaseNumberModal(incidentId, currentCase) {
             } else {
                 showToast('Error', 'Could not update case number', 'error');
             }
-        }, 'Save', '◈');
+        }, 'Save', '<i class="i i-folder"></i>');
 }
 
 async function viewLinkedIncidents(caseNumber) {
@@ -905,13 +905,13 @@ async function viewLinkedIncidents(caseNumber) {
         <div class="panel-title">Case: ${caseNumber}</div>
         <div class="panel-actions"><button class="btn btn-ghost btn-sm" onclick="loadIncidents()">← Back</button></div>
     </div>
-    <div class="panel-body" id="case-incidents-list"><div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">Loading...</div></div></div>`;
+    <div class="panel-body" id="case-incidents-list"><div class="empty-state"><div class="empty-icon"><i class="i i-folder"></i></div><div class="empty-text">Loading...</div></div></div>`;
 
     const incidents = await nuiFetch('getIncidentsByCase', caseNumber);
     const el = document.getElementById('case-incidents-list');
     if (!el) return;
     if (!incidents || !incidents.length) {
-        el.innerHTML = '<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No incidents found for this case</div></div>';
+        el.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="i i-folder"></i></div><div class="empty-text">No incidents found for this case</div></div>';
         return;
     }
     el.innerHTML = incidents.map(function(i) {
@@ -940,16 +940,16 @@ window.unlinkRecord                 = unlinkRecord;
 window.refreshLinkedRecordsDisplay  = refreshLinkedRecordsDisplay;
 
 const EVIDENCE_LOOK = {
-    photo: ['📷', 'Photo'],
-    item:  ['📦', 'Item'],
-    note:  ['📝', 'Note'],
+    photo: ['<i class="i i-camera"></i>', 'Photo'],
+    item:  ['<i class="i i-box"></i>', 'Item'],
+    note:  ['<i class="i i-edit"></i>', 'Note'],
 };
 
 function renderEvidenceList(list, incidentId) {
     if (!list.length) return '<div class="text-muted text-sm">Nothing logged yet.</div>';
 
     return list.map(e => {
-        const [icon, kindLabel] = EVIDENCE_LOOK[e.kind] || ['🗃', e.kind];
+        const [icon, kindLabel] = EVIDENCE_LOOK[e.kind] || ['<i class="i i-archive"></i>', e.kind];
         return `
         <div style="padding:9px 0;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start;">
             ${e.kind === 'photo' && e.photo
@@ -967,7 +967,7 @@ function renderEvidenceList(list, incidentId) {
                 </div>
             </div>
             <button class="btn btn-ghost btn-sm" title="Remove — your own within 15 minutes, or supervisor"
-                    onclick="removeEvidence(${e.id}, ${incidentId})">✕</button>
+                    onclick="removeEvidence(${e.id}, ${incidentId})"><i class="i i-x"></i></button>
         </div>`;
     }).join('');
 }
@@ -978,9 +978,9 @@ function openEvidenceModal(incidentId) {
             <div class="form-group" style="flex:1;">
                 <label class="form-label">Type</label>
                 <select class="select" id="ev-kind" onchange="document.getElementById('ev-photo-row').style.display = this.value === 'photo' ? '' : 'none'">
-                    <option value="item">📦 Item</option>
-                    <option value="photo">📷 Photo</option>
-                    <option value="note">📝 Note</option>
+                    <option value="item"><i class="i i-box"></i> Item</option>
+                    <option value="photo"><i class="i i-camera"></i> Photo</option>
+                    <option value="note"><i class="i i-edit"></i> Note</option>
                 </select>
             </div>
             <div class="form-group" style="flex:2;">

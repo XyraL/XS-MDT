@@ -7,7 +7,7 @@ function loadBolos() {
                 <div class="panel-subtitle">Be On Lookout — active alerts</div>
             </div>
             <div class="panel-actions">
-                <button class="btn btn-ghost btn-sm" onclick="loadBolos()">↻ Refresh</button>
+                <button class="btn btn-ghost btn-sm" onclick="loadBolos()"><i class="i i-refresh"></i> Refresh</button>
                 <button class="btn btn-primary btn-sm" onclick="openIssueBolo()">+ Issue BOLO</button>
             </div>
         </div>
@@ -23,7 +23,7 @@ function loadBolos() {
         if (!bolos || bolos.length === 0) {
             body.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-icon">📡</div>
+                    <div class="empty-icon"><i class="i i-signal"></i></div>
                     <div class="empty-title">No active BOLOs</div>
                     <div class="empty-subtitle">All clear — no lookouts in effect</div>
                 </div>`;
@@ -35,12 +35,12 @@ function loadBolos() {
 
         let html = '';
         if (vehicles.length) {
-            html += `<div class="text-xs uppercase font-black text-muted mb-2" style="letter-spacing:.1em;">🚗 Vehicle BOLOs (${vehicles.length})</div>`;
+            html += `<div class="text-xs uppercase font-black text-muted mb-2" style="letter-spacing:.1em;"><i class="i i-car"></i> Vehicle BOLOs (${vehicles.length})</div>`;
             html += vehicles.map(b => boloCard(b)).join('');
         }
         if (persons.length) {
             if (vehicles.length) html += '<div class="divider"></div>';
-            html += `<div class="text-xs uppercase font-black text-muted mb-2" style="letter-spacing:.1em;">👤 Person BOLOs (${persons.length})</div>`;
+            html += `<div class="text-xs uppercase font-black text-muted mb-2" style="letter-spacing:.1em;"><i class="i i-user"></i> Person BOLOs (${persons.length})</div>`;
             html += persons.map(b => boloCard(b)).join('');
         }
         body.innerHTML = html;
@@ -56,7 +56,7 @@ function boloCard(b) {
              onmouseenter="this.style.borderColor='${accentColor}'" onmouseleave="this.style.borderColor='${accentColor}'">
             <div class="card-header" style="margin-bottom:8px;">
                 <div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap;">
-                    <span class="tag ${tagClass}">${isVehicle ? '🚗 VEHICLE' : '👤 PERSON'}</span>
+                    <span class="tag ${tagClass}">${isVehicle ? '<i class="i i-car"></i> VEHICLE' : '<i class="i i-user"></i> PERSON'}</span>
                     ${b.plate ? `<span class="font-mono font-bold" style="font-size:15px;color:var(--orange);">${esc(b.plate)}</span>` : ''}
                     <span class="text-xs text-muted font-mono">${timeAgo(b.created_at)}</span>
                 </div>
@@ -85,8 +85,8 @@ function openIssueBolo(prefillType = 'person', prefillPlate = '') {
             <div class="form-group">
                 <label class="form-label">BOLO Type</label>
                 <select class="select" id="bolo-type" onchange="toggleBoloPlate(this.value)">
-                    <option value="person" ${prefillType==='person'?'selected':''}>👤 Person</option>
-                    <option value="vehicle" ${prefillType==='vehicle'?'selected':''}>🚗 Vehicle</option>
+                    <option value="person" ${prefillType==='person'?'selected':''}><i class="i i-user"></i> Person</option>
+                    <option value="vehicle" ${prefillType==='vehicle'?'selected':''}><i class="i i-car"></i> Vehicle</option>
                 </select>
             </div>
             <div class="form-group" id="bolo-plate-group" style="${prefillType!=='vehicle'?'opacity:.4;pointer-events:none;':''}">
@@ -105,7 +105,7 @@ function openIssueBolo(prefillType = 'person', prefillPlate = '') {
             <input class="input" id="bolo-reason" placeholder="e.g. Armed and dangerous, Felony warrant, Stolen vehicle, Suspect in shooting">
         </div>
         <div class="alert alert-warn">
-            <span>📡</span>
+            <span><i class="i i-signal"></i></span>
             <span>This BOLO will be broadcast to all on-duty officers immediately.</span>
         </div>`,
         async () => {
@@ -126,7 +126,7 @@ function openIssueBolo(prefillType = 'person', prefillPlate = '') {
                 showToast('Error', 'Could not issue BOLO.', 'error');
                 btn.textContent = 'Issue BOLO'; btn.disabled = false;
             }
-        }, 'Issue BOLO', '📡');
+        }, 'Issue BOLO', '<i class="i i-signal"></i>');
 }
 
 function toggleBoloPlate(type) {

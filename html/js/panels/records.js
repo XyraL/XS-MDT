@@ -46,7 +46,7 @@ function openNewArrestModal(prefillPerson = null) {
             </label>
         </div>
         <div class="alert alert-warn">
-            <span>⚠</span>
+            <span><i class="i i-alert"></i></span>
             <span>Logging this arrest will appear permanently on the civilian's record.</span>
         </div>`,
         async () => {
@@ -70,7 +70,7 @@ function openNewArrestModal(prefillPerson = null) {
                 showToast('Error', 'Could not log arrest.', 'error');
                 btn.textContent = 'Log Arrest'; btn.disabled = false;
             }
-        }, 'Log Arrest', '🔒');
+        }, 'Log Arrest', '<i class="i i-lock"></i>');
 
     // Initialize name search
     const ns = new NameSearch({
@@ -149,7 +149,7 @@ function openNewCitationModal(prefillPerson = null) {
                 showToast('Error', 'Could not issue citation.', 'error');
                 btn.textContent = 'Issue Citation'; btn.disabled = false;
             }
-        }, 'Issue Citation', '📄');
+        }, 'Issue Citation', '<i class="i i-file"></i>');
 
     new NameSearch({
         container: '#cite-person-search',
@@ -178,11 +178,11 @@ function _filterRow(type) {
     return `
         <div class="records-filter-row">
             <div class="search-bar" style="flex:1.4;min-width:160px;">
-                <span class="search-icon">👤</span>
+                <span class="search-icon"><i class="i i-user"></i></span>
                 <input type="text" id="${pfx}-search-input" placeholder="Civilian name or Citizen ID…" autocomplete="off">
             </div>
             <div class="search-bar" style="flex:1;min-width:140px;">
-                <span class="search-icon">👮</span>
+                <span class="search-icon"><i class="i i-badge"></i></span>
                 <input type="text" id="${pfx}-officer-input" placeholder="Officer name…" autocomplete="off">
             </div>
             <span class="filter-label">From</span>
@@ -225,7 +225,7 @@ function initArrestsPanel() {
                 <div class="panel-subtitle">Recent 25 by default — use filters to narrow results</div>
             </div>
             <div class="panel-actions">
-                <button class="btn btn-danger btn-sm" onclick="openNewArrestModal()">🔒 Log Arrest</button>
+                <button class="btn btn-danger btn-sm" onclick="openNewArrestModal()"><i class="i i-lock"></i> Log Arrest</button>
             </div>
         </div>
         ${_filterRow('arrest')}
@@ -240,7 +240,7 @@ async function loadRecentArrests() {
     const body = document.getElementById('arrests-body');
     if (!body) return;
     const results = await nuiFetch('getRecentArrests');
-    renderRecordBody(body, results, renderArrestsList, '🔒', 'No arrest records yet');
+    renderRecordBody(body, results, renderArrestsList, '<i class="i i-lock"></i>', 'No arrest records yet');
 }
 
 async function searchArrests() {
@@ -249,7 +249,7 @@ async function searchArrests() {
     const body = document.getElementById('arrests-body');
     body.innerHTML = Array(3).fill(0).map(() => `<div class="card mb-2">${skeletonLines(3)}</div>`).join('');
     const results = await nuiFetch('searchArrests', filters);
-    renderRecordBody(body, results, renderArrestsList, '🔒', 'No arrest records found');
+    renderRecordBody(body, results, renderArrestsList, '<i class="i i-lock"></i>', 'No arrest records found');
 }
 
 function clearArrestFilters() {
@@ -268,7 +268,7 @@ function initCitationsPanel() {
                 <div class="panel-subtitle">Recent 25 by default — use filters to narrow results</div>
             </div>
             <div class="panel-actions">
-                <button class="btn btn-success btn-sm" onclick="openNewCitationModal()">📄 Issue Citation</button>
+                <button class="btn btn-success btn-sm" onclick="openNewCitationModal()"><i class="i i-file"></i> Issue Citation</button>
             </div>
         </div>
         ${_filterRow('citation')}
@@ -283,7 +283,7 @@ async function loadRecentCitations() {
     const body = document.getElementById('citations-body');
     if (!body) return;
     const results = await nuiFetch('getRecentCitations');
-    renderRecordBody(body, results, renderCitationsList, '📄', 'No citations yet');
+    renderRecordBody(body, results, renderCitationsList, '<i class="i i-file"></i>', 'No citations yet');
 }
 
 async function searchCitations() {
@@ -292,7 +292,7 @@ async function searchCitations() {
     const body = document.getElementById('citations-body');
     body.innerHTML = Array(3).fill(0).map(() => `<div class="card mb-2">${skeletonLines(3)}</div>`).join('');
     const results = await nuiFetch('searchCitations', filters);
-    renderRecordBody(body, results, renderCitationsList, '📄', 'No citations found');
+    renderRecordBody(body, results, renderCitationsList, '<i class="i i-file"></i>', 'No citations found');
 }
 
 function clearCitationFilters() {
@@ -409,7 +409,7 @@ function renderArrestsList(list) {
             <div class="card mb-2">
                 <div class="card-header" style="cursor:pointer;" onclick="toggleRecordDetail('${detailId}',this)">
                     <div class="card-title">
-                        <div class="card-title-icon" style="background:rgba(239,68,68,.12);color:#f87171;">🔒</div>
+                        <div class="card-title-icon"><i class="i i-lock"></i></div>
                         ${esc(a.civilian_name || a.citizenid)}
                         ${copyBtn(a.citizenid)}
                         <span class="tag tag-red" style="margin-left:8px;">ARREST</span>
@@ -423,9 +423,9 @@ function renderArrestsList(list) {
                     ${charges.map(c => chargeTypeTag(c.type||'misdemeanor') + ` <span style="font-size:11px;vertical-align:middle;">${esc(c.name||c.title)}</span>`).join(' ')}
                 </div>
                 <div style="display:flex;gap:16px;font-size:12px;color:var(--text-muted);">
-                    ${a.fine > 0 ? `<span>💰 <strong style="color:var(--green);">${dollarFmt(a.fine)}</strong></span>` : ''}
-                    ${a.jail_time > 0 ? `<span>⏰ <strong style="color:var(--yellow);">${a.jail_time} min</strong></span>` : ''}
-                    ${a.location ? `<span>📍 ${esc(a.location)}</span>` : ''}
+                    ${a.fine > 0 ? `<span><i class="i i-cash"></i><strong style="color:var(--green);">${dollarFmt(a.fine)}</strong></span>` : ''}
+                    ${a.jail_time > 0 ? `<span><i class="i i-clock"></i><strong style="color:var(--yellow);">${a.jail_time} min</strong></span>` : ''}
+                    ${a.location ? `<span><i class="i i-map-pin"></i> ${esc(a.location)}</span>` : ''}
                 </div>
                 ${hasNarr ? `
                 <div id="${detailId}" class="record-detail-body" style="display:none;">
@@ -455,7 +455,7 @@ function renderCitationsList(list) {
             <div class="card mb-2" id="citation-card-${c.id}">
                 <div class="card-header">
                     <div class="card-title">
-                        <div class="card-title-icon" style="background:rgba(99,102,241,.12);color:var(--accent-2);">📄</div>
+                        <div class="card-title-icon"><i class="i i-file"></i></div>
                         ${esc(c.civilian_name || c.citizenid)}
                         ${copyBtn(c.citizenid)}
                         <span class="tag tag-blue" style="margin-left:8px;">CITATION</span>
@@ -470,8 +470,8 @@ function renderCitationsList(list) {
                     ${charges.map(ch => chargeTypeTag(ch.type||'infraction') + ` <span style="font-size:11px;vertical-align:middle;">${esc(ch.name||ch.title)}</span>`).join(' ')}
                 </div>
                 <div style="display:flex;gap:16px;font-size:12px;color:var(--text-muted);">
-                    ${c.fine > 0 ? `<span>💰 <strong style="color:var(--yellow);">${dollarFmt(c.fine)}</strong></span>` : ''}
-                    ${c.location ? `<span>📍 ${esc(c.location)}</span>` : ''}
+                    ${c.fine > 0 ? `<span><i class="i i-cash"></i><strong style="color:var(--yellow);">${dollarFmt(c.fine)}</strong></span>` : ''}
+                    ${c.location ? `<span><i class="i i-map-pin"></i> ${esc(c.location)}</span>` : ''}
                     ${c.notes ? `<span style="color:var(--text-secondary);">${esc(c.notes)}</span>` : ''}
                 </div>
                 ${renderRecordTags('citation', c.id, c.tags)}

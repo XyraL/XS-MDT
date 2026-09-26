@@ -9,7 +9,7 @@ function initVehiclePanel() {
         </div>
         <div class="search-wrap">
             <div class="search-bar">
-                <span class="search-icon">🚗</span>
+                <span class="search-icon"><i class="i i-car"></i></span>
                 <input type="text" id="plate-search" placeholder="Enter license plate number..."
                        autocomplete="off" maxlength="8" style="text-transform:uppercase;font-family:var(--font-mono);font-size:15px;font-weight:700;letter-spacing:.08em;">
             </div>
@@ -17,7 +17,7 @@ function initVehiclePanel() {
         </div>
         <div class="panel-body" id="vehicle-results">
             <div class="empty-state">
-                <div class="empty-icon">🚗</div>
+                <div class="empty-icon"><i class="i i-car"></i></div>
                 <div class="empty-title">Enter a plate number above</div>
                 <div class="empty-subtitle">Press Enter or click Search</div>
             </div>
@@ -46,7 +46,7 @@ async function lookupPlate() {
         // the plate an officer most wants flagged.
         const boloBanner = bolo ? `
             <div class="alert alert-danger" style="margin-bottom:12px;">
-                <span>🚨</span>
+                <span><i class="i i-siren"></i></span>
                 <div>
                     <strong>ACTIVE BOLO — ${esc(plate)}</strong><br>
                     ${esc(bolo.reason || 'No reason recorded')}
@@ -57,7 +57,7 @@ async function lookupPlate() {
         if (!matches.length) {
             el.innerHTML = boloBanner + `
                 <div class="empty-state">
-                    <div class="empty-icon">❌</div>
+                    <div class="empty-icon"><i class="i i-x"></i></div>
                     <div class="empty-title">No vehicle found</div>
                     <div class="empty-subtitle">Plate <span class="font-mono" style="color:var(--accent-2);">${esc(plate)}</span> is not registered</div>
                 </div>`;
@@ -109,12 +109,12 @@ async function lookupPlate() {
                 <div class="card accent-border">
                     <div class="card-header">
                         <div class="card-title">
-                            <div class="card-title-icon" style="background:var(--accent-glow);color:var(--accent-2);">🚗</div>
+                            <div class="card-title-icon"><i class="i i-car"></i></div>
                             Vehicle Record
                         </div>
                         <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                            ${data.bolo ? '<span class="tag tag-red">⚠ BOLO</span>' : ''}
-                            ${data.active_warrants > 0 ? `<span class="tag tag-red">⚠ ${data.active_warrants} Warrant(s)</span>` : ''}
+                            ${data.bolo ? '<span class="tag tag-red"><i class="i i-alert"></i> BOLO</span>' : ''}
+                            ${data.active_warrants > 0 ? `<span class="tag tag-red"><i class="i i-alert"></i> ${data.active_warrants} Warrant(s)</span>` : ''}
                             <span class="tag ${stateTag}">${stateLabel}</span>
                         </div>
                     </div>
@@ -143,15 +143,15 @@ async function lookupPlate() {
                         </div>
                     </div>
                     <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
-                        <button class="btn btn-danger btn-sm" onclick="flagStolen('${data.plate}')">🚨 Flag Stolen</button>
-                        <button class="btn btn-ghost btn-sm" onclick="openIssueBolo('vehicle','${data.plate}')">📡 Issue BOLO</button>
-                        <button class="btn btn-success btn-sm" onclick="openTrafficStop(${JSON.stringify(data.owner).replace(/"/g,'&quot;')})">🚦 Traffic Stop</button>
+                        <button class="btn btn-danger btn-sm" onclick="flagStolen('${data.plate}')"><i class="i i-siren"></i> Flag Stolen</button>
+                        <button class="btn btn-ghost btn-sm" onclick="openIssueBolo('vehicle','${data.plate}')"><i class="i i-signal"></i> Issue BOLO</button>
+                        <button class="btn btn-success btn-sm" onclick="openTrafficStop(${JSON.stringify(data.owner).replace(/"/g,'&quot;')})"><i class="i i-traffic"></i> Traffic Stop</button>
                     </div>
                 </div>
 
                 ${data.bolo ? `
                     <div class="alert alert-danger">
-                        <span>📡</span>
+                        <span><i class="i i-signal"></i></span>
                         <div>
                             <strong>Active BOLO on this vehicle</strong><br>
                             <span style="font-size:12px;">${esc(data.bolo.description)}</span><br>
@@ -165,7 +165,7 @@ async function lookupPlate() {
                 <div class="card">
                     <div class="card-header">
                         <div class="card-title">
-                            <div class="card-title-icon" style="background:var(--purple-glow);color:var(--purple);">👤</div>
+                            <div class="card-title-icon"><i class="i i-user"></i></div>
                             Registered Owner
                         </div>
                         <button class="btn btn-ghost btn-sm"
@@ -193,7 +193,7 @@ async function lookupPlate() {
                     </div>
                     ${data.active_warrants > 0 ? `
                         <div class="alert alert-danger mt-3">
-                            <span>⚖</span>
+                            <span><i class="i i-scale"></i></span>
                             <div>Owner has <strong>${data.active_warrants} active warrant(s)</strong> on file.</div>
                         </div>` : `
                         <div class="alert alert-info mt-3">
@@ -216,7 +216,7 @@ async function flagStolen(plate) {
             <input class="input" id="stolen-desc" placeholder="Color, make, model, last seen location, etc.">
         </div>
         <div class="alert alert-warn">
-            <span>⚠</span>
+            <span><i class="i i-alert"></i></span>
             <span>This will create an automatic BOLO and notify all on-duty officers.</span>
         </div>`,
         async () => {
@@ -232,7 +232,7 @@ async function flagStolen(plate) {
                 showToast('Error', 'Could not flag vehicle.', 'error');
                 btn.textContent = 'Flag Stolen'; btn.disabled = false;
             }
-        }, 'Flag as Stolen', '🚨');
+        }, 'Flag as Stolen', '<i class="i i-siren"></i>');
 }
 
 function openTrafficStop(owner) {

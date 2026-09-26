@@ -26,9 +26,9 @@ class NameSearch {
             <div class="ns-wrap" tabindex="-1">
                 ${label ? `<label class="form-label">${label}</label>` : ''}
                 <div class="ns-input-row">
-                    <div class="ns-search-icon">🔍</div>
+                    <div class="ns-search-icon"><i class="i i-search"></i></div>
                     <input class="ns-input" type="text" autocomplete="off" placeholder="${placeholder}">
-                    ${allowClear ? '<button class="ns-clear" title="Clear" style="display:none;">✕</button>' : ''}
+                    ${allowClear ? '<button class="ns-clear" title="Clear" style="display:none;"><i class="i i-x"></i></button>' : ''}
                 </div>
                 <div class="ns-dropdown" style="display:none;"></div>
                 <div class="ns-selected" style="display:none;"></div>
@@ -80,11 +80,11 @@ class NameSearch {
             <div class="ns-item ${this.focusIndex === i ? 'ns-item-focused' : ''}" data-idx="${i}">
                 <div class="ns-item-left">
                     <div class="ns-item-name">${esc(p.name)}</div>
-                    <div class="ns-item-meta">DOB ${p.dob || '—'} · ${p.gender === 'male' || p.gender === 'm' ? '♂' : '♀'}</div>
+                    <div class="ns-item-meta">DOB ${p.dob || '—'} · ${p.gender === 'male' || p.gender === 'm' ? 'M' : 'F'}</div>
                 </div>
                 <div class="ns-item-right">
-                    ${p.online ? '<span class="ns-badge ns-badge-green">● ONLINE</span>' : '<span class="ns-badge ns-badge-gray">OFFLINE</span>'}
-                    ${p.warrants > 0 ? `<span class="ns-badge ns-badge-red">⚠ ${p.warrants}W</span>` : ''}
+                    ${p.online ? '<span class="ns-badge ns-badge-green"><i class="dot"></i>ONLINE</span>' : '<span class="ns-badge ns-badge-gray">OFFLINE</span>'}
+                    ${p.warrants > 0 ? `<span class="ns-badge ns-badge-red"><i class="i i-alert"></i> ${p.warrants}W</span>` : ''}
                 </div>
             </div>`).join('');
 
@@ -133,7 +133,7 @@ class NameSearch {
         this._input.style.display = 'none';
         if (this._clearBtn) this._clearBtn.style.display = 'none';
         const warnHtml = person.warrants > 0
-            ? `<span class="ns-badge ns-badge-red" style="margin-left:auto;">⚠ ${person.warrants} Active Warrant${person.warrants > 1 ? 's' : ''}</span>`
+            ? `<span class="ns-badge ns-badge-red" style="margin-left:auto;"><i class="i i-alert"></i> ${person.warrants} Active Warrant${person.warrants > 1 ? 's' : ''}</span>`
             : '';
         this._selBox.innerHTML = `
             <div class="ns-selected-card">
@@ -143,7 +143,7 @@ class NameSearch {
                     <div class="ns-selected-meta">DOB ${person.dob || '—'} · ${person.citizenid}</div>
                 </div>
                 ${warnHtml}
-                <button class="ns-deselect" title="Change">✕</button>
+                <button class="ns-deselect" title="Change"><i class="i i-x"></i></button>
             </div>`;
         this._selBox.querySelector('.ns-deselect').addEventListener('click', () => this.clear());
     }

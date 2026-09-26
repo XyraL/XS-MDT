@@ -40,7 +40,7 @@ function loadPCRs(filter) {
                 <div class="panel-subtitle">Field reports — one per patient contact</div>
             </div>
             <div class="panel-actions">
-                <button class="btn btn-ghost btn-sm" onclick="loadPCRs()">↻ Refresh</button>
+                <button class="btn btn-ghost btn-sm" onclick="loadPCRs()"><i class="i i-refresh"></i> Refresh</button>
                 <button class="btn btn-primary btn-sm" onclick="openNewPCR()">+ New PCR</button>
             </div>
         </div>
@@ -73,7 +73,7 @@ function fetchPCRs(search) {
         if (!rows || rows.length === 0) {
             body.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-icon">✚</div>
+                    <div class="empty-icon"><i class="i i-cross"></i></div>
                     <div class="empty-title">No patient care reports</div>
                     <div class="empty-subtitle">File one after your next call</div>
                 </div>`;
@@ -210,7 +210,7 @@ function openNewPCR() {
         const id = await nuiFetch('createPCR', data);
         if (id) { showToast('PCR Filed', `Report #${id} created`, 'success'); loadPCRs(); }
         else showToast('Error', 'Could not file the report.', 'error');
-    }, 'File Report', '✚');
+    }, 'File Report', '<i class="i i-cross"></i>');
 
     // Reuse the shared name-search component to attach a patient.
     mountNameSearch('pcr-patient-search', (person) => {
@@ -229,7 +229,7 @@ async function openPCR(id) {
         const ok = await nuiFetch('updatePCR', data);
         if (ok) { showToast('PCR Updated', `Report #${r.id} saved`, 'success'); loadPCRs(); }
         else showToast('Error', 'Could not save — you may not be the author.', 'error');
-    }, 'Save Changes', '✚');
+    }, 'Save Changes', '<i class="i i-cross"></i>');
 
     mountNameSearch('pcr-patient-search', (person) => {
         document.getElementById('pcr-cid').value   = person.citizenid;
@@ -257,7 +257,7 @@ function loadMedicalRecords() {
         </div>
         <div class="panel-body" id="med-body">
             <div class="empty-state">
-                <div class="empty-icon">❤</div>
+                <div class="empty-icon"><i class="i i-heart"></i></div>
                 <div class="empty-title">Search for a patient</div>
                 <div class="empty-subtitle">Type at least two letters of their name</div>
             </div>
@@ -274,7 +274,7 @@ function loadMedicalRecords() {
             const body = document.getElementById('med-body');
             if (!body) return;
             if (!results || !results.length) {
-                body.innerHTML = `<div class="empty-state"><div class="empty-icon">◎</div>
+                body.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="i i-user"></i></div>
                     <div class="empty-title">No match</div></div>`;
                 return;
             }
@@ -305,8 +305,8 @@ async function openMedicalRecord(citizenid) {
                 DOB ${civ.dob || '—'} · ${civ.gender || '—'} · ${civ.phone || 'no phone'}
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-                ${rec.blood_type ? `<span class="tag tag-red">🩸 ${rec.blood_type}</span>` : ''}
-                ${Number(rec.dnr) ? '<span class="tag tag-orange">⚠ DNR</span>' : ''}
+                ${rec.blood_type ? `<span class="tag tag-red"><i class="i i-droplet"></i> ${rec.blood_type}</span>` : ''}
+                ${Number(rec.dnr) ? '<span class="tag tag-orange"><i class="i i-alert"></i> DNR</span>' : ''}
                 ${Number(rec.organ_donor) ? '<span class="tag tag-green">ORGAN DONOR</span>' : ''}
             </div>
             ${medListBlock('Allergies', rec.allergies, 'tag-red')}
@@ -415,7 +415,7 @@ async function editMedicalRecord(citizenid) {
         });
         if (ok) { showToast('Record Updated', '', 'success'); openMedicalRecord(citizenid); }
         else showToast('Error', 'Could not save the record.', 'error');
-    }, 'Save Record', '❤');
+    }, 'Save Record', '<i class="i i-heart"></i>');
 }
 
 function addMedicalEntry(citizenid) {
@@ -443,7 +443,7 @@ function addMedicalEntry(citizenid) {
         });
         if (ok) { showToast('Entry Added', '', 'success'); openMedicalRecord(citizenid); }
         else showToast('Error', 'Could not add the entry.', 'error');
-    }, 'Add Entry', '❤');
+    }, 'Add Entry', '<i class="i i-heart"></i>');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -464,7 +464,7 @@ function loadNarcLog(filter) {
                 <div class="panel-subtitle">Every draw, administration and waste — witnessed</div>
             </div>
             <div class="panel-actions">
-                <button class="btn btn-ghost btn-sm" onclick="loadNarcLog()">↻ Refresh</button>
+                <button class="btn btn-ghost btn-sm" onclick="loadNarcLog()"><i class="i i-refresh"></i> Refresh</button>
                 <button class="btn btn-primary btn-sm" onclick="openNarcEntry()">+ Log Entry</button>
             </div>
         </div>
@@ -482,13 +482,13 @@ function loadNarcLog(filter) {
         const body = document.getElementById('narc-body');
         if (!body) return;
         if (!d) {
-            body.innerHTML = `<div class="empty-state"><div class="empty-icon">🔒</div>
+            body.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="i i-lock"></i></div>
                 <div class="empty-title">Supervisor access required</div>
                 <div class="empty-subtitle">The full log is restricted</div></div>`;
             return;
         }
         if (!d.entries.length) {
-            body.innerHTML = `<div class="empty-state"><div class="empty-icon">💊</div>
+            body.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="i i-pill"></i></div>
                 <div class="empty-title">No entries logged</div></div>`;
             return;
         }
@@ -585,7 +585,7 @@ function openNarcEntry() {
         });
         if (id) { showToast('Entry Logged', '', 'success'); loadNarcLog(); }
         else showToast('Error', 'Could not log the entry.', 'error');
-    }, 'Log Entry', '💊');
+    }, 'Log Entry', '<i class="i i-pill"></i>');
 
     mountNameSearch('narc-patient-search', (person) => {
         document.getElementById('narc-cid').value   = person.citizenid;
