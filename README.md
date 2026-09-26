@@ -126,15 +126,16 @@ ensure XS-MDT
 
 ### 2. Import the database
 
-Two files, in this order:
+Run `sql/mdt.sql`. That is the whole step.
 
-1. `sql/mdt.sql` — the tables. Nothing else is in it.
-2. `sql/penal-codes.sql` — the charge book, 178 charges across seven titles.
+The charge book seeds itself on first start — 178 charges across seven titles —
+so `sql/penal-codes.sql` only needs importing by hand if you cleared the table
+and want it back.
 
 **Upgrading from an older version?** Just update the resource and start it.
 The MDT reads the schema it ships with, compares it to your database and adds
 whatever is missing — tables and columns both — then says what it did in the
-console. There is nothing to run by hand and nothing is ever dropped.
+console. Nothing is ever dropped.
 
 `CREATE TABLE IF NOT EXISTS` only creates missing *tables*; it never adds a
 column to a table you already have. That is why every older version needed a

@@ -8,8 +8,7 @@ charge book, and it runs on QBCore as well as QBox.
 
 > **Upgrading:** update the resource and start it. The MDT brings its own
 > database up to date — it reads the schema it ships with, adds whatever is
-> missing, and says what it did. Import `sql/penal-codes.sql` for the new
-> charge book; your old charges stay alongside it until you retire them.
+> missing, seeds the charge book if there is none, and says what it did.
 
 ### The look
 

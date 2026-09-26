@@ -164,11 +164,29 @@ CreateThread(function()
 
         -- The charge book is data, not schema, so it is only seeded when the table
         -- is genuinely empty. A server that cleared it out meant to.
+        -- The charge book is data the resource ships, so there is no reason to
+        -- make anyone import it by hand. Only when the table is empty: a server
+        -- that cleared it out meant to.
         local ok, charges = pcall(function()
             return MySQL.scalar.await('SELECT COUNT(*) FROM mdt_penal_codes') or 0
         end)
+
         if ok and charges == 0 then
-            print('^3[XS-MDT] No charges on file — import sql/penal-codes.sql for the default book.^7')
+            local book = LoadResourceFile(GetCurrentResourceName(), 'sql/penal-codes.sql')
+
+            if not book then
+                print('^3[XS-MDT] No charges on file, and sql/penal-codes.sql is missing.^7')
+            else
+                -- The file is a header comment and one INSERT, which MySQL
+                -- takes as a single statement, comment and all.
+                local seeded, e = pcall(function() MySQL.query.await(book) end)
+                if seeded then
+                    local n = MySQL.scalar.await('SELECT COUNT(*) FROM mdt_penal_codes') or 0
+                    print(('[XS-MDT] seeded the charge book: %d charges'):format(n))
+                else
+                    print(('^1[XS-MDT] Could not seed the charge book: %s^7'):format(e))
+                end
+            end
         end
     end)
 

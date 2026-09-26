@@ -4,11 +4,24 @@ function renderChargePicker(pickerId, selectedId) {
     const container = document.getElementById(pickerId);
     if (!container) return;
 
-    if (!MDT.penalCodes || MDT.penalCodes.length === 0) {
-        container.innerHTML = `<div class="skeleton skeleton-block" style="height:120px;"></div>`;
+    // Not loaded yet, so fetch once. An empty result is an answer, not a reason
+    // to ask again — `if (data)` is true for [], so the old version set an
+    // empty list, re-entered, saw it was empty and asked the server forever.
+    if (!MDT.penalCodes) {
+        container.innerHTML = `<div class="skeleton skeleton-line w-full" style="height:110px;"></div>`;
         nuiFetch('getPenalCodes').then(data => {
-            if (data) { MDT.penalCodes = data; renderChargePicker(pickerId, selectedId); }
+            MDT.penalCodes = Array.isArray(data) ? data : [];
+            renderChargePicker(pickerId, selectedId);
         });
+        return;
+    }
+
+    if (!MDT.penalCodes.length) {
+        container.innerHTML = `<div class="empty-state">
+            <div class="empty-icon"><i class="i i-scale"></i></div>
+            <div class="empty-title">No charges on file</div>
+            <div class="empty-subtitle">Nothing to pick from yet. A supervisor can add codes in Penal Codes.</div>
+        </div>`;
         return;
     }
 
