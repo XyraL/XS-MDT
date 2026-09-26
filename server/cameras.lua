@@ -57,7 +57,17 @@ local function SeedCameras()
 end
 
 AddEventHandler('onResourceStart', function(name)
-    if name == GetCurrentResourceName() then SeedCameras() end
+    if name ~= GetCurrentResourceName() then return end
+
+    -- The seed writes heading and pitch, which the migration may not have
+    -- added yet. Wait for it rather than for a timer.
+    CreateThread(function()
+        MdtSchema.Wait()
+        local ok, err = pcall(SeedCameras)
+        if not ok then
+            print(('^1[XS-MDT] Could not seed the default cameras: %s^7'):format(err))
+        end
+    end)
 end)
 
 -- ── Cameras ───────────────────────────────────────────────────────────────

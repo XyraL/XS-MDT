@@ -56,7 +56,10 @@ end
 -- Purge on resource start, then every 6 hours
 AddEventHandler('onResourceStart', function(resourceName)
     if resourceName ~= GetCurrentResourceName() then return end
-    PurgeOldLogs()
+    CreateThread(function()
+        MdtSchema.Wait()
+        pcall(PurgeOldLogs)
+    end)
 end)
 
 CreateThread(function()

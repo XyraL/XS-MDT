@@ -15,6 +15,19 @@
       is ever dropped, renamed or narrowed — only created and only added.
 ]]
 
+--[[ The gate.
+
+     Anything that touches the database on start has to wait for this, not for
+     a timer. The camera seeder did not, and ran its INSERT against columns the
+     migration had not added yet.
+
+     It is set even when the migration fails, so a waiter is never stuck. ]]
+MdtSchema = { ready = false }
+
+function MdtSchema.Wait()
+    while not MdtSchema.ready do Wait(50) end
+end
+
 local function Read()
     local raw = LoadResourceFile(GetCurrentResourceName(), 'sql/mdt.sql')
     if not raw then return nil end
@@ -150,4 +163,6 @@ CreateThread(function()
     if not ran then
         print(('^1[XS-MDT] Schema update failed: %s^7'):format(err))
     end
+
+    MdtSchema.ready = true
 end)
