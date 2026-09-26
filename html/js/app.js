@@ -447,7 +447,7 @@ window.addEventListener('message', (e) => {
         // The overlay lives on the same page as the MDT but is not part of
         // it — the tablet is closed by the time these arrive.
         case 'bodycamOpen':
-            BodyCam.open(data.unit);
+            BodyCam.open(data.unit, data.mode);
             break;
         case 'bodycamClose':
             BodyCam.close();

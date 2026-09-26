@@ -69,7 +69,7 @@ const BodyCam = (() => {
         }
     }
 
-    function open(u) {
+    function open(u, mode) {
         unit = u || {};
         startedAt = Date.now();
         signal = true;
@@ -77,6 +77,8 @@ const BodyCam = (() => {
         build();
         el.classList.add('live');
         el.classList.remove('nosignal');
+        // A fixed camera has no battery and is not worn by anyone.
+        el.classList.toggle('cam', mode === 'camera');
 
         document.getElementById('bc-callsign').textContent = unit.callsign || unit.badge || '';
         document.getElementById('bc-name').textContent =
@@ -107,6 +109,8 @@ const BodyCam = (() => {
         const bits = [];
         if (data.street) bits.push(data.street);
         if (data.inVehicle) bits.push(`${data.speed || 0} MPH`);
+        if (data.bearing !== undefined) bits.push(`BRG ${String(data.bearing).padStart(3, '0')}`);
+        if (data.zoom) bits.push(`ZOOM ${data.zoom}%`);
         where.textContent = bits.join('  ·  ');
     }
 

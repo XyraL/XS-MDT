@@ -43,15 +43,16 @@ local function SeedCameras()
         if cam.code and cam.label then
             rows[#rows + 1] = {
                 cam.code:upper():sub(1, 20), cam.label, cam.area, cam.kind or 'fixed',
-                cam.coords and json.encode(cam.coords) or nil, 'Default',
+                cam.coords and json.encode(cam.coords) or nil,
+                tonumber(cam.heading) or 0.0, tonumber(cam.pitch) or -14.0, 'Default',
             }
         end
     end
     if #rows == 0 then return end
 
     MySQL.prepare.await([[
-        INSERT IGNORE INTO mdt_cameras (camera_code, label, area, kind, coords, added_by_name)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT IGNORE INTO mdt_cameras (camera_code, label, area, kind, coords, heading, pitch, added_by_name)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ]], rows)
 end
 
@@ -106,9 +107,11 @@ lib.callback.register('XS-MDT:server:saveCamera', function(source, data)
     if data.id then
         MySQL.update.await([[
             UPDATE mdt_cameras SET camera_code = ?, label = ?, area = ?, kind = ?, status = ?,
-                   coords = COALESCE(?, coords), notes = ?
+                   coords = COALESCE(?, coords), heading = COALESCE(?, heading),
+                   pitch = COALESCE(?, pitch), notes = ?
             WHERE id = ?
-        ]], { code, data.label, data.area, data.kind or 'fixed', data.status or 'online', coords, data.notes, data.id })
+        ]], { code, data.label, data.area, data.kind or 'fixed', data.status or 'online', coords,
+              tonumber(data.heading), tonumber(data.pitch), data.notes, data.id })
         Audit(source, 'CAMERA_UPDATED', ('%s — %s'):format(code, data.label))
         return true
     end
@@ -117,9 +120,10 @@ lib.callback.register('XS-MDT:server:saveCamera', function(source, data)
     if taken then return false, 'That camera code is already used' end
 
     MySQL.insert.await([[
-        INSERT INTO mdt_cameras (camera_code, label, area, kind, status, coords, notes, added_by, added_by_name)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ]], { code, data.label, data.area, data.kind or 'fixed', data.status or 'online', coords, data.notes,
+        INSERT INTO mdt_cameras (camera_code, label, area, kind, status, coords, heading, pitch, notes, added_by, added_by_name)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ]], { code, data.label, data.area, data.kind or 'fixed', data.status or 'online', coords,
+          tonumber(data.heading) or 0.0, tonumber(data.pitch) or -12.0, data.notes,
           me.citizenid, me.name })
 
     Audit(source, 'CAMERA_ADDED', ('%s — %s'):format(code, data.label))

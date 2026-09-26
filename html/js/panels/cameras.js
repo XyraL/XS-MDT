@@ -133,8 +133,12 @@ function fetchCams() {
                             <div class="cam-label">${esc(c.label)}</div>
                             <div class="cam-meta">${esc(CAM_KINDS[c.kind] || c.kind || 'Street')}</div>
                             <div class="cam-actions">
-                                ${c.coords ? `<button class="btn btn-ghost btn-xs" onclick="cameraWaypoint(${c.id})"><i class="i i-map-pin"></i> Waypoint</button>` : ''}
-                                <button class="btn btn-ghost btn-xs" onclick="openFootageEditor(null, ${c.id})">Log footage</button>
+                                ${c.coords && c.status !== 'offline'
+                                    ? `<button class="btn btn-primary btn-xs" onclick="viewCamera(${c.id})"><i class="i i-video"></i> View</button>`
+                                    : `<button class="btn btn-ghost btn-xs" disabled>No feed</button>`}
+                                ${c.coords ? `<button class="btn btn-ghost btn-xs" onclick="cameraWaypoint(${c.id})"><i class="i i-map-pin"></i></button>` : ''}
+                                <button class="btn btn-ghost btn-xs" onclick="openFootageEditor(null, ${c.id})">Log</button>
+                                ${data.canManage ? `<button class="btn btn-ghost btn-xs" onclick="aimCamera(${c.id})" title="Point it where you are looking">Aim here</button>` : ''}
                                 ${data.canManage ? `<button class="btn btn-ghost btn-xs" onclick="openCameraEditor(${c.id})">Edit</button>` : ''}
                             </div>
                         </div>`;
@@ -199,6 +203,49 @@ function fmtDuration(secs) {
     if (!n) return '—';
     const m = Math.floor(n / 60);
     return `${m}:${String(n % 60).padStart(2, '0')}`;
+}
+
+function viewCamera(id) {
+    const cam = (_cams.cameras || []).find(c => c.id === id);
+    if (!cam || !cam.coords) return;
+
+    nuiPost('viewCamera', {
+        id: cam.id,
+        camera_code: cam.camera_code,
+        label: cam.label,
+        area: cam.area,
+        coords: cam.coords,
+        heading: cam.heading,
+        pitch: cam.pitch,
+    }).then(res => {
+        if (!res || res.ok !== true) showToast('No feed', 'That camera could not be reached.', 'error', 3500);
+    });
+}
+
+// Stand where the camera should be, look at what it should see.
+function aimCamera(id) {
+    const cam = (_cams.cameras || []).find(c => c.id === id);
+    if (!cam) return;
+
+    nuiPost('myView').then(view => {
+        if (!view || view.x === undefined) return;
+        nuiFetch('saveCamera', {
+            id: cam.id,
+            camera_code: cam.camera_code,
+            label: cam.label,
+            area: cam.area,
+            kind: cam.kind,
+            status: cam.status,
+            notes: cam.notes,
+            coords: { x: view.x, y: view.y, z: view.z },
+            heading: view.heading,
+            pitch: view.pitch,
+        }).then(res => {
+            if (!res) return;
+            showToast('Camera aimed', esc(cam.camera_code) + ' now looks where you were', 'success', 3000);
+            fetchCams();
+        });
+    });
 }
 
 function cameraWaypoint(id) {
@@ -407,8 +454,8 @@ function fetchLiveCams() {
         if (!data.units || !data.units.length) {
             body.innerHTML = `<div class="empty-state">
                 <div class="empty-icon"><i class="i i-badge"></i></div>
-                <div class="empty-title">Nobody on duty</div>
-                <div class="empty-subtitle">A camera only exists while its officer is working.</div>
+                <div class="empty-title">No other units on duty</div>
+                <div class="empty-subtitle">Body cams are worn by officers, so the list shows whoever else is working right now. Your own camera is not in it.</div>
             </div>`;
             return;
         }
@@ -449,6 +496,8 @@ window.fetchLiveCams = fetchLiveCams;
 window.watchBodyCam = watchBodyCam;
 
 window.loadCameras = loadCameras;
+window.viewCamera = viewCamera;
+window.aimCamera = aimCamera;
 window.cameraWaypoint = cameraWaypoint;
 window.openCameraEditor = openCameraEditor;
 window.removeCamera = removeCamera;

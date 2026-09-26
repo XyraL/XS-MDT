@@ -55,6 +55,10 @@
 
   --rail: 232px;
 
+  /* The window. Config.Interface overrides these at runtime. */
+  --mdt-w: 1320px;
+  --mdt-h: 790px;
+
   --radius: 6px;
   --radius-lg: 10px;
 }
@@ -97,6 +101,12 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Form controls do not inherit the page font. Without this, every button that
+   is not a .btn renders in Arial on a grey bevel, which is exactly what the
+   tag and expand buttons were doing. */
+button, input, select, textarea { font: inherit; color: inherit; }
+button { background: none; border: 0; cursor: pointer; }
+
 html, body {
   height: 100%;
   font-family: var(--font);
@@ -125,16 +135,27 @@ body.hidden, .hidden { display: none !important; }
 
 #mdt-overlay {
   position: fixed; inset: 0;
-  background: var(--base);
-  display: flex;
+  display: grid; place-items: center;
+  background: rgba(2, 4, 8, .58);
 }
 #mdt-overlay.hidden { display: none; }
 
+/* The screen itself. Fixed size rather than full bleed — it is a laptop
+   bolted to a dashboard, and the dense tables read better at 1300px than
+   stretched across 1920. */
 #mdt-container {
+  position: relative;
   display: grid;
   grid-template-columns: var(--rail) minmax(0, 1fr);
-  width: 100%; height: 100%;
+  width: min(var(--mdt-w), 94vw);
+  height: min(var(--mdt-h), 92vh);
   min-height: 0;
+  background: var(--base);
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  box-shadow: 0 40px 120px -30px rgba(0, 0, 0, .95),
+              0 0 0 1px rgba(255, 255, 255, .02) inset;
+  overflow: hidden;
 }
 
 /* ── Rail ─────────────────────────────────────────────────────────────────── */
@@ -272,7 +293,7 @@ body.hidden, .hidden { display: none !important; }
 
 /* Quick dispatch floats over the work area. */
 #quick-dispatch {
-  position: fixed; right: 16px; bottom: 16px; z-index: 50;
+  position: absolute; right: 16px; bottom: 16px; z-index: 50;
   width: 320px; max-height: 60vh;
   display: flex; flex-direction: column;
   background: var(--surface); border: 1px solid var(--line);
@@ -314,8 +335,14 @@ body.hidden, .hidden { display: none !important; }
 .btn-warning { color: var(--yellow); border-color: color-mix(in srgb, var(--yellow) 32%, transparent); }
 .btn-warning:hover { background: color-mix(in srgb, var(--yellow) 12%, transparent); color: var(--yellow); }
 
-.btn-copy { height: 22px; padding: 0 7px; font-size: 10.5px; }
-.btn-add-tag { height: 20px; padding: 0 7px; font-size: 10.5px; }
+.btn-add-tag {
+  height: 20px; padding: 0 9px;
+  border: 1px dashed var(--line-2); border-radius: 20px;
+  color: var(--faint);
+  font: 10.5px var(--font-mono);
+  transition: color .12s, border-color .12s;
+}
+.btn-add-tag:hover { color: var(--accent); border-color: var(--accent); }
 
 .kbd {
   display: inline-block; padding: 1px 5px;
@@ -380,7 +407,10 @@ body.hidden, .hidden { display: none !important; }
 .search-bar input::placeholder, .search-wrap > input::placeholder { color: var(--faint); }
 
 .search-icon, .ns-search-icon { position: absolute; left: 11px; color: var(--faint); font-size: 12px; pointer-events: none; z-index: 1; }
-.ns-input-row .ns-input { padding-left: 30px; }
+/* A flex item with width:100% and the default flex-shrink collapses to its
+   content, which left the picker a 197px stub in a 642px row. */
+.ns-input-row { width: 100%; }
+.ns-input-row .ns-input { flex: 1 1 auto; min-width: 0; padding-left: 30px; }
 .search-shortcut { position: absolute; right: 10px; color: var(--faint); font: 10px var(--font-mono); pointer-events: none; }
 /* Absolute positioning measures from the padding box, so the hint has to clear
    the gutter the toolbar row added. */
@@ -458,7 +488,11 @@ body.hidden, .hidden { display: none !important; }
 
 .status-badge.on-duty { color: var(--on-duty); border-color: color-mix(in srgb, var(--on-duty) 34%, transparent); background: color-mix(in srgb, var(--on-duty) 11%, transparent); }
 
-.tag-remove { cursor: pointer; opacity: .6; }
+.tag-remove {
+  padding: 0 1px 0 3px;
+  color: inherit; opacity: .55;
+  font-size: 11px; line-height: 1;
+}
 .tag-remove:hover { opacity: 1; color: var(--red); }
 
 /* ═══ Alerts ═══════════════════════════════════════════════════════════════ */
@@ -608,7 +642,14 @@ body.hidden, .hidden { display: none !important; }
   font-size: 12.5px; color: var(--dim); line-height: 1.6; margin-top: 7px;
   white-space: pre-wrap; word-break: break-word;
 }
-.record-expand-btn { margin-top: 8px; }
+.record-expand-btn {
+  margin-top: 8px; padding: 3px 10px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--raised); color: var(--dim);
+  font: 11px var(--font);
+  transition: color .12s, border-color .12s;
+}
+.record-expand-btn:hover { color: var(--text); border-color: var(--line-2); }
 .records-filter-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
 .bulletin-pin { color: var(--yellow); }
 .bulletin-title { font-weight: 600; font-size: 13px; }

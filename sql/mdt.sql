@@ -107,6 +107,8 @@ CREATE TABLE IF NOT EXISTS `mdt_cad_calls` (
     `description` TEXT NOT NULL,
     `location` VARCHAR(255) NOT NULL,
     `coords` JSON DEFAULT NULL,
+    `heading` FLOAT DEFAULT 0,
+    `pitch` FLOAT DEFAULT -12,
     `units` JSON DEFAULT NULL,
     `primary_unit` VARCHAR(50) DEFAULT NULL,
     `status` ENUM('pending', 'active', 'enroute', 'onscene', 'completed', 'cancelled') DEFAULT 'pending',

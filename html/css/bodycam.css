@@ -143,3 +143,7 @@
   font: 11px/1 var(--font-mono); letter-spacing: .2em;
   text-transform: uppercase; opacity: .6;
 }
+
+/* Fixed camera: no battery, and the hint names the controls it actually has. */
+#bodycam.cam .bc-batt { display: none; }
+#bodycam.cam .bc-exit::after { content: '  ·  ARROWS PAN  ·  SCROLL ZOOM'; }

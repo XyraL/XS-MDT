@@ -6,11 +6,10 @@ A new look and a lot more MDT. Cases, an evidence locker, a weapons registry,
 cameras, internal affairs, field training, SOPs, a management panel, a proper
 charge book, and it runs on QBCore as well as QBox.
 
-> **Upgrading:** run `sql/upgrade-3.0.sql`, then re-run `sql/mdt.sql` for the
-> new tables, then import `sql/penal-codes.sql`. Coming from 1.x, run
-> `sql/upgrade-legacy.sql` before all of that. Your existing charges stay
-> active alongside the new book until you turn them off — the last line of
-> the upgrade file does it, commented out.
+> **Upgrading:** update the resource and start it. The MDT brings its own
+> database up to date — it reads the schema it ships with, adds whatever is
+> missing, and says what it did. Import `sql/penal-codes.sql` for the new
+> charge book; your old charges stay alongside it until you retire them.
 
 ### The look
 
@@ -127,8 +126,12 @@ opened to sixty lines of upgrade history for versions they never ran. Tables
 are in dependency order, which alphabetical was not — mdt_case_links carries a
 foreign key to mdt_cases and would have failed on a fresh import.
 
-Upgrades moved to `sql/upgrade-3.0.sql` and `sql/upgrade-legacy.sql`. Nothing
-was dropped.
+The upgrade statements are gone entirely, because the resource does it now.
+On start it reads the schema it ships with, compares it to the database and
+adds any missing table or column. `CREATE TABLE IF NOT EXISTS` never touches a
+table that already exists, which is why “just re-run the SQL” has never been
+true and why missing columns surfaced as query errors from whatever panel
+needed them.
 
 ### Fixed
 

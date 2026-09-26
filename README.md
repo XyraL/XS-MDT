@@ -128,21 +128,18 @@ ensure XS-MDT
 
 Two files, in this order:
 
-1. `sql/mdt.sql` — the tables. Nothing else is in it, and it is safe to re-run.
-2. `sql/penal-codes.sql` — the charge book, 178 charges across seven titles. `INSERT IGNORE`, so re-running it never touches a charge you edited or added.
+1. `sql/mdt.sql` — the tables. Nothing else is in it.
+2. `sql/penal-codes.sql` — the charge book, 178 charges across seven titles.
 
-**Already running an older version?** Run the upgrade file for where you are
-coming from *first*, then the two above.
+**Upgrading from an older version?** Just update the resource and start it.
+The MDT reads the schema it ships with, compares it to your database and adds
+whatever is missing — tables and columns both — then says what it did in the
+console. There is nothing to run by hand and nothing is ever dropped.
 
-| Coming from | Run |
-|---|---|
-| 2.x | `sql/upgrade-3.0.sql` |
-| 1.x | `sql/upgrade-legacy.sql`, then `sql/upgrade-3.0.sql` |
-
-Re-running `sql/mdt.sql` afterwards adds every table 3.0 introduced and
-leaves the ones you already have alone. Your old charges stay active
-alongside the new book until you turn them off — the last line of
-`sql/upgrade-3.0.sql` is the one that does it, commented out.
+`CREATE TABLE IF NOT EXISTS` only creates missing *tables*; it never adds a
+column to a table you already have. That is why every older version needed a
+block of ALTER statements, and why forgetting them produced “Unknown column”
+errors from whichever panel happened to need one.
 
 ### 3. Configure
 

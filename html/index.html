@@ -58,22 +58,23 @@
             <!-- Tab panels are created per-department at runtime (app.js) -->
             <main id="mdt-content"></main>
 
+            <!-- Mini Dispatch Responder -->
+            <div id="quick-dispatch" class="hidden">
+                <div id="qd-header">
+                    <span id="qd-title">ACTIVE CALLS</span>
+                    <span id="qd-hint">↑↓ navigate · Enter respond · Esc close</span>
+                </div>
+                <div id="qd-list"></div>
+                <div id="qd-footer">
+                    <span id="qd-selected-info"></span>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <div id="toast-container"></div>
 
-    <!-- Mini Dispatch Responder -->
-    <div id="quick-dispatch" class="hidden">
-        <div id="qd-header">
-            <span id="qd-title">ACTIVE CALLS</span>
-            <span id="qd-hint">↑↓ navigate · Enter respond · Esc close</span>
-        </div>
-        <div id="qd-list"></div>
-        <div id="qd-footer">
-            <span id="qd-selected-info"></span>
-        </div>
-    </div>
 
     <script src="vendor/leaflet/leaflet.js"></script>
     <script src="js/app.js"></script>
