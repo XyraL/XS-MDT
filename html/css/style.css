@@ -1196,4 +1196,121 @@ body.hidden, .hidden { display: none !important; }
 
 .check-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--dim); cursor: pointer; }
 
+/* ═══ Cases ════════════════════════════════════════════════════════════════ */
+
+.record-card.case-active { border-left-color: var(--red); }
+.record-card.case-open   { border-left-color: var(--yellow); }
+.record-card.case-cold   { border-left-color: var(--blue); }
+.record-card.case-closed { opacity: .72; }
+
+.case-counts { display: flex; gap: 16px; margin-top: 8px; font: 10.5px var(--font-mono); color: var(--faint); }
+.case-counts span { display: inline-flex; align-items: center; gap: 5px; }
+
+.case-summary {
+  padding: 11px 13px; margin-bottom: 16px;
+  background: var(--base); border: 1px solid var(--line); border-radius: var(--radius);
+  font-size: 12.5px; color: var(--dim); line-height: 1.6;
+}
+
+.case-section-head {
+  display: flex; align-items: center; gap: 10px;
+  margin: 18px 0 9px;
+  font: 10px var(--font-mono); letter-spacing: .13em; text-transform: uppercase;
+  color: var(--faint);
+}
+.case-section-head button { margin-left: auto; }
+
+.case-links { margin-bottom: 10px; }
+.case-link-kind {
+  font: 10px var(--font-mono); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--faint); margin-bottom: 4px;
+}
+.case-link {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 11px; margin-bottom: 4px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  font-size: 12.5px;
+}
+.case-link-icon { color: var(--faint); display: inline-grid; place-items: center; }
+.case-link-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.case-link .record-meta { margin-left: auto; }
+
+.case-note {
+  padding: 10px 12px; margin-bottom: 7px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+}
+.case-note-head { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 550; }
+.case-note-head .record-meta { margin-left: auto; }
+.case-note-body { margin-top: 6px; font-size: 12.5px; color: var(--dim); line-height: 1.6; }
+
+/* ═══ Evidence ═════════════════════════════════════════════════════════════ */
+
+.ev-table {
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1.4fr) 118px 104px minmax(0, 1fr) 118px 140px;
+  border: 1px solid var(--line); border-radius: var(--radius-lg);
+  background: var(--surface); overflow: hidden;
+}
+.ev-head, .ev-row { display: contents; }
+
+.ev-head > span {
+  position: sticky; top: 0; z-index: 2;
+  padding: 9px 11px;
+  background: var(--raised); border-bottom: 1px solid var(--line);
+  font: 10px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--faint);
+}
+.ev-row > span {
+  display: flex; align-items: center;
+  padding: 8px 11px;
+  border-bottom: 1px solid var(--line-soft);
+  min-width: 0; font-size: 12.5px; cursor: pointer;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ev-row:hover > span { background: var(--raised); }
+.ev-no { font: 11.5px var(--font-mono); color: var(--accent); }
+.ev-label { font-weight: 550; }
+.ev-kind { gap: 6px; color: var(--dim); }
+
+.custody { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.custody-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 11px;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 12px;
+}
+.custody-row:last-child { border-bottom: 0; }
+.custody-detail { color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.custody-row .record-meta { margin-left: auto; }
+
+/* ═══ Weapons ══════════════════════════════════════════════════════════════ */
+
+.w-table {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1.2fr) 108px minmax(0, 1fr) 130px 110px;
+  border: 1px solid var(--line); border-radius: var(--radius-lg);
+  background: var(--surface); overflow: hidden;
+}
+.w-head, .w-row { display: contents; }
+
+.w-head > span {
+  position: sticky; top: 0; z-index: 2;
+  padding: 9px 11px;
+  background: var(--raised); border-bottom: 1px solid var(--line);
+  font: 10px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--faint);
+}
+.w-row > span {
+  display: flex; align-items: center;
+  padding: 8px 11px;
+  border-bottom: 1px solid var(--line-soft);
+  min-width: 0; font-size: 12.5px; cursor: pointer;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.w-row:hover > span { background: var(--raised); }
+.w-serial { font: 11.5px var(--font-mono); color: var(--accent); letter-spacing: .06em; }
+.w-model { font-weight: 550; }
+
+/* record-meta pushes itself right inside a card header, which is wrong when
+   it is a grid cell in a table row. */
+.ev-row .record-meta, .w-row .record-meta, .roster-line .record-meta { margin-left: 0; }
+
 .tab-panel:not(.active) { display: none !important; }

@@ -138,6 +138,9 @@ const PANELS = {
     citations  : { label: 'Citations',   icon: '<i class="i i-file"></i>', section: 'Records' },
     incidents  : { label: 'Incidents',   icon: '<i class="i i-clipboard"></i>', section: 'Records' },
     penal      : { label: 'Penal Codes', icon: '<i class="i i-list"></i>', section: 'Records' },
+    cases      : { label: 'Cases',       icon: '<i class="i i-folder"></i>', section: 'Records' },
+    evidence   : { label: 'Evidence',    icon: '<i class="i i-box"></i>',    section: 'Records' },
+    weapons    : { label: 'Weapons',     icon: '<i class="i i-alert"></i>',  section: 'Records' },
 
     pcr        : { label: 'Patient Care',    icon: '<i class="i i-cross"></i>', section: 'Medical' },
     medhistory : { label: 'Medical Records', icon: '<i class="i i-heart"></i>', section: 'Medical' },
@@ -299,6 +302,9 @@ function onTabActivated(tab) {
         case 'fireincidents': loadFireIncidents(); break;
         case 'hazmat':      loadHazmat(); break;
         case 'apparatus':   loadApparatus(); break;
+        case 'cases':       loadCases(); break;
+        case 'evidence':    loadEvidence(); break;
+        case 'weapons':     loadWeapons(); break;
         case 'ia':          loadIA(); break;
         case 'fto':         loadFTO(); break;
         case 'sop':         loadSOP(); break;

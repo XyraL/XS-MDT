@@ -3,6 +3,14 @@
 
 -- ── Upgrade scripts (run these if updating from an older version) ──────────
 -- v2.x → v3.0
+-- ALTER TABLE mdt_evidence DROP FOREIGN KEY fk_evidence_incident;
+-- ALTER TABLE mdt_evidence MODIFY COLUMN incident_id INT DEFAULT NULL;
+-- ALTER TABLE mdt_evidence ADD COLUMN IF NOT EXISTS case_id         INT         DEFAULT NULL;
+-- ALTER TABLE mdt_evidence ADD COLUMN IF NOT EXISTS evidence_number VARCHAR(20) DEFAULT NULL;
+-- ALTER TABLE mdt_evidence ADD COLUMN IF NOT EXISTS status ENUM('booked','checked_out','released','destroyed','lost') DEFAULT 'booked';
+-- ALTER TABLE mdt_evidence ADD COLUMN IF NOT EXISTS location        VARCHAR(120) DEFAULT NULL;
+-- Five more tables (mdt_cases, mdt_case_links, mdt_case_notes,
+-- mdt_evidence_custody, mdt_weapons) come from re-running this file.
 -- ALTER TABLE mdt_audit_log ADD COLUMN IF NOT EXISTS citizenid        VARCHAR(50)  DEFAULT NULL;
 -- ALTER TABLE mdt_audit_log ADD COLUMN IF NOT EXISTS department       VARCHAR(50)  DEFAULT NULL;
 -- ALTER TABLE mdt_audit_log ADD COLUMN IF NOT EXISTS target_citizenid VARCHAR(50)  DEFAULT NULL;
@@ -449,7 +457,13 @@ CREATE TABLE IF NOT EXISTS `mdt_licences` (
 -- cascades on delete.
 CREATE TABLE IF NOT EXISTS `mdt_evidence` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `incident_id` INT NOT NULL,
+    -- Nullable since 3.0: evidence is booked when it is collected, and a
+    -- report is written later if one is written at all.
+    `incident_id` INT DEFAULT NULL,
+    `case_id` INT DEFAULT NULL,
+    `evidence_number` VARCHAR(20) DEFAULT NULL,
+    `status` ENUM('booked', 'checked_out', 'released', 'destroyed', 'lost') DEFAULT 'booked',
+    `location` VARCHAR(120) DEFAULT NULL,
     `kind` VARCHAR(10) NOT NULL,
     `label` VARCHAR(120) NOT NULL,
     `detail` TEXT DEFAULT NULL,
@@ -458,8 +472,8 @@ CREATE TABLE IF NOT EXISTS `mdt_evidence` (
     `logged_by_name` VARCHAR(100) NOT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     KEY `idx_incident` (`incident_id`),
-    CONSTRAINT `fk_evidence_incident` FOREIGN KEY (`incident_id`)
-        REFERENCES `mdt_incidents` (`id`) ON DELETE CASCADE
+    KEY `idx_case` (`case_id`),
+    KEY `idx_evidence_number` (`evidence_number`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ── Personnel ───────────────────────────────────────────────────────────────
@@ -563,4 +577,90 @@ CREATE TABLE IF NOT EXISTS `mdt_personnel_log` (
     `changed_by_name` VARCHAR(100) NOT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     KEY `idx_citizenid` (`citizenid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ── Cases, evidence and weapons ─────────────────────────────────────────────
+
+-- A case is the folder everything else gets filed into. Before 3.0 a case was
+-- a free-text string on an incident, so two officers typing CASE-2025-1 and
+-- CASE-2025-01 had two different cases and neither of them knew.
+CREATE TABLE IF NOT EXISTS `mdt_cases` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `case_number` VARCHAR(20) NOT NULL UNIQUE,
+    `title` VARCHAR(200) NOT NULL,
+    `summary` TEXT DEFAULT NULL,
+    `status` ENUM('open', 'active', 'cold', 'closed') DEFAULT 'open',
+    `lead_citizenid` VARCHAR(50) DEFAULT NULL,
+    `lead_name` VARCHAR(100) DEFAULT NULL,
+    `department` VARCHAR(50) DEFAULT NULL,
+    `created_by` VARCHAR(50) NOT NULL,
+    `created_by_name` VARCHAR(100) NOT NULL,
+    `closed_at` TIMESTAMP NULL DEFAULT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY `idx_status` (`status`),
+    KEY `idx_department` (`department`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- What is attached to a case. One row per link rather than columns per kind,
+-- so attaching a new kind of record later needs no schema change.
+CREATE TABLE IF NOT EXISTS `mdt_case_links` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `case_id` INT NOT NULL,
+    `kind` VARCHAR(20) NOT NULL,
+    `ref_id` VARCHAR(60) NOT NULL,
+    `label` VARCHAR(200) DEFAULT NULL,
+    `added_by` VARCHAR(50) NOT NULL,
+    `added_by_name` VARCHAR(100) NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY `uk_case_ref` (`case_id`, `kind`, `ref_id`),
+    KEY `idx_case` (`case_id`),
+    CONSTRAINT `fk_link_case` FOREIGN KEY (`case_id`)
+        REFERENCES `mdt_cases` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Notes on a case, so the story of it is not buried in one officer's report.
+CREATE TABLE IF NOT EXISTS `mdt_case_notes` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `case_id` INT NOT NULL,
+    `body` TEXT NOT NULL,
+    `author` VARCHAR(50) NOT NULL,
+    `author_name` VARCHAR(100) NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_case` (`case_id`),
+    CONSTRAINT `fk_note_case` FOREIGN KEY (`case_id`)
+        REFERENCES `mdt_cases` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Every hand a piece of evidence passes through. An evidence log that cannot
+-- say who had it and when is not worth keeping.
+CREATE TABLE IF NOT EXISTS `mdt_evidence_custody` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `evidence_id` INT NOT NULL,
+    `action` VARCHAR(20) NOT NULL,
+    `detail` VARCHAR(255) DEFAULT NULL,
+    `officer_citizenid` VARCHAR(50) NOT NULL,
+    `officer_name` VARCHAR(100) NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_evidence` (`evidence_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Registered firearms. Serial numbers are the point: a seized weapon is looked
+-- up by serial, and a serial that is not in here is an unregistered one.
+CREATE TABLE IF NOT EXISTS `mdt_weapons` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `serial` VARCHAR(30) NOT NULL UNIQUE,
+    `model` VARCHAR(80) NOT NULL,
+    `class` VARCHAR(40) DEFAULT NULL,
+    `owner_citizenid` VARCHAR(50) DEFAULT NULL,
+    `owner_name` VARCHAR(100) DEFAULT NULL,
+    `status` ENUM('registered', 'stolen', 'seized', 'destroyed', 'unregistered') DEFAULT 'registered',
+    `registered_at` DATE DEFAULT NULL,
+    `notes` TEXT DEFAULT NULL,
+    `added_by` VARCHAR(50) DEFAULT NULL,
+    `added_by_name` VARCHAR(100) DEFAULT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY `idx_owner` (`owner_citizenid`),
+    KEY `idx_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

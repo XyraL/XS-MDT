@@ -35,6 +35,7 @@ Config.Departments = {
             'dashboard', 'roster', 'map',
             'civilians', 'vehicles',
             'warrants', 'bolos', 'arrests', 'citations', 'incidents', 'penal',
+            'cases', 'evidence', 'weapons',
             'cad', 'callhistory', 'bulletins',
             'mugshots', 'shiftlog',
             'ia', 'fto', 'sop',
@@ -52,6 +53,7 @@ Config.Departments = {
         panels = {
             'dashboard', 'roster', 'map',
             'civilians',
+            'cases',
             'pcr', 'medhistory', 'narclog',
             'cad', 'callhistory', 'bulletins',
             'shiftlog',
@@ -70,6 +72,7 @@ Config.Departments = {
         panels = {
             'dashboard', 'roster', 'map',
             'civilians',
+            'cases',
             'fireincidents', 'hazmat', 'apparatus',
             'cad', 'callhistory', 'bulletins',
             'shiftlog',
