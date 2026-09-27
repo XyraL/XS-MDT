@@ -17,6 +17,23 @@ local function IsAuthorized(src)
 end
 
 -- Returns basic officer info pulled from QBX player data
+local function JobColors()
+    local out = {}
+    for _, cfg in pairs(Config.Departments or {}) do
+        for _, job in ipairs(cfg.jobs or {}) do out[job] = cfg.color end
+    end
+    return out
+end
+
+local function DepartmentList()
+    local out = {}
+    for key, cfg in pairs(Config.Departments or {}) do
+        out[#out + 1] = { key = key, label = cfg.short or cfg.label or key, color = cfg.color }
+    end
+    table.sort(out, function(a, b) return a.key < b.key end)
+    return out
+end
+
 local function GetOfficerInfo(src)
     local player = GetPlayer(src)
     if not player then return nil end
@@ -34,7 +51,12 @@ local function GetOfficerInfo(src)
         department      = deptKey,
         departmentLabel = deptCfg and deptCfg.label or 'Unknown',
         departmentShort = deptCfg and deptCfg.short or '--',
-        departmentColor = deptCfg and deptCfg.color or '#6366f1',
+        departmentColor = deptCfg and deptCfg.color or '#3b82f6',
+        -- Every department, so the live map can colour units that are not
+        -- the viewer own. The map used to carry a copy of these and drifted
+        -- the first time config changed.
+        jobColors       = JobColors(),
+        departments     = DepartmentList(),
         departmentIcon  = deptCfg and deptCfg.icon or '⬡',
         panels          = Dept.PanelsOfJob(pd.job.name),
     }

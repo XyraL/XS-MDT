@@ -41,6 +41,7 @@ jobs:
             --exclude '.gitignore' \
             --exclude '.gitattributes' \
             --exclude '*.zip' \
+            --exclude 'tools' \
 
           cd staging
           zip -r "../$RESOURCE-$TAG.zip" "$RESOURCE" -x '*.DS_Store'

@@ -74,7 +74,7 @@ function _updateShiftUI() {
     if (!label || !btn) return;
     if (_shiftClockedIn) {
         label.innerHTML = '<i class="dot"></i>Currently On Duty';
-        label.style.color = '#22c55e';
+        label.style.color = '#3ddc97';
         btn.textContent   = 'Clock Out';
         btn.className     = 'btn btn-danger';
     } else {

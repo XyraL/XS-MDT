@@ -25,21 +25,17 @@ const MAP = {
     world: { minX: -4140, maxX: 4860, minY: -5100, maxY: 8400 },
 };
 
-// Mirrors the department colours in config.lua.
-const JOB_COLOR = {
-    police:'#6366f1', sheriff:'#818cf8', swat:'#4f46e5', statepolice:'#818cf8',
-    ambulance:'#22c55e', ems:'#22c55e',
-    fire:'#ef4444', firefighter:'#ef4444',
-};
-const jobColor = job => JOB_COLOR[job] || '#6366f1';
+// Department colours come from the server with the officer payload, built
+// from Config.Departments. The map used to keep a copy of them here, with a
+// comment saying it mirrored config, and it drifted the first time config
+// changed. The fallback is only for a job no department claims.
+const jobColor = job => (MDT.officer && MDT.officer.jobColors && MDT.officer.jobColors[job]) || '#4d8dff';
 
-const LEGEND = [
-    { label:'Police', color:'#6366f1' },
-    { label:'EMS',    color:'#22c55e' },
-    { label:'Fire',   color:'#ef4444' },
-];
+const legend = () => (MDT.officer && MDT.officer.departments || [])
+    .map(d => ({ label: d.label, color: d.color }));
 
-const PRIORITY_COLOR = { 1:'#ef4444', 2:'#f59e0b', 3:'#6366f1' };
+// Call priority is state, so it uses the same three colours the CAD panel does.
+const PRIORITY_COLOR = { 1:'#ff4d5e', 2:'#ffb020', 3:'#3ddc97' };
 
 let _map = null;
 let _unitLayer = null, _callLayer = null;
@@ -153,7 +149,7 @@ function initMapPanel() {
                 <div id="map-unit-list" class="cmap-list"></div>
                 <div class="cmap-legend">
                     <div class="cmap-side-head">Legend</div>
-                    ${LEGEND.map(l => `
+                    ${legend().map(l => `
                         <div class="cmap-legend-row">
                             <span class="cmap-swatch" style="background:${l.color};box-shadow:0 0 5px ${l.color};"></span>
                             <span>${esc(l.label)}</span>

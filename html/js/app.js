@@ -54,11 +54,11 @@ function playUISound(type) {
 }
 
 const UNIT_STATUSES = [
-    { code: '10-8',  label: 'Available',        color: '#22c55e' },
-    { code: '10-6',  label: 'Busy / On Scene',  color: '#f59e0b' },
+    { code: '10-8',  label: 'Available',        color: '#3ddc97' },
+    { code: '10-6',  label: 'Busy / On Scene',  color: '#ffb020' },
     { code: '10-7',  label: 'Out of Service',   color: '#6b7280' },
-    { code: 'CODE3', label: 'Code 3 — Enroute', color: '#ef4444' },
-    { code: 'CODE4', label: 'Code 4 — Clear',   color: '#6366f1' },
+    { code: 'CODE3', label: 'Code 3 — Enroute', color: '#ff4d5e' },
+    { code: 'CODE4', label: 'Code 4 — Clear',   color: '#4d8dff' },
     { code: 'BKUP',  label: 'Need Backup',      color: '#f87171' },
 ];
 
@@ -638,7 +638,7 @@ function showPanicAlert(data) {
     el.style.cssText = `
         position:fixed;top:0;left:0;right:0;z-index:99999;
         background:linear-gradient(135deg,#7f1d1d,#991b1b);
-        border-bottom:3px solid #ef4444;
+        border-bottom:3px solid #ff4d5e;
         padding:18px 28px;display:flex;align-items:center;gap:20px;
         animation:panicSlideIn .3s ease;box-shadow:0 8px 40px rgba(239,68,68,.5);`;
     el.innerHTML = `

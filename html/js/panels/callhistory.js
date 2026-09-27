@@ -64,8 +64,8 @@ function renderCallHistory(calls) {
         return;
     }
     var STATUS_COLORS = {
-        completed: '#22c55e', cancelled: '#6b7280', active: '#3b82f6',
-        enroute: '#f59e0b', onscene: '#8b5cf6', pending: '#94a3b8',
+        completed: '#3ddc97', cancelled: '#6b7280', active: '#3b82f6',
+        enroute: '#ffb020', onscene: '#8b5cf6', pending: '#94a3b8',
     };
     el.innerHTML = `
         <table class="data-table">

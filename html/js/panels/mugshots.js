@@ -54,7 +54,7 @@ function renderMugshotGrid(items) {
         const arrests  = c.arrest_count || 0;
         const warrants = c.active_warrants || 0;
         const wBadge   = warrants > 0
-            ? `<span class="badge" style="background:rgba(239,68,68,0.15);color:#ef4444;font-size:10px"><i class="i i-scale"></i> ${warrants}w</span>`
+            ? `<span class="badge" style="background:rgba(255,77,94,0.15);color:#ff4d5e;font-size:10px"><i class="i i-scale"></i> ${warrants}w</span>`
             : '';
         return `<div class="mugshot-card" onclick="switchTab('civilians');setTimeout(function(){openCivilianProfile('${c.citizenid}')},80)">
             <div class="mugshot-img-wrap">
