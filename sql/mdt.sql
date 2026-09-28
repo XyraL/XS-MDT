@@ -442,6 +442,7 @@ CREATE TABLE IF NOT EXISTS `mdt_narc_log` (
 CREATE TABLE IF NOT EXISTS `mdt_officers` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `citizenid` VARCHAR(50) NOT NULL UNIQUE,
+    `name` VARCHAR(100) DEFAULT NULL,
     `badge` VARCHAR(20) NOT NULL UNIQUE,
     `callsign` VARCHAR(20) DEFAULT NULL,
     `rank` VARCHAR(50) DEFAULT 'Officer',

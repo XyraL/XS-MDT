@@ -149,3 +149,38 @@ if (colProblems.length) {
 }
 
 console.log('every column the Lua writes exists');
+
+// ── Reserved words ─────────────────────────────────────────────────────────
+//
+// `rank` is reserved in MySQL 8 and not in MariaDB, so an unquoted SET rank = ?
+// works on one host and is a syntax error on the next. Only INSERT column lists
+// and UPDATE SET clauses are read — a qualified o.rank is legal unquoted.
+
+const RESERVED = new Set(['rank', 'row', 'rows', 'window', 'groups', 'key', 'keys', 'order', 'group',
+  'desc', 'range', 'interval', 'system', 'over', 'lead', 'lag', 'empty', 'function', 'condition']);
+
+const quoteProblems = [];
+
+for (const f of files) {
+  const src = readFileSync(f, 'utf8');
+  const rel = relative(ROOT, f).replace(/\\/g, '/');
+
+  const bare = (list, kind) => {
+    for (const m of list.matchAll(/(^|[\s,(])([A-Za-z_]+)(?=\s*(?:,|\)|=|$))/g)) {
+      if (RESERVED.has(m[2].toLowerCase())) {
+        quoteProblems.push(`${rel}: ${kind} uses \`${m[2]}\` unquoted — reserved in MySQL 8, write it as \`${m[2]}\``);
+      }
+    }
+  };
+
+  for (const m of src.matchAll(/INSERT\s+(?:IGNORE\s+)?INTO\s+mdt_\w+\s*\(([^)]*)\)/gi)) bare(m[1], 'an INSERT');
+  for (const m of src.matchAll(/UPDATE\s+mdt_\w+\s+SET\s+([\s\S]*?)(?:\sWHERE\s|\]\]|'\s*,)/gi)) bare(m[1], 'an UPDATE');
+}
+
+if (quoteProblems.length) {
+  console.log('\nPROBLEMS:');
+  for (const p of [...new Set(quoteProblems)]) console.log('  ' + p);
+  process.exit(1);
+}
+
+console.log('no reserved words used bare');

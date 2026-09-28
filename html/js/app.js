@@ -515,12 +515,12 @@ window.addEventListener('message', (e) => {
             openMDT(data.officer);
             setTimeout(() => {
                 if (data.mode === 'citation') openNewCitationModal(data.data);
-                else { switchTab('civilians'); setTimeout(() => openCivilianProfile(data.data.citizenid), 80); }
+                else { showCivilian(data.data.citizenid); }
             }, 350);
             break;
         case 'targetResult':
             if (data.mode === 'citation') openNewCitationModal(data.data);
-            else { switchTab('civilians'); setTimeout(() => openCivilianProfile(data.data.citizenid), 80); }
+            else { showCivilian(data.data.citizenid); }
             break;
     }
 });

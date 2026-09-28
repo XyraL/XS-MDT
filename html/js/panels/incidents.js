@@ -246,7 +246,7 @@ async function openIncidentDetail(id) {
                                 <div style="font-weight:600;font-size:13px;">${esc(c.name)} ${copyBtn(c.citizenid)}</div>
                                 <div class="text-muted text-sm font-mono">${c.citizenid}</div>
                             </div>
-                            <button class="btn btn-ghost btn-sm" onclick="switchTab('civilians');setTimeout(()=>openCivilianProfile('${c.citizenid}'),80);">View Profile</button>
+                            <button class="btn btn-ghost btn-sm" onclick="showCivilian('${c.citizenid}')">View Profile</button>
                         </div>`).join('')}
             </div>
             <div class="card">

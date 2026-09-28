@@ -35,6 +35,10 @@ class NameSearch {
                 <div class="ns-selected" style="display:none;"></div>
             </div>`;
 
+        // Forms reach the instance through the container to prefill it. This
+        // was never set, so prefill from a civilian profile silently did nothing.
+        el._ns = this;
+
         this._wrap     = el.querySelector('.ns-wrap');
         this._input    = el.querySelector('.ns-input');
         this._dropdown = el.querySelector('.ns-dropdown');
@@ -81,10 +85,12 @@ class NameSearch {
             <div class="ns-item ${this.focusIndex === i ? 'ns-item-focused' : ''}" data-idx="${i}">
                 <div class="ns-item-left">
                     <div class="ns-item-name">${esc(p.name)}</div>
-                    <div class="ns-item-meta">DOB ${p.dob || '—'} · ${p.gender === 'male' || p.gender === 'm' ? 'M' : 'F'}</div>
+                    <div class="ns-item-meta">${this._meta(p)}</div>
                 </div>
                 <div class="ns-item-right">
-                    ${p.online ? '<span class="ns-badge ns-badge-green"><i class="dot"></i>ONLINE</span>' : '<span class="ns-badge ns-badge-gray">OFFLINE</span>'}
+                    ${p.online === true ? '<span class="ns-badge ns-badge-green"><i class="dot"></i>ONLINE</span>'
+                      : p.online === false ? '<span class="ns-badge ns-badge-gray">OFFLINE</span>' : ''}
+                    ${p.onduty ? '<span class="ns-badge ns-badge-green"><i class="dot"></i>ON DUTY</span>' : ''}
                     ${p.warrants > 0 ? `<span class="ns-badge ns-badge-red"><i class="i i-alert"></i> ${p.warrants}W</span>` : ''}
                 </div>
             </div>`).join('');
@@ -120,7 +126,26 @@ class NameSearch {
         }
     }
 
+    // One shape, whatever the source. A profile prefill carries firstname and
+    // lastname but no name, and _renderSelected read person.name.charAt() —
+    // the crash that took the charge picker down with it.
+    _normalise(person) {
+        const name = person.name
+            || [person.firstname, person.lastname].filter(Boolean).join(' ')
+            || person.citizenid || 'Unknown';
+        return { ...person, name };
+    }
+
+    _meta(p) {
+        if (p.badge) return [`#${esc(p.badge)}`, esc(p.grade || p.rank || '')].filter(Boolean).join(' · ');
+        const g = String(p.gender || '').toLowerCase();
+        const gender = g === 'male' || g === 'm' || g === '0' ? 'M'
+                     : g === 'female' || g === 'f' || g === '1' ? 'F' : '';
+        return [`DOB ${esc(p.dob || '—')}`, gender].filter(Boolean).join(' · ');
+    }
+
     _select(person) {
+        person = this._normalise(person);
         this.selected = person;
         this._input.value = '';
         if (this._clearBtn) this._clearBtn.style.display = 'none';
@@ -141,7 +166,7 @@ class NameSearch {
                 <div class="ns-selected-avatar">${person.name.charAt(0).toUpperCase()}</div>
                 <div class="ns-selected-info">
                     <div class="ns-selected-name">${esc(person.name)}</div>
-                    <div class="ns-selected-meta">DOB ${person.dob || '—'} · ${person.citizenid}</div>
+                    <div class="ns-selected-meta">${this._meta(person)} · ${esc(person.citizenid || '')}</div>
                 </div>
                 ${warnHtml}
                 <button class="ns-deselect" title="Change"><i class="i i-x"></i></button>
@@ -169,90 +194,6 @@ class NameSearch {
     getValue() { return this.selected; }
     setValue(person) { if (person) this._select(person); }
 }
-
-// Inject styles into the document
-(function injectNameSearchStyles() {
-    if (document.getElementById('ns-styles')) return;
-    const s = document.createElement('style');
-    s.id = 'ns-styles';
-    s.textContent = `
-.ns-wrap { position: relative; }
-.ns-input-row {
-    display: flex; align-items: center; gap: 0;
-    background: var(--bg-input); border: 1px solid var(--border);
-    border-radius: var(--radius); transition: border-color .15s;
-}
-.ns-input-row:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
-.ns-search-icon { padding: 0 10px; font-size: 14px; opacity: .55; pointer-events: none; }
-.ns-input {
-    flex: 1; padding: 10px 8px 10px 0; background: transparent;
-    border: none; outline: none; color: var(--text-primary);
-    font-size: 14px; font-family: var(--font-sans);
-}
-.ns-clear {
-    background: none; border: none; color: var(--text-muted); cursor: pointer;
-    padding: 0 12px; font-size: 14px; opacity: .7;
-}
-.ns-clear:hover { opacity: 1; color: var(--text-primary); }
-.ns-dropdown {
-    position: absolute; top: calc(100% + 6px); left: 0; right: 0;
-    background: var(--bg-panel); border: 1px solid var(--border-light);
-    border-radius: var(--radius); z-index: 9999;
-    box-shadow: 0 12px 40px rgba(0,0,0,.6);
-    max-height: 280px; overflow-y: auto;
-}
-.ns-item {
-    display: flex; align-items: center; gap: 12px;
-    padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--border);
-    transition: background .1s;
-}
-.ns-item:last-child { border-bottom: none; }
-.ns-item:hover, .ns-item-focused { background: var(--bg-hover); }
-.ns-item-left { flex: 1; min-width: 0; }
-.ns-item-name { font-weight: 600; font-size: 14px; color: var(--text-primary); }
-.ns-item-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-.ns-item-right { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
-.ns-badge {
-    font-size: 10px; font-weight: 700; padding: 2px 7px;
-    border-radius: 20px; text-transform: uppercase; letter-spacing: .04em;
-}
-.ns-badge-green { background: rgba(34,197,94,.15); color: #4ade80; }
-.ns-badge-gray  { background: rgba(148,163,184,.1); color: var(--text-muted); }
-.ns-badge-red   { background: rgba(239,68,68,.15); color: #f87171; }
-.ns-empty, .ns-loading {
-    padding: 14px 16px; font-size: 13px; color: var(--text-muted); text-align: center;
-}
-.ns-loading { display: flex; align-items: center; justify-content: center; gap: 8px; }
-.ns-spinner {
-    width: 14px; height: 14px; border: 2px solid var(--border-light);
-    border-top-color: var(--accent); border-radius: 50%;
-    animation: ns-spin .7s linear infinite; display: inline-block;
-}
-@keyframes ns-spin { to { transform: rotate(360deg); } }
-.ns-selected { }
-.ns-selected-card {
-    display: flex; align-items: center; gap: 12px;
-    background: var(--bg-input); border: 1px solid var(--accent);
-    border-radius: var(--radius); padding: 10px 14px;
-    box-shadow: 0 0 0 2px var(--accent-glow);
-}
-.ns-selected-avatar {
-    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-    background: var(--accent-glow); color: var(--accent-2);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; font-weight: 800;
-}
-.ns-selected-info { flex: 1; min-width: 0; }
-.ns-selected-name { font-weight: 700; font-size: 14px; color: var(--text-primary); }
-.ns-selected-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-family: var(--font-mono); }
-.ns-deselect {
-    background: none; border: none; color: var(--text-muted); cursor: pointer;
-    padding: 4px 8px; font-size: 14px; opacity: .6; flex-shrink: 0;
-}
-.ns-deselect:hover { opacity: 1; color: var(--text-danger); }
-`;
-    document.head.appendChild(s);
-}());
 
 window.NameSearch = NameSearch;
 

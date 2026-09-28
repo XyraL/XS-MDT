@@ -247,6 +247,15 @@ lib.callback.register('XS-MDT:server:open', function(source)
     local officer = GetOfficerInfo(source)
     officer.isSupervisor = officer.grade >= Dept.SupervisorGrade(officer.job)
 
+    -- The officer record is what the roster and the officer search read for
+    -- anyone who is not online, so it carries the name, department key and
+    -- rank as of the last time they opened the MDT. The department was stored
+    -- as the job name before, so an 'ambulance' medic never matched the 'ems'
+    -- roster.
+    MySQL.update.await([[
+        UPDATE mdt_officers SET name = ?, department = ?, `rank` = ? WHERE citizenid = ?
+    ]], { officer.name, officer.department, officer.gradeLabel, officer.citizenid })
+
     -- Body cam: log MDT open
     if Config.BodyCam.Enabled then
         MySQL.insert.await('INSERT INTO mdt_bodycam (citizenid, officer_name, action, details) VALUES (?,?,?,?)', {

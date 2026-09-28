@@ -40,7 +40,7 @@ function loadWarrants(filter = 'active') {
                             const isExpiringSoon = w.expires_at && w.status === 'active' &&
                                 (new Date(w.expires_at) - Date.now()) < 86400000 * 3;
                             return `
-                            <tr onclick="openCivilianProfile('${w.citizenid}');switchTab('civilians');">
+                            <tr onclick="showCivilian('${w.citizenid}')">
                                 <td>
                                     <div class="font-bold">${w.subject_name || w.citizenid}</div>
                                     <div class="text-xs font-mono text-muted">${w.citizenid}</div>
@@ -61,7 +61,7 @@ function loadWarrants(filter = 'active') {
                                 <td>
                                     <div style="display:flex;gap:5px;">
                                         ${w.status==='active' ? `<button class="btn btn-success btn-xs" onclick="event.stopPropagation();clearWarrantRow(${w.id})">Clear</button>` : ''}
-                                        <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();openCivilianProfile('${w.citizenid}');switchTab('civilians');">View</button>
+                                        <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();showCivilian('${w.citizenid}')">View</button>
                                     </div>
                                 </td>
                             </tr>`;}).join('')}

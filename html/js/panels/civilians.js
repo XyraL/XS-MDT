@@ -153,6 +153,15 @@ function searchCivilians(query) {
     });
 }
 
+// Open someone's profile from anywhere in the MDT. The tab switch has to come
+// first: it runs the civilians loader, which draws the search view, and doing
+// it second drew that search view over the profile.
+function showCivilian(citizenid) {
+    if (!citizenid) return;
+    switchTab('civilians');
+    openCivilianProfile(citizenid);
+}
+
 function openCivilianProfile(citizenid) {
     const panel = document.getElementById('tab-civilians');
     panel.innerHTML = `
@@ -540,8 +549,8 @@ function openMugshotModal(citizenid, currentImage) {
         </button>`,
         async () => {
             const url = document.getElementById('mugshot-url')?.value.trim() || null;
-            const ok = await nuiFetch('updateCivilianImage', { citizenid, image: url || null });
-            if (res && res.ok) {
+            const saved = await nuiFetch('updateCivilianImage', { citizenid, image: url || null });
+            if (saved) {
                 showToast('Photo Updated', '', 'success');
                 closeModal(modal);
                 openCivilianProfile(citizenid);
@@ -567,6 +576,7 @@ function previewMugshot() {
 window.initCivilianPanel       = initCivilianPanel;
 window.searchCivilians         = searchCivilians;
 window.openCivilianProfile     = openCivilianProfile;
+window.showCivilian            = showCivilian;
 window.renderCivilianProfile   = renderCivilianProfile;
 window.showCivTab              = showCivTab;
 window.renderWarrantsList      = renderWarrantsList;

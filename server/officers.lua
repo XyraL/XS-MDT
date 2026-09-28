@@ -61,8 +61,8 @@ lib.callback.register('XS-MDT:server:getMyOfficerProfile', function(source)
     if not profile then
         -- Auto-create a basic profile on first open
         local badge = tostring(math.random(1000, 9999))
-        MySQL.insert.await('INSERT INTO mdt_officers (citizenid, badge, rank, department) VALUES (?, ?, ?, ?)', {
-            officer.citizenid, badge, officer.gradeLabel, officer.job
+        MySQL.insert.await('INSERT INTO mdt_officers (citizenid, name, badge, `rank`, department) VALUES (?, ?, ?, ?, ?)', {
+            officer.citizenid, officer.name, badge, officer.gradeLabel, officer.department
         })
         profile = MySQL.single.await('SELECT * FROM mdt_officers WHERE citizenid = ?', { officer.citizenid })
     end
@@ -74,29 +74,56 @@ lib.callback.register('XS-MDT:server:getMyOfficerProfile', function(source)
     return profile
 end)
 
--- Search on-duty officers by name (for incident linking)
+-- Officers by name, online or not.
+--
+-- Online players are matched on their live character name. Everyone else is
+-- matched on the name stored on their officer record the last time they
+-- opened the MDT, because an IA case or an FTO trainee is often someone who is
+-- not on right now.
 lib.callback.register('XS-MDT:server:searchOfficers', function(source, query)
     if not IsAuthorized(source) then return nil end
-    if not query or #query < 2 then return {} end
-    local search = '%' .. query:lower() .. '%'
-    local results = {}
-    local players = Framework.GetPlayers()
-    for src, player in pairs(players) do
+    if type(query) ~= 'string' or #query < 2 then return {} end
+
+    -- A plain substring. This used to be '%' .. q .. '%' handed to a
+    -- plain-text find, which searched for the percent signs themselves.
+    local needle = query:lower()
+    local results, seen = {}, {}
+
+    for _, player in pairs(Framework.GetPlayers()) do
         local pd = player.PlayerData
-        if Config.AuthorizedJobs[pd.job.name] then
+        if pd and Config.AuthorizedJobs[pd.job.name] then
             local fullname = pd.charinfo.firstname .. ' ' .. pd.charinfo.lastname
-            if fullname:lower():find(search, 1, true) then
+            if fullname:lower():find(needle, 1, true) then
                 local badge = MySQL.scalar.await('SELECT badge FROM mdt_officers WHERE citizenid = ?', { pd.citizenid })
                 results[#results + 1] = {
                     citizenid = pd.citizenid,
                     name = fullname,
                     grade = pd.job.grade.name,
-                    badge = badge or 'N/A',
-                    onduty = pd.job.onduty,
+                    badge = badge or '—',
+                    onduty = pd.job.onduty and true or false,
                 }
+                seen[pd.citizenid] = true
             end
         end
     end
+
+    local stored = MySQL.query.await([[
+        SELECT citizenid, name, badge, `rank` FROM mdt_officers
+        WHERE name LIKE ? LIMIT 20
+    ]], { '%' .. query .. '%' }) or {}
+
+    for _, row in ipairs(stored) do
+        if not seen[row.citizenid] then
+            results[#results + 1] = {
+                citizenid = row.citizenid,
+                name = row.name,
+                grade = row.rank,
+                badge = row.badge or '—',
+                onduty = false,
+            }
+        end
+    end
+
     return results
 end)
 

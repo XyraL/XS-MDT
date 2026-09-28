@@ -66,6 +66,15 @@ local function SourceFor(citizenid)
     return nil
 end
 
+-- The job names a department covers. Officer records written before 3.0
+-- stored the job name rather than the department key, and they only
+-- re-sync when that officer next opens the MDT.
+function DepartmentJobs(key)
+    local cfg = Config.Departments[key]
+    local jobs = cfg and cfg.jobs or {}
+    return #jobs > 0 and jobs or { '' }
+end
+
 -- ── Roster ────────────────────────────────────────────────────────────────
 
 --[[ Every officer on the books, not just the ones on duty.
@@ -79,13 +88,13 @@ lib.callback.register('XS-MDT:server:getPersonnel', function(source)
     if not me then return nil end
 
     local rows = MySQL.query.await([[
-        SELECT o.citizenid, o.badge, o.callsign, o.rank, o.department, o.status, o.created_at,
+        SELECT o.citizenid, o.name, o.badge, o.callsign, o.rank, o.department, o.status, o.created_at,
                (SELECT COUNT(*) FROM mdt_certifications c WHERE c.citizenid = o.citizenid) AS certs,
                (SELECT COUNT(*) FROM mdt_ia_cases i WHERE i.citizenid = o.citizenid AND i.status IN ('open','investigating')) AS ia_open
         FROM mdt_officers o
-        WHERE o.department = ?
+        WHERE o.department = ? OR o.department IN (?)
         ORDER BY o.rank, o.badge
-    ]], { me.department })
+    ]], { me.department, DepartmentJobs(me.department) })
 
     -- Names and duty state come from the live players; an offline officer
     -- keeps whatever name the last record wrote.
@@ -105,7 +114,7 @@ lib.callback.register('XS-MDT:server:getPersonnel', function(source)
 
     for _, row in ipairs(rows) do
         local live = online[row.citizenid]
-        row.name = live and live.name or (row.callsign or row.badge)
+        row.name = (live and live.name) or row.name or row.callsign or row.badge
         row.online = live and true or false
         row.onduty = live and live.onduty or false
         row.grade = live and live.grade or nil
@@ -181,7 +190,7 @@ lib.callback.register('XS-MDT:server:setOfficerRank', function(source, data)
         return false, 'The framework refused the job change'
     end
 
-    MySQL.update.await('UPDATE mdt_officers SET rank = ? WHERE citizenid = ?', { picked.label, row.citizenid })
+    MySQL.update.await('UPDATE mdt_officers SET `rank` = ? WHERE citizenid = ?', { picked.label, row.citizenid })
     LogChange(row.citizenid, 'rank', row.rank, picked.label, me)
     Audit(source, 'RANK_CHANGED', ('%s → %s'):format(row.rank or '?', picked.label), row.citizenid)
     Framework.Notify(src, ('Your rank is now %s'):format(picked.label), 'inform')

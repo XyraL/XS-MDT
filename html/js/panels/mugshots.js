@@ -56,7 +56,7 @@ function renderMugshotGrid(items) {
         const wBadge   = warrants > 0
             ? `<span class="badge" style="background:rgba(255,77,94,0.15);color:#ff4d5e;font-size:10px"><i class="i i-scale"></i> ${warrants}w</span>`
             : '';
-        return `<div class="mugshot-card" onclick="switchTab('civilians');setTimeout(function(){openCivilianProfile('${c.citizenid}')},80)">
+        return `<div class="mugshot-card" onclick="showCivilian('${c.citizenid}')">
             <div class="mugshot-img-wrap">
                 <img src="${esc(c.image)}" alt="${esc(name)}" class="mugshot-img"
                      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">

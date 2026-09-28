@@ -383,15 +383,15 @@ body.hidden, .hidden { display: none !important; }
   color: var(--faint);
 }
 
-.input, .select, .textarea, .search-input, .ns-input {
+.input, .select, .textarea, .search-input {
   width: 100%; height: 32px; padding: 0 11px;
   background: var(--base); border: 1px solid var(--line);
   border-radius: var(--radius); color: var(--text);
   font: 12.5px var(--font);
 }
 .textarea { height: auto; min-height: 92px; padding: 9px 11px; resize: vertical; line-height: 1.5; }
-.input::placeholder, .textarea::placeholder, .search-input::placeholder, .ns-input::placeholder { color: var(--faint); }
-.input:focus, .select:focus, .textarea:focus, .search-input:focus, .ns-input:focus {
+.input::placeholder, .textarea::placeholder, .search-input::placeholder { color: var(--faint); }
+.input:focus, .select:focus, .textarea:focus, .search-input:focus {
   outline: none; border-color: var(--accent);
 }
 .input-sm { height: 26px; font-size: 11.5px; }
@@ -408,7 +408,7 @@ body.hidden, .hidden { display: none !important; }
 
 .form-hint { margin-top: 6px; font-size: 11.5px; color: var(--faint); }
 
-.search-bar, .search-wrap, .ns-input-row, .ns-wrap { position: relative; display: flex; gap: 8px; align-items: center; }
+.search-bar, .search-wrap { position: relative; display: flex; gap: 8px; align-items: center; }
 
 /* A search row that is a direct child of the panel is a toolbar, so it carries
    the panel gutter. Inside .panel-actions the panel already supplies it. */
@@ -426,11 +426,7 @@ body.hidden, .hidden { display: none !important; }
 .search-bar input:focus, .search-wrap > input:focus { outline: none; border-color: var(--accent); }
 .search-bar input::placeholder, .search-wrap > input::placeholder { color: var(--faint); }
 
-.search-icon, .ns-search-icon { position: absolute; left: 11px; color: var(--faint); font-size: 12px; pointer-events: none; z-index: 1; }
-/* A flex item with width:100% and the default flex-shrink collapses to its
-   content, which left the picker a 197px stub in a 642px row. */
-.ns-input-row { width: 100%; }
-.ns-input-row .ns-input { flex: 1 1 auto; min-width: 0; padding-left: 30px; }
+.search-icon { position: absolute; left: 11px; color: var(--faint); font-size: 12px; pointer-events: none; z-index: 1; }
 .search-shortcut { position: absolute; right: 10px; color: var(--faint); font: 10px var(--font-mono); pointer-events: none; }
 /* Absolute positioning measures from the padding box, so the hint has to clear
    the gutter the toolbar row added. */
@@ -726,6 +722,13 @@ body.hidden, .hidden { display: none !important; }
 
 .charge-picker { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); overflow: hidden; }
 .charge-picker-search { padding: 10px; border-bottom: 1px solid var(--line); }
+.charge-picker-search input {
+  width: 100%; height: 30px; padding: 0 10px;
+  background: var(--base); border: 1px solid var(--line);
+  border-radius: var(--radius); color: var(--text); font: 12.5px var(--font);
+}
+.charge-picker-search input:focus { outline: none; border-color: var(--accent); }
+.charge-picker-search input::placeholder { color: var(--faint); }
 .charge-picker-list, .charge-list { max-height: 320px; overflow-y: auto; }
 .charge-category { border-bottom: 1px solid var(--line-soft); }
 .charge-cat-header {
@@ -748,36 +751,102 @@ body.hidden, .hidden { display: none !important; }
 .charge-total-label { font: 10px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--faint); }
 .charge-total-value { margin-left: auto; font: 600 14px var(--font-mono); font-variant-numeric: tabular-nums; }
 
-/* ═══ Person linker / name search ══════════════════════════════════════════ */
+/* ═══ Person linker ════════════════════════════════════════════════════════ */
 
-.person-linker, .ns-wrap { position: relative; }
+.person-linker { position: relative; }
 .person-linker-input-row { display: flex; gap: 8px; }
-.person-linker-dropdown, .ns-dropdown {
+.person-linker-dropdown {
   position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 20;
   max-height: 240px; overflow-y: auto;
   background: var(--raised); border: 1px solid var(--line);
   border-radius: var(--radius); box-shadow: 0 16px 40px -12px rgba(0,0,0,.7);
 }
-.person-linker-result, .ns-item { display: flex; align-items: center; gap: 10px; padding: 8px 11px; cursor: pointer; }
-.person-linker-result:hover, .ns-item:hover { background: var(--raised-2); }
-.person-linker-result-name, .ns-item-name { font-size: 12.5px; font-weight: 550; }
-.person-linker-result-meta, .ns-item-meta { font: 10.5px var(--font-mono); color: var(--faint); }
+.person-linker-result { display: flex; align-items: center; gap: 10px; padding: 8px 11px; cursor: pointer; }
+.person-linker-result:hover { background: var(--raised-2); }
+.person-linker-result-name { font-size: 12.5px; font-weight: 550; }
+.person-linker-result-meta { font: 10.5px var(--font-mono); color: var(--faint); }
+.linked-persons { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+/* ═══ Name search ══════════════════════════════════════════════════════════
+   The picker in every form that needs a person. The row is the field; the
+   icon is an ordinary flex item beside the input rather than something laid
+   over it, so the placeholder can never end up underneath it. */
+
+.ns-wrap { position: relative; width: 100%; }
+
+.ns-input-row {
+  display: flex; align-items: center;
+  width: 100%; height: 32px;
+  background: var(--base);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  transition: border-color .12s;
+}
+.ns-input-row:focus-within { border-color: var(--accent); }
+
+.ns-search-icon {
+  flex: none; width: 30px;
+  display: grid; place-items: center;
+  color: var(--faint); font-size: 12px;
+  pointer-events: none;
+}
+
+.ns-input {
+  flex: 1 1 auto; min-width: 0; height: 100%;
+  padding: 0 10px 0 0;
+  background: transparent; border: 0; outline: none;
+  color: var(--text); font: 12.5px var(--font);
+}
+.ns-input::placeholder { color: var(--faint); }
+
+.ns-clear {
+  flex: none; height: 100%; padding: 0 10px;
+  color: var(--faint);
+}
+.ns-clear:hover { color: var(--red); }
+
+.ns-dropdown {
+  position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 70;
+  max-height: 260px; overflow-y: auto;
+  background: var(--raised); border: 1px solid var(--line-2);
+  border-radius: var(--radius); box-shadow: 0 16px 40px -12px rgba(0,0,0,.8);
+}
+.ns-item { display: flex; align-items: center; gap: 10px; padding: 8px 11px; cursor: pointer; border-bottom: 1px solid var(--line-soft); }
+.ns-item:last-child { border-bottom: 0; }
+.ns-item:hover, .ns-item-focused { background: var(--raised-2); }
 .ns-item-left { min-width: 0; flex: 1; }
-.ns-item-right { margin-left: auto; }
-.linked-persons, .ns-selected { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.ns-selected-card { display: flex; align-items: center; gap: 9px; padding: 8px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
-.ns-selected-avatar { width: 26px; height: 26px; border-radius: var(--radius); background: var(--raised-2); display: grid; place-items: center; font: 600 10px var(--font-mono); color: var(--dim); }
-.ns-selected-name { font-size: 12.5px; font-weight: 550; }
-.ns-selected-meta { font: 10.5px var(--font-mono); color: var(--faint); }
-.ns-deselect, .ns-clear { cursor: pointer; color: var(--faint); margin-left: auto; }
-.ns-deselect:hover, .ns-clear:hover { color: var(--red); }
-.ns-empty, .ns-loading { padding: 14px; text-align: center; color: var(--faint); font-size: 12px; }
+.ns-item-name { font-size: 12.5px; font-weight: 550; }
+.ns-item-meta { font: 10.5px var(--font-mono); color: var(--faint); margin-top: 1px; }
+.ns-item-right { flex: none; display: flex; gap: 5px; align-items: center; }
+
+.ns-empty, .ns-loading { padding: 13px; text-align: center; color: var(--faint); font-size: 12px; }
+.ns-loading { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .ns-spinner {
-  width: 14px; height: 14px; margin: 0 auto 6px;
+  width: 13px; height: 13px;
   border: 2px solid var(--line); border-top-color: var(--accent);
   border-radius: 50%; animation: spin .7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.ns-selected-card {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 10px;
+  background: var(--base);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+}
+.ns-selected-avatar {
+  width: 26px; height: 26px; flex: none;
+  border-radius: var(--radius);
+  background: var(--raised-2); color: var(--dim);
+  display: grid; place-items: center;
+  font: 600 11px var(--font-mono);
+}
+.ns-selected-info { flex: 1; min-width: 0; }
+.ns-selected-name { font-size: 12.5px; font-weight: 550; }
+.ns-selected-meta { font: 10.5px var(--font-mono); color: var(--faint); }
+.ns-deselect { flex: none; padding: 2px 6px; color: var(--faint); }
+.ns-deselect:hover { color: var(--red); }
 
 /* ═══ Modal ════════════════════════════════════════════════════════════════ */
 

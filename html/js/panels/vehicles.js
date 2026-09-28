@@ -169,7 +169,7 @@ async function lookupPlate() {
                             Registered Owner
                         </div>
                         <button class="btn btn-ghost btn-sm"
-                                onclick="openCivilianProfile('${data.owner.citizenid}');switchTab('civilians');">
+                                onclick="showCivilian('${data.owner.citizenid}')">
                             View Full Profile →
                         </button>
                     </div>
