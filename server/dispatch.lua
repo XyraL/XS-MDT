@@ -8,6 +8,45 @@ if Config.DisableInternalDispatchDetection then return end
 local _suppressed = {}
 local _filters    = {}
 
+local function AllJobs()
+    local out = {}
+    for job in pairs(Config.AuthorizedJobs or {}) do out[#out + 1] = job end
+    return out
+end
+
+local function Mirror(call)
+    if MdtDispatchAlerts then MdtDispatchAlerts(call) end
+end
+
+-- ── Call Type Config ──────────────────────────────────────────────────────
+local CALL_ICONS = {
+    SHOTS_FIRED  = '🔫',
+    FIGHT        = '👊',
+    VEHICLE_CRASH= '💥',
+    ROBBERY      = '🏪',
+    BANK_ROBBERY = '🏦',
+    STORE_ROBBERY= '🏪',
+    TRAFFIC_STOP = '🚦',
+    MEDICAL      = '🚑',
+    FIRE         = '🔥',
+    SUSPICIOUS   = '👁',
+    CUSTOM       = '📡',
+}
+
+local CALL_LABELS = {
+    SHOTS_FIRED  = 'Shots Fired',
+    FIGHT        = 'Fight / Assault',
+    VEHICLE_CRASH= 'Vehicle Crash',
+    ROBBERY      = 'Robbery in Progress',
+    BANK_ROBBERY = 'Bank Robbery',
+    STORE_ROBBERY= 'Store Robbery',
+    TRAFFIC_STOP = 'Traffic Stop',
+    MEDICAL      = 'Medical Emergency',
+    FIRE         = 'Structure Fire',
+    SUSPICIOUS   = 'Suspicious Activity',
+    CUSTOM       = 'Dispatch Call',
+}
+
 --[[
     SuppressDispatch(callType, suppressed)
     Globally enable or disable a dispatch call type server-wide.
@@ -166,52 +205,21 @@ exports('CreateDispatchCall', function(data)
     end
 
     -- And out to whatever dispatch the server already runs.
-    if MdtDispatchAlerts then
-        MdtDispatchAlerts({
-            callType = data.callType,
-            label = label,
-            code = data.code,
-            description = data.description,
-            coords = data.coords,
-            street = data.street,
-            priority = tonumber(data.priority) or 2,
-            callNumber = callNumber,
-            caller = data.callerName or 'Dispatch',
-            jobs = Dept.JobsForCall(data.callType),
-        })
-    end
+    Mirror({
+        callType = data.callType,
+        label = label,
+        code = data.code,
+        description = data.description,
+        coords = data.coords,
+        street = data.street,
+        priority = tonumber(data.priority) or 2,
+        callNumber = callNumber,
+        caller = data.callerName or 'Dispatch',
+        jobs = Dept.JobsForCall(data.callType),
+    })
 
     return callId
 end)
-
--- ── Call Type Config ──────────────────────────────────────────────────────
-local CALL_ICONS = {
-    SHOTS_FIRED  = '🔫',
-    FIGHT        = '👊',
-    VEHICLE_CRASH= '💥',
-    ROBBERY      = '🏪',
-    BANK_ROBBERY = '🏦',
-    STORE_ROBBERY= '🏪',
-    TRAFFIC_STOP = '🚦',
-    MEDICAL      = '🚑',
-    FIRE         = '🔥',
-    SUSPICIOUS   = '👁',
-    CUSTOM       = '📡',
-}
-
-local CALL_LABELS = {
-    SHOTS_FIRED  = 'Shots Fired',
-    FIGHT        = 'Fight / Assault',
-    VEHICLE_CRASH= 'Vehicle Crash',
-    ROBBERY      = 'Robbery in Progress',
-    BANK_ROBBERY = 'Bank Robbery',
-    STORE_ROBBERY= 'Store Robbery',
-    TRAFFIC_STOP = 'Traffic Stop',
-    MEDICAL      = 'Medical Emergency',
-    FIRE         = 'Structure Fire',
-    SUSPICIOUS   = 'Suspicious Activity',
-    CUSTOM       = 'Dispatch Call',
-}
 
 -- Rate limit: don't spam identical calls from same player
 local _recentCalls = {}
@@ -358,6 +366,18 @@ AddEventHandler('XS-MDT:server:manualDispatch', function(data)
             TriggerClientEvent('XS-MDT:client:newCall', psrc, callData)
         end
     end
+
+    Mirror({
+        callType = 'CUSTOM',
+        label = data.callType or 'Dispatch Call',
+        description = data.description or '',
+        coords = data.coords,
+        street = data.location,
+        priority = tonumber(data.priority) or 2,
+        callNumber = callNumber,
+        caller = officer.name,
+        jobs = Dept.JobsForCall('CUSTOM'),
+    })
 end)
 
 -- Panic button handler
@@ -428,6 +448,19 @@ AddEventHandler('XS-MDT:server:panicButton', function(data)
             TriggerClientEvent('XS-MDT:client:newCall', psrc, callData)
         end
     end
+
+    Mirror({
+        callType = 'PANIC',
+        label = 'Officer Needs Assistance',
+        code = '10-99',
+        description = ('%s (Badge #%s) pressed their panic button'):format(name, badge),
+        coords = data,
+        street = street,
+        priority = 1,
+        callNumber = callNumber,
+        caller = name,
+        jobs = AllJobs(),
+    })
 
     exports['XS-MDT']:AuditLog('PANIC BUTTON', name, 'Badge #' .. badge .. ' at ' .. street)
     exports['XS-MDT']:LogBodyCam(src, 'PANIC_BUTTON', 'Location: ' .. street)
@@ -501,6 +534,19 @@ AddEventHandler('XS-MDT:server:backupRequest', function(data)
             })
         end
     end
+
+    Mirror({
+        callType = 'BACKUP_REQUEST',
+        label = 'Backup Requested',
+        code = '10-78',
+        description = ('%s (Badge #%s) requested backup'):format(name, badge),
+        coords = data,
+        street = street,
+        priority = 1,
+        callNumber = callNumber,
+        caller = name,
+        jobs = AllJobs(),
+    })
 
     exports['XS-MDT']:AuditLog('BACKUP REQUEST', name, 'Badge #' .. badge .. ' at ' .. street)
 end)

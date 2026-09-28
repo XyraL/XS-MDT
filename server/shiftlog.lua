@@ -61,9 +61,17 @@ lib.callback.register('XS-MDT:server:getShiftStatus', function(source)
     if not HasPanel(source, 'shiftlog') then return nil end
     local officer = GetOfficerInfo(source)
     if not officer then return nil end
+    local shiftId = _openShifts[officer.citizenid]
+    local elapsed = 0
+    if shiftId then
+        elapsed = MySQL.scalar.await(
+            'SELECT TIMESTAMPDIFF(SECOND, clock_in, NOW()) FROM mdt_shift_log WHERE id = ?', { shiftId }) or 0
+    end
+
     return {
-        clockedIn = _openShifts[officer.citizenid] ~= nil,
-        shiftId   = _openShifts[officer.citizenid],
+        clockedIn = shiftId ~= nil,
+        shiftId   = shiftId,
+        elapsedSeconds = elapsed,
     }
 end)
 

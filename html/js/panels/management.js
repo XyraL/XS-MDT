@@ -89,7 +89,7 @@ function renderStatus() {
                         <div class="mgmt-row">
                             ${light(t.enabled)}
                             <span class="mono">${esc(t.id)}</span>
-                            <span class="record-meta">${t.enabled ? 'receiving alerts' : t.started ? 'started, not enabled' : 'not running'}</span>
+                            <span class="record-meta">${t.enabled ? 'receiving alerts' : t.started ? 'started, not enabled' : 'not running'}${t.resource && t.resource !== t.id ? ' (' + esc(t.resource) + ')' : ''}</span>
                         </div>`).join('') || '<div class="text-muted text-sm">No dispatch resources detected.</div>'}
                 </div>
             </div>

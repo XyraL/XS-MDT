@@ -356,6 +356,10 @@ Config.DisableInternalDispatchDetection = false
 -- ═══════════════════════════════════════════════════════════════════════════
 Config.DispatchAlerts = 'auto'
 
+-- Only needed if your dispatch runs under a folder name the MDT can't match.
+-- Example: { ['ps-dispatch'] = 'my-dispatch' }
+Config.DispatchAlertResources = {}
+
 Config.DispatchAdapters = {
     { id = 'XS-Dispatch', resource = 'XS-Dispatch', priority = 100 },
     -- Generic export adapter example:

@@ -63,7 +63,9 @@ async function _loadShiftStatus() {
     _shiftClockedIn = data.clockedIn || false;
     _updateShiftUI();
     if (_shiftClockedIn) {
-        _shiftStartTime = Date.now();
+        // Count from when the shift really started, not from when this tab
+        // was opened.
+        _shiftStartTime = Date.now() - (Number(data.elapsedSeconds) || 0) * 1000;
         _startShiftTimer();
     }
 }
