@@ -101,6 +101,77 @@ local function FixUps()
     end
 end
 
+-- The 35 charges every release before 3.0 seeded, exactly as they shipped.
+local OLD_CHARGES = {
+    { '12500(a) VC', 'Driving Without a License' }, { '22350 VC', 'Speeding' },
+    { '23152(a) VC', 'Driving Under the Influence' }, { '23153(a) VC', 'DUI Causing Injury' },
+    { '20001 VC', 'Hit and Run (Felony)' }, { '20002 VC', 'Hit and Run (Misdemeanor)' },
+    { '2800.2 VC', 'Evading a Peace Officer' }, { '10851 VC', 'Vehicle Theft' },
+    { '187 PC', 'Murder' }, { '664/187 PC', 'Attempted Murder' },
+    { '245(a)(1) PC', 'Assault with a Deadly Weapon' }, { '240 PC', 'Assault' },
+    { '242 PC', 'Battery' }, { '207 PC', 'Kidnapping' }, { '261 PC', 'Rape' },
+    { '211 PC', 'Robbery' }, { '212.5 PC', 'Home Invasion Robbery' }, { '459 PC', 'Burglary' },
+    { '487 PC', 'Grand Theft' }, { '488 PC', 'Petty Theft' }, { '594 PC', 'Vandalism' },
+    { '25400 PC', 'Carrying a Concealed Weapon' }, { '26350 PC', 'Open Carry (Unloaded)' },
+    { '417 PC', 'Brandishing a Weapon' }, { '12022.5 PC', 'Using a Firearm During a Felony' },
+    { '11350 HS', 'Possession of a Controlled Substance' }, { '11351 HS', 'Possession for Sale' },
+    { '11352 HS', 'Transportation/Sale of Controlled Substance' },
+    { '11357 HS', 'Possession of Marijuana (Over Limit)' },
+    { '69 PC', 'Obstruction of Justice' }, { '148(a)(1) PC', 'Resisting Arrest' },
+    { '647(b) PC', 'Disorderly Conduct' }, { '13523 PC', 'Impersonating an Officer' },
+    { '32 PC', 'Accessory After the Fact' }, { '182 PC', 'Criminal Conspiracy' },
+}
+
+local function OldChargeMatch()
+    local parts, args = {}, {}
+    for _, c in ipairs(OLD_CHARGES) do
+        parts[#parts + 1] = '(code = ? AND name = ?)'
+        args[#args + 1] = c[1]
+        args[#args + 1] = c[2]
+    end
+    return '(' .. table.concat(parts, ' OR ') .. ')', args
+end
+
+--[[ The charge book ships with the resource, so nobody should have to import
+     it by hand. It is seeded into an empty table, or into one holding nothing
+     but the old default charges, which is a server upgrading from 2.x. A table
+     with charges of the server's own is left alone.
+
+     Once the book is in, the old defaults that came before it are retired, so
+     the picker does not list both. Only rows exactly as they shipped: one a
+     server renamed or re-priced is theirs now. ]]
+local function ChargeBook()
+    local match, args = OldChargeMatch()
+
+    local total = MySQL.scalar.await('SELECT COUNT(*) FROM mdt_penal_codes') or 0
+    local book = MySQL.scalar.await("SELECT COUNT(*) FROM mdt_penal_codes WHERE code LIKE 'PC %'") or 0
+    local old = MySQL.scalar.await('SELECT COUNT(*) FROM mdt_penal_codes WHERE ' .. match, args) or 0
+
+    if book == 0 and (total == 0 or total == old) then
+        local file = LoadResourceFile(GetCurrentResourceName(), 'sql/penal-codes.sql')
+        if not file then
+            print('^3[XS-MDT] sql/penal-codes.sql is missing, so the charge book could not be seeded.^7')
+            return
+        end
+        -- The file is a header comment and one INSERT, which MySQL takes as a
+        -- single statement, comment and all.
+        MySQL.query.await(file)
+        local n = MySQL.scalar.await("SELECT COUNT(*) FROM mdt_penal_codes WHERE code LIKE 'PC %'") or 0
+        print(('[XS-MDT] seeded the charge book: %d charges'):format(n))
+    end
+
+    local firstBook = MySQL.scalar.await("SELECT MIN(id) FROM mdt_penal_codes WHERE code LIKE 'PC %'")
+    if not firstBook then return end
+
+    local retiredArgs = { firstBook }
+    for _, v in ipairs(args) do retiredArgs[#retiredArgs + 1] = v end
+    local retired = MySQL.update.await(
+        'UPDATE mdt_penal_codes SET active = 0 WHERE active = 1 AND id < ? AND ' .. match, retiredArgs) or 0
+    if retired > 0 then
+        print(('[XS-MDT] retired %d old default charges now the charge book is in'):format(retired))
+    end
+end
+
 CreateThread(function()
     -- Let oxmysql finish connecting.
     Wait(2000)
@@ -162,32 +233,8 @@ CreateThread(function()
             for i = 1, math.min(#failures, 8) do print('^1[XS-MDT]   ' .. failures[i] .. '^7') end
         end
 
-        -- The charge book is data, not schema, so it is only seeded when the table
-        -- is genuinely empty. A server that cleared it out meant to.
-        -- The charge book is data the resource ships, so there is no reason to
-        -- make anyone import it by hand. Only when the table is empty: a server
-        -- that cleared it out meant to.
-        local ok, charges = pcall(function()
-            return MySQL.scalar.await('SELECT COUNT(*) FROM mdt_penal_codes') or 0
-        end)
-
-        if ok and charges == 0 then
-            local book = LoadResourceFile(GetCurrentResourceName(), 'sql/penal-codes.sql')
-
-            if not book then
-                print('^3[XS-MDT] No charges on file, and sql/penal-codes.sql is missing.^7')
-            else
-                -- The file is a header comment and one INSERT, which MySQL
-                -- takes as a single statement, comment and all.
-                local seeded, e = pcall(function() MySQL.query.await(book) end)
-                if seeded then
-                    local n = MySQL.scalar.await('SELECT COUNT(*) FROM mdt_penal_codes') or 0
-                    print(('[XS-MDT] seeded the charge book: %d charges'):format(n))
-                else
-                    print(('^1[XS-MDT] Could not seed the charge book: %s^7'):format(e))
-                end
-            end
-        end
+        local ok, e = pcall(ChargeBook)
+        if not ok then print(('^1[XS-MDT] Could not check the charge book: %s^7'):format(e)) end
     end)
 
     if not ran then
