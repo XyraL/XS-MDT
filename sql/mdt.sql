@@ -115,6 +115,8 @@ CREATE TABLE IF NOT EXISTS `mdt_cad_calls` (
     `caller_name` VARCHAR(100) DEFAULT NULL,
     `notes` JSON DEFAULT NULL,
     `priority` TINYINT DEFAULT 2,
+    `origin` VARCHAR(40) DEFAULT NULL,
+    `external_id` VARCHAR(64) DEFAULT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     KEY `idx_status` (`status`)

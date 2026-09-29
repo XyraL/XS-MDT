@@ -3,7 +3,7 @@ game 'gta5'
 
 name 'XS-MDT'
 description 'Multi-department MDT (Police / EMS / Fire) with CAD integration for QBox and QBCore'
-version '3.0.0'
+version '3.0.1'
 author 'XyraL'
 
 shared_scripts {
@@ -40,6 +40,7 @@ server_scripts {
     'server/evidence-bridge.lua',
     'server/dispatch-adapters.lua',
     'server/dispatch.lua',
+    'server/dispatch-feed.lua',
     'server/officers.lua',
     'server/personnel.lua',
     'server/cases.lua',

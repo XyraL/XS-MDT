@@ -1,5 +1,4 @@
 -- XS-MDT Client Dispatch — detects game events and sends auto-dispatch calls
-if Config.DisableInternalDispatchDetection then return end
 
 local function InternalDetectionActive()
     if Config.DispatchProvider == 'internal' then return true end
@@ -27,7 +26,13 @@ AddEventHandler('XS-MDT:client:setSuppression', function(callType, suppressed)
 end)
 
 local function IsSuppr(callType)
-    return _suppressed[callType] == true
+    if Config.DisableInternalDispatchDetection or _suppressed[callType] == true then return true end
+    if GlobalState['xs-mdt:feed'] then
+        for _, replaced in ipairs(Config.DispatchCallsReplace or { 'SHOTS_FIRED', 'FIGHT' }) do
+            if replaced == callType then return true end
+        end
+    end
+    return false
 end
 
 local function GetStreetLabel(x, y, z)
@@ -35,7 +40,7 @@ local function GetStreetLabel(x, y, z)
     return GetStreetNameFromHashKey(streetHash)
 end
 
-local function SendDispatch(callType, description, coords)
+local function SendDispatch(callType, description, coords, custom)
     if not InternalDetectionActive() then return end
     local street = GetStreetLabel(coords.x, coords.y, coords.z)
     TriggerServerEvent('XS-MDT:server:autoDispatch', {
@@ -43,6 +48,7 @@ local function SendDispatch(callType, description, coords)
         description = description,
         street      = street,
         coords      = { x = coords.x, y = coords.y, z = coords.z },
+        custom      = custom or nil,
     })
 end
 
@@ -128,7 +134,7 @@ end)
 -- Public API: other resources trigger a custom dispatch call directly
 --   TriggerEvent('XS-MDT:client:dispatch:custom', 'CUSTOM', 'Description', vector3(x,y,z))
 AddEventHandler('XS-MDT:client:dispatch:custom', function(callType, description, coords)
-    if IsSuppr(callType) or IsSuppr('CUSTOM') then return end
+    if _suppressed[callType] or _suppressed['CUSTOM'] then return end
     if not coords then coords = GetEntityCoords(PlayerPedId()) end
-    SendDispatch(callType, description, coords)
+    SendDispatch(callType, description, coords, true)
 end)

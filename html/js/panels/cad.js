@@ -113,11 +113,12 @@ function renderCallList(calls) {
         <div class="call-card status-${c.status} ${_selectedCallId===c.id?'selected':''}"
              id="call-card-${c.id}" onclick='openCallDetail(${JSON.stringify(c.id)})'>
             <div class="call-card-top">
-                <span class="call-number">${c.call_number}</span>
+                <span class="call-number">${esc(c.call_number)}</span>
                 <span class="priority-badge priority-${pri(c)}" style="margin-left:6px;">P${pri(c)}</span>
+                ${c.origin ? `<span class="call-origin">${esc(c.origin)}</span>` : ''}
                 <span class="tag tag-${statusColor(c.status)} ml-auto" style="font-size:9.5px;">${STATUS_LABELS[c.status]||c.status}</span>
             </div>
-            <div class="call-type">${c.call_type || c.type}</div>
+            <div class="call-type">${esc(c.call_type || c.type)}</div>
             <div class="call-location" style="display:flex;align-items:center;gap:8px;">
                 <span><i class="i i-map-pin"></i> ${esc(c.location)}</span>
                 <span class="elapsed-chip ${elapsedClass(mins)}" data-created="${c.created_at}"><i class="i i-clock"></i> ${formatElapsed(mins)}</span>
@@ -144,13 +145,13 @@ function openCallDetail(callId) {
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;gap:16px;flex-wrap:wrap;">
             <div>
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                    <div class="font-mono text-muted text-xs">${call.call_number}</div>
+                    <div class="font-mono text-muted text-xs">${esc(call.call_number)}</div>
                     <span class="priority-badge priority-${call.priority||2}">${PRIORITY_LABELS[call.priority||2]}</span>
                 </div>
-                <div style="font-size:22px;font-weight:800;margin-bottom:4px;">${call.call_type || call.type}</div>
+                <div style="font-size:22px;font-weight:800;margin-bottom:4px;">${esc(call.call_type || call.type)}</div>
                 <div style="font-size:13px;color:var(--text-secondary);"><i class="i i-map-pin"></i> ${esc(call.location)}</div>
                 <div style="font-size:11px;color:var(--text-muted);margin-top:4px;display:flex;align-items:center;gap:10px;">
-                    <span>Created by ${esc(call.created_by_name||'CAD')} · ${timeAgo(call.created_at)}</span>
+                    <span>${call.origin ? 'From ' + esc(call.origin) + (call.caller_name ? ' · ' + esc(call.caller_name) : '') : 'Created by ' + esc(call.created_by_name || 'CAD')} · ${timeAgo(call.created_at)}</span>
                     <span class="elapsed-chip ${elapsedClass(elapsedMins(call.created_at))}" data-created="${call.created_at}"><i class="i i-clock"></i> ${formatElapsed(elapsedMins(call.created_at))}</span>
                 </div>
             </div>
@@ -170,7 +171,7 @@ function openCallDetail(callId) {
             <div class="card-header" style="margin-bottom:6px;">
                 <div class="card-title">Description</div>
             </div>
-            <div style="font-size:13.5px;line-height:1.7;color:var(--text-secondary);">${esc(call.description)}</div>
+            <div style="font-size:13.5px;line-height:1.7;color:var(--text-secondary);white-space:pre-line;">${esc(call.description)}</div>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">

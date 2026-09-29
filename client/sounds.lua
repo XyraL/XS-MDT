@@ -16,7 +16,8 @@ RegisterNetEvent('XS-MDT:client:panicAlert', function()
 end)
 
 -- New CAD call — subtle in-game beep
-RegisterNetEvent('XS-MDT:client:newCall', function()
+RegisterNetEvent('XS-MDT:client:newCall', function(call)
+    if call and call.origin then return end
     PlaySoundFrontend(-1, 'Countdown_Beep', 'DLC_HEIST_HACKING_SNAKE_SOUNDS', true)
 end)
 

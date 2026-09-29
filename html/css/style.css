@@ -956,6 +956,11 @@ body.hidden, .hidden { display: none !important; }
 .call-card.status-cancelled { opacity: .55; }
 
 .call-number { font: 11px var(--font-mono); color: var(--faint); letter-spacing: .04em; }
+.call-origin {
+  margin-left: 6px; padding: 1px 6px; border-radius: 3px;
+  font: 600 10px/1.6 var(--font-mono); letter-spacing: .04em;
+  background: var(--raised-2); color: var(--dim);
+}
 .call-type { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
 .call-location { font-size: 11.5px; color: var(--dim); }
 .call-units { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }

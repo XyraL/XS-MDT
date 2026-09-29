@@ -1,44 +1,24 @@
---[[  Outbound dispatch adapters
-
-      server/integrations.lua handles the case where another resource REPLACES
-      the CAD — the MDT asks it for calls and hands actions back. That is not
-      what most servers want. Most servers want to keep the MDT's CAD as the
-      record and ALSO have the alert pop up in whatever dispatch they already
-      run, because half the department has that UI open and not this one.
-
-      So: when the MDT creates a call, every enabled adapter below is handed
-      the same call and sends it on in that resource's own shape.
-
-      Each adapter is one function. If a resource changes its signature, the
-      fix is visible and local — edit the function, not a table of strings —
-      and a mismatch cannot take the MDT down, because every call is wrapped.
-      The second argument is the name the resource is running under, which is
-      not always the name it shipped with.
-
-      Adding your own:
-
-          Adapters['my-dispatch'] = function(call, res)
-              exports[res]:Alert({
-                  title = call.label, text = call.description,
-                  coords = call.coords, jobs = call.jobs,
-              })
-          end
-
-      `call` is:
-          callType     'STORE_ROBBERY'
-          label        'Store Robbery'
-          description  what the caller reported
-          coords       { x, y, z }
-          street       street name, already resolved
-          priority     1 high, 2 normal, 3 low
-          callNumber   'CAD-20260926-004'
-          jobs         { 'police', 'sheriff' } — the jobs being alerted
-          caller       who reported it
-]]
-
 local Adapters = {}
 
 local JOB_TYPES = { police = 'leo', ems = 'ems', fire = 'fire' }
+
+local function Vec(c)
+    return vector3((tonumber(c.x) or 0.0) + 0.0, (tonumber(c.y) or 0.0) + 0.0, (tonumber(c.z) or 0.0) + 0.0)
+end
+
+local function Code(call)
+    return call.code or '10-90'
+end
+
+local function Details(call)
+    local text = call.description or call.label
+    if call.street and call.street ~= '' then return ('%s — %s'):format(text, call.street) end
+    return text
+end
+
+local function Colour(call)
+    return call.priority == 1 and 1 or 5
+end
 
 local function OnDutyWithJobs(jobs)
     local wanted, out = {}, {}
@@ -52,11 +32,6 @@ local function OnDutyWithJobs(jobs)
     return out
 end
 
---[[ ps-dispatch (Project Sloth)
-
-     CustomAlert is a client export, so a server has to go another way. Current
-     versions take SendTargetedAlert with the players to show it to; older ones
-     only have their notify event. ]]
 Adapters['ps-dispatch'] = function(call, res)
     local jobs, seen = {}, {}
     for _, j in ipairs(call.jobs or {}) do
@@ -69,16 +44,16 @@ Adapters['ps-dispatch'] = function(call, res)
     local alert = {
         message     = call.label,
         codeName    = 'mdt_call',
-        code        = call.code or '10-90',
+        code        = Code(call),
         icon        = 'fas fa-bullhorn',
         priority    = call.priority == 1 and 1 or 2,
-        coords      = vector3(call.coords.x + 0.0, call.coords.y + 0.0, (call.coords.z or 0.0) + 0.0),
+        coords      = Vec(call.coords),
         street      = call.street,
         information = call.description,
         jobs        = jobs,
         addToList   = true,
         alert = {
-            radius = 0, sprite = 60, color = call.priority == 1 and 1 or 5, scale = 1.0, length = 3,
+            radius = 0, sprite = 60, color = Colour(call), scale = 1.0, length = 3,
             sound = 'Lose_1st', sound2 = 'GTAO_FM_Events_Soundset', offset = false, flash = call.priority == 1,
         },
     }
@@ -91,97 +66,120 @@ Adapters['ps-dispatch'] = function(call, res)
     end
 end
 
---[[ qs-dispatch (Quasar)
-
-     Same idea, different field names. `code` rather than displayCode, and the
-     blip block is flat. ]]
-Adapters['qs-dispatch'] = function(call, res)
-    exports[res]:CustomAlert({
-        coords      = call.coords,
-        job         = call.jobs,
-        code        = call.code or '10-90',
-        title       = call.label,
-        message     = call.description,
-        street      = call.street,
+Adapters['qs-dispatch'] = function(call)
+    TriggerEvent('qs-dispatch:server:CreateDispatchCall', {
+        job          = call.jobs,
+        callLocation = Vec(call.coords),
+        callCode     = { code = Code(call), snippet = call.label },
+        message      = Details(call),
+        flashes      = call.priority == 1,
+        image        = nil,
         blip = {
             sprite  = 60,
             scale   = 1.0,
-            colour  = call.priority == 1 and 1 or 5,
+            colour  = Colour(call),
+            flashes = call.priority == 1,
+            text    = call.label,
+            time    = 180000,
+        },
+    })
+end
+
+Adapters['cd_dispatch'] = function(call)
+    TriggerClientEvent('cd_dispatch:AddNotification', -1, {
+        job_table = call.jobs,
+        coords    = Vec(call.coords),
+        title     = ('%s - %s'):format(Code(call), call.label),
+        message   = Details(call),
+        flash     = call.priority == 1 and 1 or 0,
+        unique_id = tostring(math.random(1000000, 9999999)),
+        sound     = call.callType == 'PANIC' and 3 or 1,
+        blip = {
+            sprite  = 60,
+            scale   = 1.0,
+            colour  = Colour(call),
             flashes = call.priority == 1,
             text    = call.label,
             time    = 3,
+            radius  = 0,
         },
     })
 end
 
---[[ cd_dispatch
+Adapters['core_dispatch'] = function(call, res)
+    local extra = { { icon = 'fa-comment', info = call.description or call.label } }
+    if call.street and call.street ~= '' then
+        extra[#extra + 1] = { icon = 'fa-map-marker-alt', info = call.street }
+    end
+    local urgent = call.priority == 1
 
-     A server event rather than an export, and it wants the job list as a
-     table of job names. unique_id keeps repeat alerts from stacking. ]]
-Adapters['cd_dispatch'] = function(call)
-    TriggerEvent('cd_dispatch:AddNotification', {
-        job_table    = call.jobs,
-        coords       = call.coords,
-        title        = call.code or '10-90',
-        message      = call.street and ('%s — %s'):format(call.description, call.street) or call.description,
-        flash        = call.priority == 1 and 1 or 0,
-        unique_id    = call.callNumber,
-        sound        = 1,
+    local sent = pcall(function()
+        exports[res]:sendAlert({
+            code      = Code(call),
+            message   = call.label,
+            extraInfo = extra,
+            coords    = Vec(call.coords),
+            priority  = urgent,
+            job       = call.jobs,
+            time      = 10000,
+            blip      = 60,
+            color     = Colour(call),
+        })
+    end)
+    if sent then return end
+
+    local c = Vec(call.coords)
+    for _, job in ipairs(call.jobs or {}) do
+        TriggerEvent('core_dispatch:addCall', Code(call), call.label, extra, { c.x, c.y, c.z }, job, 10000, 60, Colour(call), urgent)
+    end
+end
+
+Adapters['rcore_dispatch'] = function(call)
+    TriggerEvent('rcore_dispatch:server:sendAlert', {
+        code             = ('%s - %s'):format(Code(call), call.label),
+        default_priority = call.priority == 1 and 'high' or call.priority == 3 and 'low' or 'medium',
+        coords           = Vec(call.coords),
+        job              = call.jobs,
+        text             = Details(call),
+        type             = 'alerts',
         blip = {
-            sprite    = 60,
-            scale     = 1.0,
-            colour    = call.priority == 1 and 1 or 5,
-            flashes   = call.priority == 1,
-            text      = call.label,
-            time      = 3,
+            sprite  = 60,
+            colour  = Colour(call),
+            scale   = 1.0,
+            text    = call.label,
+            flashes = call.priority == 1,
+            radius  = 0,
         },
     })
 end
 
---[[ core_dispatch
-
-     Positional arguments, not a table. Length is in minutes. ]]
-Adapters['core_dispatch'] = function(call)
-    TriggerEvent('core_dispatch:addCall',
-        call.code or '10-90',
-        call.label,
-        { { icon = 'fa-user', info = call.caller or 'Caller' },
-          { icon = 'fa-comment', info = call.description } },
-        { call.coords.x, call.coords.y, call.coords.z },
-        call.jobs,
-        3,
-        60,
-        call.priority == 1 and 1 or 5)
-end
-
---[[ linden_outlawalert
-
-     Takes a dispatchData block with its own display fields. ]]
 Adapters['linden_outlawalert'] = function(call)
     TriggerEvent('wf-alerts:svNotify', {
         dispatchData = {
-            displayCode = call.code or '10-90',
-            description = call.description,
-            isImportant = call.priority == 1 and 1 or 0,
+            displayCode   = Code(call),
+            description   = call.label,
+            isImportant   = call.priority == 1 and 1 or 0,
             recipientList = call.jobs,
-            length = '3',
-            infoM = 'fa-info-circle',
-            information = call.street or call.label,
+            length        = 10000,
+            infoM         = 'fa-info-circle',
+            info          = call.description,
+            infoM2        = call.street and 'fa-map-marker-alt' or nil,
+            info2         = call.street,
+            blipSprite    = 60,
+            blipColour    = Colour(call),
+            blipScale     = 1.0,
         },
         caller = call.caller or 'Dispatch',
-        coords = call.coords,
+        coords = Vec(call.coords),
     })
 end
 
--- ── Wiring ────────────────────────────────────────────────────────────────
+local alertsOn, callsOn, running = {}, {}, {}
 
-local enabled, running = {}, {}
+MdtMirroring = false
 
 local function Squash(s) return ((s or ''):lower():gsub('[^%w]', '')) end
 
---[[ The name a dispatch is running under. A download from GitHub unzips as
-     ps-dispatch-main, and plenty of servers rename theirs, so an exact match
-     alone missed installs that were up and running. ]]
 local function Find(id)
     local named = Config.DispatchAlertResources and Config.DispatchAlertResources[id]
     if named then return GetResourceState(named) == 'started' and named or nil end
@@ -199,41 +197,52 @@ local function Find(id)
     return loose
 end
 
---[[ Which adapters are on.
-
-     'auto' turns on every adapter whose resource is started, which is what a
-     server owner expects and needs no config. A list names them explicitly,
-     and false turns the whole thing off. ]]
-local function Resolve()
-    enabled, running = {}, {}
-    for id in pairs(Adapters) do running[id] = Find(id) end
-
-    local setting = Config.DispatchAlerts
-    if setting == false or setting == 'off' then return end
-
+local function Pick(setting)
+    local out = {}
+    if setting == false or setting == 'off' then return out end
     if type(setting) == 'table' then
         for _, id in ipairs(setting) do
-            if Adapters[id] and running[id] then enabled[#enabled + 1] = id end
+            if Adapters[id] and running[id] then out[#out + 1] = id end
         end
     else
         for id in pairs(Adapters) do
-            if running[id] then enabled[#enabled + 1] = id end
+            if running[id] then out[#out + 1] = id end
         end
     end
+    table.sort(out)
+    return out
+end
 
-    table.sort(enabled)
-    if #enabled > 0 then
-        local names = {}
-        for _, id in ipairs(enabled) do
-            names[#names + 1] = running[id] == id and id or ('%s (%s)'):format(id, running[id])
-        end
-        print(('[XS-MDT] dispatch alerts going to: %s'):format(table.concat(names, ', ')))
+local function Names(list)
+    local names = {}
+    for _, id in ipairs(list) do
+        names[#names + 1] = running[id] == id and id or ('%s (%s)'):format(id, running[id])
     end
+    return table.concat(names, ', ')
+end
+
+local lastReport
+
+local function Resolve()
+    running = {}
+    for id in pairs(Adapters) do running[id] = Find(id) end
+
+    local alerts, calls = Pick(Config.DispatchAlerts), Pick(Config.DispatchCalls)
+    alertsOn, callsOn = {}, {}
+    for _, id in ipairs(alerts) do alertsOn[id] = true end
+    for _, id in ipairs(calls) do callsOn[id] = true end
+
+    GlobalState['xs-mdt:feed'] = #calls > 0 and not MdtDispatchBridge.IsExternal()
+
+    local report = Names(alerts) .. '|' .. Names(calls)
+    if report == lastReport then return end
+    lastReport = report
+    if #alerts > 0 then print(('[XS-MDT] dispatch alerts going to: %s'):format(Names(alerts))) end
+    if #calls > 0 then print(('[XS-MDT] taking dispatch calls from: %s'):format(Names(calls))) end
 end
 
 AddEventHandler('onResourceStart', function(name)
     if name == GetCurrentResourceName() then
-        -- Resolve after everything else has had a chance to start.
         SetTimeout(2000, Resolve)
     else
         SetTimeout(500, Resolve)
@@ -244,17 +253,18 @@ AddEventHandler('onResourceStop', function(name)
     if name ~= GetCurrentResourceName() then SetTimeout(500, Resolve) end
 end)
 
---[[ Send a call to every enabled dispatch resource.
+function MdtDispatchFeeding(id)
+    return callsOn[id] == true and running[id] ~= nil
+end
 
-     Called by server/dispatch.lua when a CAD call is created. Wrapped per
-     adapter: a resource with a different signature than the one written above
-     logs a line and the others still fire. ]]
 function MdtDispatchAlerts(call)
-    if #enabled == 0 then return end
+    if not next(alertsOn) then return end
     if not call or not call.coords then return end
 
-    for _, id in ipairs(enabled) do
+    for id in pairs(alertsOn) do
+        MdtMirroring = true
         local ok, err = pcall(Adapters[id], call, running[id] or id)
+        MdtMirroring = false
         if not ok then
             print(('[XS-MDT] %s rejected the alert (%s). The adapter in server/dispatch-adapters.lua may need its fields adjusting for your version.'):format(id, err))
         end
@@ -263,15 +273,14 @@ end
 
 exports('SendDispatchAlert', function(call) return MdtDispatchAlerts(call) end)
 
---[[ Which adapters are live, for the management panel. ]]
 exports('GetDispatchAlertTargets', function()
-    local on = {}
-    for _, id in ipairs(enabled) do on[id] = true end
-
     local out = {}
     for id in pairs(Adapters) do
         local res = Find(id)
-        out[#out + 1] = { id = id, resource = res, started = res ~= nil, enabled = on[id] == true }
+        out[#out + 1] = {
+            id = id, resource = res, started = res ~= nil,
+            enabled = alertsOn[id] == true, feeding = callsOn[id] == true,
+        }
     end
     table.sort(out, function(a, b) return a.id < b.id end)
     return out

@@ -83,6 +83,8 @@ lib.callback.register('XS-MDT:server:getManagement', function(source)
             alerts = targets,
             setting = type(Config.DispatchAlerts) == 'table' and table.concat(Config.DispatchAlerts, ', ')
                       or tostring(Config.DispatchAlerts),
+            calls = type(Config.DispatchCalls) == 'table' and table.concat(Config.DispatchCalls, ', ')
+                      or tostring(Config.DispatchCalls == nil and 'auto' or Config.DispatchCalls),
         },
         integrations = {
             ResourceRow(Config.JailResource or nil, 'Jail on arrest'),

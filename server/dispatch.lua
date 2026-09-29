@@ -1,6 +1,5 @@
 local HasPanel = function(src, panel) return exports['XS-MDT']:HasPanel(src, panel) end
 -- XS-MDT Server Dispatch — receives auto-dispatch events and creates CAD calls
-if Config.DisableInternalDispatchDetection then return end
 
 -- ── Suppression & Filter Registry ────────────────────────────────────────
 -- _suppressed[callType] = true  → globally blocked
@@ -227,6 +226,7 @@ local _recentCalls = {}
 RegisterNetEvent('XS-MDT:server:autoDispatch')
 AddEventHandler('XS-MDT:server:autoDispatch', function(data)
     local src = source
+    if type(data) ~= 'table' then return end
     if MdtDispatchBridge.IsExternal() then
         MdtDispatchBridge.Call('createCall', src, {
             type = data and string.lower(data.callType or 'custom') or 'custom',
@@ -242,6 +242,14 @@ AddEventHandler('XS-MDT:server:autoDispatch', function(data)
 
     -- Check suppression and filters before doing anything
     if not IsAllowed(callType, data, src) then return end
+    if not data.custom then
+        if Config.DisableInternalDispatchDetection then return end
+        if GlobalState['xs-mdt:feed'] then
+            for _, replaced in ipairs(Config.DispatchCallsReplace or { 'SHOTS_FIRED', 'FIGHT' }) do
+                if replaced == callType then return end
+            end
+        end
+    end
 
     local key = tostring(src) .. '_' .. callType
 

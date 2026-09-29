@@ -40,6 +40,13 @@ function loadManagement() {
     });
 }
 
+function dispatchLinkText(t) {
+    if (t.enabled && t.feeding) return 'alerts out, calls in';
+    if (t.enabled) return 'alerts out';
+    if (t.feeding) return 'calls in';
+    return t.started ? 'started, not enabled' : 'not running';
+}
+
 function renderStatus() {
     const body = document.getElementById('mgmt-body');
     if (!body) return;
@@ -83,13 +90,14 @@ function renderStatus() {
                     <div class="info-row"><div class="info-key">CAD</div><div class="info-val">${m.dispatch.provider === 'internal' ? 'This MDT' : esc(m.dispatch.provider)}</div></div>
                     <div class="info-row"><div class="info-key">Mode</div><div class="info-val mono">${esc(m.dispatch.mode)}</div></div>
                     <div class="info-row"><div class="info-key">Alerts</div><div class="info-val mono">${esc(m.dispatch.setting)}</div></div>
+                    <div class="info-row"><div class="info-key">Calls</div><div class="info-val mono">${esc(m.dispatch.calls || 'auto')}</div></div>
                 </div>
                 <div class="mgmt-list">
                     ${(m.dispatch.alerts || []).map(t => `
                         <div class="mgmt-row">
-                            ${light(t.enabled)}
+                            ${light(t.enabled || t.feeding)}
                             <span class="mono">${esc(t.id)}</span>
-                            <span class="record-meta">${t.enabled ? 'receiving alerts' : t.started ? 'started, not enabled' : 'not running'}${t.resource && t.resource !== t.id ? ' (' + esc(t.resource) + ')' : ''}</span>
+                            <span class="record-meta">${dispatchLinkText(t)}${t.resource && t.resource !== t.id ? ' (' + esc(t.resource) + ')' : ''}</span>
                         </div>`).join('') || '<div class="text-muted text-sm">No dispatch resources detected.</div>'}
                 </div>
             </div>

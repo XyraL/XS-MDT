@@ -119,6 +119,13 @@ Config.CAD = {
 -- Civilian records: pull from QBCore players table
 Config.UseQBCoreCharacters = true
 
+-- Where a car's parked / out / impounded status is read from.
+--   'auto'       works it out from your player_vehicles table
+--   'state'      qb-garages, qbx_garages and most others
+--   'in_garage'  jg-advancedgarages
+--   'stored'     garages that use a stored column
+Config.VehicleStateFrom = 'auto'
+
 -- Default penal code categories seeded on first run
 Config.SeedPenalCodes = true
 
@@ -338,27 +345,37 @@ Config.JailResource = false
 -- 'auto' selects the first running adapter and safely falls back to the
 -- built-in CAD. A provider can also be forced by its id, or set to 'internal'.
 Config.DispatchProvider = 'auto'
+
+-- Turns off the MDT's own detection (shots fired, fights, crashes, robbery
+-- events). Panic, backup and calls made from the CAD keep working.
 Config.DisableInternalDispatchDetection = false
 -- ═══════════════════════════════════════════════════════════════════════════
---  DISPATCH ALERTS (outbound)
---  The MDT keeps its own CAD, and every call it creates is ALSO pushed to
---  whatever dispatch resource you already run, because half the department
---  has that UI open and not this one.
+--  YOUR DISPATCH SCRIPT
+--  Works with ps-dispatch, qs-dispatch, cd_dispatch, core_dispatch,
+--  rcore_dispatch and linden_outlawalert.
+--
+--  DispatchAlerts  every call the MDT creates also pops up in your dispatch
+--  DispatchCalls   every alert your dispatch raises also lands on the CAD,
+--                  where it can be responded to, noted and closed
 --
 --    'auto'                  every supported resource that is started
 --    { 'ps-dispatch' }       only the ones you name
 --    false                   off
 --
---  Supported out of the box: ps-dispatch, qs-dispatch, cd_dispatch,
---  core_dispatch, linden_outlawalert. Each one is a single function in
---  server/dispatch-adapters.lua — if your version takes different fields,
---  that is the one place to change, and a mismatch prints a line rather
---  than breaking anything.
---
 --  This is separate from Config.DispatchAdapters below, which is for a
---  resource that REPLACES the CAD rather than mirroring it.
+--  resource that REPLACES the CAD rather than working beside it.
 -- ═══════════════════════════════════════════════════════════════════════════
 Config.DispatchAlerts = 'auto'
+Config.DispatchCalls = 'auto'
+
+-- While your dispatch is sending calls to the CAD, the MDT stops detecting
+-- these itself. Your dispatch already reports them, and both would put
+-- every shooting on the board twice. Empty the list to keep both.
+Config.DispatchCallsReplace = { 'SHOTS_FIRED', 'FIGHT' }
+
+-- Calls from your dispatch that nobody responds to clear themselves after
+-- this many minutes, the way they drop off your dispatch. 0 keeps them.
+Config.DispatchCallsExpire = 30
 
 -- Only needed if your dispatch runs under a folder name the MDT can't match.
 -- Example: { ['ps-dispatch'] = 'my-dispatch' }

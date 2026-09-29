@@ -167,6 +167,10 @@ end)
 
 -- Alert: new CAD call
 RegisterNetEvent('XS-MDT:client:newCall', function(call)
+    if call.origin then
+        if mdtOpen then SendNUIMessage({ action = 'newCall', call = call }) end
+        return
+    end
     lib.notify({
         title = '📡 NEW CALL — ' .. call.call_number,
         description = (call.call_type or call.type or 'Unknown') .. ' @ ' .. (call.location or ''),

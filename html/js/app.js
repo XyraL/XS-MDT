@@ -555,8 +555,10 @@ window.addEventListener('message', (e) => {
             if (MDT.activeTab === 'bolos') loadBolos();
             break;
         case 'newCall':
-            showToast('NEW CALL — ' + data.call.call_number, data.call.type + ' @ ' + data.call.location, 'info', 10000);
-            playUISound('newcall');
+            if (!data.call.origin) {
+                showToast('NEW CALL — ' + esc(data.call.call_number), esc((data.call.call_type || data.call.type || 'Call') + ' @ ' + (data.call.location || '')), 'info', 10000);
+                playUISound('newcall');
+            }
             MDT.activeCalls.unshift(data.call);
             updateCADBadge();
             if (MDT.activeTab === 'cad') loadCAD();
