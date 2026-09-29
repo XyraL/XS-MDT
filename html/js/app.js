@@ -321,6 +321,77 @@ function onTabActivated(tab) {
     }
 }
 
+// ── Boot screen ───────────────────────────────────────────────────────────
+// Shown once per character per session, over the dashboard while it loads.
+let _bootedFor = null;
+
+function runBootScreen(officer) {
+    if (officer.bootScreen === false || _bootedFor === officer.citizenid) return;
+    _bootedFor = officer.citizenid;
+
+    const host = document.getElementById('mdt-container');
+    if (!host) return;
+    document.getElementById('mdt-boot')?.remove();
+
+    const iconName = String(officer.departmentIcon || '').toLowerCase();
+    const icon = /^[a-z-]{2,24}$/.test(iconName) ? iconName : 'shield';
+
+    const el = document.createElement('div');
+    el.id = 'mdt-boot';
+    el.innerHTML = `
+        <div class="boot-card">
+            <div class="boot-brand">
+                <div class="boot-seal"><i class="i i-${icon}"></i></div>
+                <div>
+                    <div class="boot-name">XYRAL<span>MDT</span></div>
+                    <div class="boot-dept">${esc(officer.departmentLabel || officer.departmentShort || '')}</div>
+                </div>
+            </div>
+            <div class="boot-log"></div>
+            <div class="boot-bar"><div class="boot-bar-fill"></div></div>
+            <div class="boot-user"></div>
+        </div>`;
+    host.appendChild(el);
+
+    const steps = ['Starting terminal', 'Connecting to dispatch', 'Loading records', 'Checking unit status'];
+    const log = el.querySelector('.boot-log');
+    const bar = el.querySelector('.boot-bar-fill');
+    const user = el.querySelector('.boot-user');
+    let step = 0;
+    let timer = null;
+    let finished = false;
+
+    const finish = () => {
+        if (finished) return;
+        finished = true;
+        clearTimeout(timer);
+        document.removeEventListener('keydown', finish, true);
+        el.classList.add('done');
+        setTimeout(() => el.remove(), 400);
+    };
+    el.addEventListener('click', finish);
+    document.addEventListener('keydown', finish, true);
+
+    const next = () => {
+        if (step < steps.length) {
+            log.insertAdjacentHTML('beforeend',
+                `<div class="boot-line"><span>${steps[step]}</span><span class="boot-dots"></span><span class="boot-ok">OK</span></div>`);
+            const line = log.lastElementChild;
+            requestAnimationFrame(() => line.classList.add('show'));
+            step++;
+            bar.style.width = Math.round(step / (steps.length + 1) * 100) + '%';
+            timer = setTimeout(next, 190);
+            return;
+        }
+        bar.style.width = '100%';
+        const badge = officer.badge ? ` · Badge ${esc(officer.badge)}` : '';
+        const unit = officer.callsign ? ` · ${esc(officer.callsign)}` : '';
+        user.innerHTML = `Signed in: ${esc(officer.name || 'Officer')}${badge}${unit}<span class="boot-cursor"></span>`;
+        timer = setTimeout(finish, 600);
+    };
+    timer = setTimeout(next, 160);
+}
+
 // ── Open / Close ──────────────────────────────────────────────────────────
 function openMDT(officer) {
     MDT.officer = officer;
@@ -328,6 +399,7 @@ function openMDT(officer) {
     applyDepartmentTheme(officer);
     updateOfficerCard(officer);
     document.getElementById('mdt-overlay').classList.remove('hidden');
+    runBootScreen(officer);
     switchTab(MDT.panels.includes('dashboard') ? 'dashboard' : (MDT.panels[0] || 'dashboard'));
 
     // Only prefetch what this department is allowed to see.

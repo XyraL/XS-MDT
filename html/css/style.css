@@ -1721,6 +1721,42 @@ body.hidden, .hidden { display: none !important; }
 .ev-link-none { flex: 1; color: var(--faint); }
 .ev-photo { display: block; max-width: 100%; max-height: 220px; margin-top: 12px; border-radius: var(--radius); border: 1px solid var(--line); }
 
+/* ═══ Boot screen ══════════════════════════════════════════════════════════ */
+
+#mdt-boot {
+  position: absolute; inset: 0; z-index: 90;
+  display: grid; place-items: center;
+  background: var(--base);
+  transition: opacity .38s ease;
+}
+#mdt-boot.done { opacity: 0; pointer-events: none; }
+.boot-card { width: min(460px, 82%); }
+.boot-brand { display: flex; align-items: center; gap: 13px; margin-bottom: 24px; }
+.boot-seal {
+  width: 46px; height: 46px; flex: none;
+  display: grid; place-items: center;
+  border-radius: var(--radius-lg);
+  background: var(--accent); color: var(--accent-ink);
+  font-size: 21px;
+}
+.boot-name { font: 700 21px var(--font); letter-spacing: .02em; }
+.boot-name span { color: var(--accent); }
+.boot-dept { margin-top: 3px; font: 10.5px var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+.boot-log { min-height: 92px; font: 12px/1.9 var(--font-mono); color: var(--dim); }
+.boot-line { display: flex; gap: 8px; opacity: 0; transform: translateY(3px); transition: opacity .16s ease, transform .16s ease; }
+.boot-line.show { opacity: 1; transform: none; }
+.boot-dots { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; color: var(--line-2); }
+.boot-dots::before { content: '........................................................................................'; }
+.boot-ok { color: var(--green); }
+.boot-bar { height: 2px; margin: 16px 0 12px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.boot-bar-fill { width: 0; height: 100%; background: var(--accent); transition: width .22s ease; }
+.boot-user { min-height: 18px; font: 12px var(--font-mono); color: var(--text); }
+.boot-cursor {
+  display: inline-block; width: 7px; height: 13px; margin-left: 5px;
+  vertical-align: -2px; background: var(--accent);
+  animation: live-blink 1s steps(1) infinite;
+}
+
 .card.flash { animation: card-flash 1.6s ease-out 1; }
 @keyframes card-flash { 0%, 30% { box-shadow: 0 0 0 2px var(--accent); } 100% { box-shadow: 0 0 0 2px transparent; } }
 

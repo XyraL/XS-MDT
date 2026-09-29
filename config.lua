@@ -102,6 +102,10 @@ Config.HoldTime = 0
 -- Show MDT only while on duty
 Config.OnDutyOnly = true
 
+-- The start-up screen the first time the MDT is opened each session.
+-- Any key or a click skips it.
+Config.BootScreen = true
+
 -- CAD Settings
 Config.CAD = {
     -- Auto-assign officer to call when they respond

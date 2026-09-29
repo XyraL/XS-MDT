@@ -262,5 +262,11 @@ lib.callback.register('XS-MDT:server:open', function(source)
             officer.citizenid, officer.name, 'MDT_OPENED', 'MDT session started'
         })
     end
+
+    local profile = MySQL.single.await('SELECT badge, callsign, status FROM mdt_officers WHERE citizenid = ?', { officer.citizenid })
+    if profile then
+        officer.badge, officer.callsign, officer.status = profile.badge, profile.callsign, profile.status
+    end
+    officer.bootScreen = Config.BootScreen ~= false
     return officer
 end)
