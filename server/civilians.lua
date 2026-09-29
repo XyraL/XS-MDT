@@ -89,19 +89,17 @@ lib.callback.register('XS-MDT:server:getCivilianProfile', function(source, citiz
         civilian.arrests   = MySQL.query.await('SELECT * FROM mdt_arrests WHERE citizenid = ? ORDER BY created_at DESC', { citizenid })
         civilian.citations = MySQL.query.await('SELECT * FROM mdt_citations WHERE citizenid = ? ORDER BY created_at DESC', { citizenid })
 
-        -- Registered vehicles from QBCore player_vehicles table
-        civilian.vehicles = MySQL.query.await([[
-            SELECT plate, vehicle, garage, state, fuel, mods
-            FROM player_vehicles
-            WHERE citizenid = ?
-            ORDER BY plate ASC
-        ]], { citizenid })
-
-        -- Parse vehicle model label from mods JSON where available
-        for _, v in ipairs(civilian.vehicles) do
-            local ok, mods = pcall(json.decode, v.mods or '{}')
-            v.label = (ok and mods and mods.model) or v.vehicle or 'Unknown'
-            v.mods  = nil -- don't send full mods blob to client
+        local rows = MySQL.query.await('SELECT * FROM player_vehicles WHERE citizenid = ? ORDER BY plate ASC', { citizenid }) or {}
+        civilian.vehicles = {}
+        for i, v in ipairs(rows) do
+            civilian.vehicles[i] = {
+                plate = v.plate,
+                vehicle = v.vehicle,
+                label = MdtVehicleLabel(v.vehicle),
+                garage = v.garage or v.garage_id,
+                state = MdtVehicleState(v),
+                fuel = tonumber(v.fuel),
+            }
         end
 
         -- Decode JSON fields

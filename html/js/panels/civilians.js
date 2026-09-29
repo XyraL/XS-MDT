@@ -445,16 +445,17 @@ function renderVehiclesList(vehicles) {
                 <tbody>
                     ${vehicles.map(v => {
                         const [stateLabel, stateTag] = stateMap[v.state] || ['Unknown','tag-gray'];
+                        const plate = String(v.plate || '').replace(/[^A-Za-z0-9 ]/g, '');
                         return `
                         <tr>
                             <td class="font-mono" style="font-weight:700;letter-spacing:.08em;">${esc(v.plate)}</td>
                             <td>${esc(v.label || v.vehicle || '—')}</td>
-                            <td class="text-muted text-sm">${v.garage || '—'}</td>
+                            <td class="text-muted text-sm">${esc(v.garage || '—')}</td>
                             <td><span class="tag ${stateTag}">${stateLabel}</span></td>
                             <td class="text-sm">${v.fuel ? Math.round(v.fuel) + '%' : '—'}</td>
                             <td>
                                 <button class="btn btn-ghost btn-xs"
-                                    onclick="switchTab('vehicles');setTimeout(()=>{const i=document.getElementById('plate-search');if(i){i.value='${v.plate}';lookupPlate();}},80);">
+                                    onclick="switchTab('vehicles');setTimeout(()=>{const i=document.getElementById('plate-search');if(i){i.value='${plate}';lookupPlate();}},80);">
                                     Lookup →
                                 </button>
                             </td>

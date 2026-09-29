@@ -176,6 +176,24 @@ if IsDuplicityVersion() then
         end
     end
 
+    local vehicleNames
+
+    function Framework.VehicleLabel(model)
+        if type(model) ~= 'string' or model == '' then return nil end
+        if not vehicleNames then
+            local ok, list = pcall(function()
+                if Framework.name == 'qbox' then return exports.qbx_core:GetVehiclesByName() end
+                if Framework.name == 'qbcore' then return Framework.core.Shared.Vehicles end
+            end)
+            if not ok or type(list) ~= 'table' then return nil end
+            vehicleNames = list
+        end
+        local v = vehicleNames[model] or vehicleNames[model:lower()]
+        if type(v) ~= 'table' or type(v.name) ~= 'string' then return nil end
+        if type(v.brand) == 'string' and v.brand ~= '' then return v.brand .. ' ' .. v.name end
+        return v.name
+    end
+
     return
 end
 
