@@ -1,9 +1,9 @@
 --[[  Camera views
 
-      Looking through a fixed camera is the body cam without the hard part —
-      there is no ped to stream in and no rotation to track. The watcher is
-      moved to the camera's position, hidden and frozen, and a static camera is
-      created there pointing at the stored heading and pitch.
+      Looking through a fixed camera. The officer stays exactly where they are,
+      visible and as vulnerable as anyone else looking at a screen: the view is
+      a scripted camera at the camera's position, and the game is told to load
+      the world there instead of around the officer.
 
       It pans, tilts and zooms, because a camera you cannot move is a
       screenshot. The stored heading is where it rests, not where it is stuck.
@@ -13,48 +13,30 @@
       position and your view.
 ]]
 
-local viewing = nil     -- { id, code, label, area, heading, pitch, fov, cam }
-local restore = nil
+local viewing = nil     -- { id, code, label, area, heading, pitch, fov, cam, health, armour, frozen, at }
 
 local PITCH_MIN, PITCH_MAX = -70.0, 25.0
 local FOV_MIN, FOV_MAX = 22.0, 85.0
 
-local function Hide()
-    local ped = PlayerPedId()
-    SetEntityVisible(ped, false, false)
-    SetEntityCollision(ped, false, false)
-    SetEntityInvincible(ped, true)
-    FreezeEntityPosition(ped, true)
-    SetLocalPlayerVisibleLocally(false)
-end
-
-local function Show()
-    local ped = PlayerPedId()
-    SetEntityVisible(ped, true, false)
-    SetEntityCollision(ped, true, true)
-    SetEntityInvincible(ped, false)
-    FreezeEntityPosition(ped, false)
-    SetLocalPlayerVisibleLocally(true)
-
-    if restore then
-        SetEntityCoords(ped, restore.x, restore.y, restore.z, false, false, false, false)
-        SetEntityHeading(ped, restore.h)
-        restore = nil
-    end
-end
-
-local function StopViewing()
+local function StopViewing(reason)
     if not viewing then return end
 
-    local cam = viewing.cam
+    local v = viewing
     viewing = nil
 
     RenderScriptCams(false, false, 0, true, true)
-    if cam and DoesCamExist(cam) then DestroyCam(cam, true) end
-    Show()
+    if v.cam and DoesCamExist(v.cam) then DestroyCam(v.cam, true) end
+    ClearFocus()
+    if v.frozen then FreezeEntityPosition(PlayerPedId(), false) end
 
     SendNUIMessage({ action = 'bodycamClose' })
     SetNuiFocus(false, false)
+
+    lib.callback.await('XS-MDT:server:stopCameraView', false)
+
+    if reason then
+        lib.notify({ title = 'Camera', description = reason, type = 'error' })
+    end
 end
 
 exports('StopCameraView', function() StopViewing() end)
@@ -70,35 +52,54 @@ local function StartViewing(cam)
     if not cam or not cam.coords then return false end
 
     local me = PlayerPedId()
-    local here = GetEntityCoords(me)
-    restore = { x = here.x, y = here.y, z = here.z, h = GetEntityHeading(me) }
+    if IsEntityDead(me) then return false end
+
+    local vehicle = GetVehiclePedIsIn(me, false)
+    if vehicle ~= 0 and GetPedInVehicleSeat(vehicle, -1) == me and GetEntitySpeed(vehicle) > 1.0 then
+        lib.notify({ title = 'Camera', description = 'Stop the vehicle first', type = 'error' })
+        return false
+    end
 
     DoScreenFadeOut(250)
     while not IsScreenFadedOut() do Wait(0) end
 
-    Hide()
+    -- On foot the officer is held still, so the ground cannot unload from
+    -- under them while the game streams the camera's area instead.
+    local frozen = vehicle == 0
+    if frozen then FreezeEntityPosition(me, true) end
 
     local c = cam.coords
-    RequestCollisionAtCoord(c.x + 0.0, c.y + 0.0, c.z + 0.0)
-    SetEntityCoords(me, c.x + 0.0, c.y + 0.0, c.z + 0.0, false, false, false, false)
-
-    -- Give the world around the camera a moment to load, or the first second
-    -- of every feed is grey fog.
-    local deadline = GetGameTimer() + 4000
-    while not HasCollisionLoadedAroundEntity(me) and GetGameTimer() < deadline do Wait(50) end
+    local x, y, z = c.x + 0.0, c.y + 0.0, c.z + 0.0
+    SetFocusPosAndVel(x, y, z, 0.0, 0.0, 0.0)
+    RequestCollisionAtCoord(x, y, z)
 
     viewing = {
         id = cam.id, code = cam.camera_code, label = cam.label, area = cam.area,
         heading = tonumber(cam.heading) or 0.0,
         pitch = tonumber(cam.pitch) or -12.0,
         fov = 60.0,
+        health = GetEntityHealth(me),
+        armour = GetPedArmour(me),
+        frozen = frozen,
+        at = GetEntityCoords(me),
     }
 
-    viewing.cam = CreateCamWithParams('DEFAULT_SCRIPTED_CAMERA',
-        c.x + 0.0, c.y + 0.0, c.z + 0.0, 0.0, 0.0, 0.0, viewing.fov, false, 2)
+    viewing.cam = CreateCamWithParams('DEFAULT_SCRIPTED_CAMERA', x, y, z, 0.0, 0.0, 0.0, viewing.fov, false, 2)
     SetCamActive(viewing.cam, true)
     RenderScriptCams(true, false, 0, true, true)
     Aim()
+
+    -- Give the world around the camera a moment to load, or the first second
+    -- of every feed is grey fog.
+    NewLoadSceneStartSphere(x, y, z, 80.0, 0)
+    local deadline = GetGameTimer() + 3000
+    while not IsNewLoadSceneLoaded() and GetGameTimer() < deadline do Wait(50) end
+    NewLoadSceneStop()
+
+    if not viewing then
+        DoScreenFadeIn(250)
+        return false
+    end
 
     SendNUIMessage({
         action = 'bodycamOpen',
@@ -107,9 +108,17 @@ local function StartViewing(cam)
     })
     SetNuiFocus(false, false)
 
-    Wait(150)
     DoScreenFadeIn(350)
     return true
+end
+
+-- The view ends the moment the officer is hurt, so it can never be somewhere
+-- to hide.
+local function Harmed(v)
+    local ped = PlayerPedId()
+    if IsEntityDead(ped) or IsPedRagdoll(ped) then return true end
+    if GetEntityHealth(ped) < v.health or GetPedArmour(ped) < v.armour then return true end
+    return false
 end
 
 -- ── Controls ──────────────────────────────────────────────────────────────
@@ -122,8 +131,11 @@ CreateThread(function()
             DisableAllControlActions(0)
             EnableControlAction(0, 200, true)   -- ESC
             EnableControlAction(0, 177, true)   -- BACKSPACE
+            EnableControlAction(0, 249, true)   -- push to talk
 
-            if IsDisabledControlJustReleased(0, 200) or IsDisabledControlJustReleased(0, 177)
+            if Harmed(viewing) then
+                StopViewing('You were hurt')
+            elseif IsDisabledControlJustReleased(0, 200) or IsDisabledControlJustReleased(0, 177)
                or IsControlJustReleased(0, 200) or IsControlJustReleased(0, 177) then
                 StopViewing()
             else
@@ -156,11 +168,13 @@ CreateThread(function()
     end
 end)
 
--- The overlay shows where the camera is pointing and how far it is zoomed in.
+-- The overlay shows where the camera is pointing and how far it is zoomed in,
+-- and the ground under the officer is kept loaded while the camera's area is.
 CreateThread(function()
     while true do
         Wait(500)
         if viewing then
+            if viewing.at then RequestCollisionAtCoord(viewing.at.x, viewing.at.y, viewing.at.z) end
             SendNUIMessage({
                 action = 'bodycamTick',
                 ok = true,
@@ -175,10 +189,15 @@ end)
 -- ── NUI ───────────────────────────────────────────────────────────────────
 
 RegisterNUICallback('viewCamera', function(data, cb)
-    if not data or not data.coords then cb(false) return end
+    if viewing or not data or not data.id then cb(false) return end
+
+    local cam = lib.callback.await('XS-MDT:server:startCameraView', false, data.id)
+    if type(cam) ~= 'table' or not cam.coords then cb(false) return end
 
     TriggerEvent('XS-MDT:client:closeForBodyCam')
-    cb(StartViewing(data) and { ok = true } or false)
+    local ok = StartViewing(cam)
+    if not ok then lib.callback.await('XS-MDT:server:stopCameraView', false) end
+    cb(ok and { ok = true } or false)
 end)
 
 RegisterNUICallback('stopCameraView', function(_, cb)
@@ -202,5 +221,12 @@ RegisterNUICallback('myView', function(_, cb)
 end)
 
 AddEventHandler('onResourceStop', function(name)
-    if name == GetCurrentResourceName() then StopViewing() end
+    if name == GetCurrentResourceName() then
+        if viewing then
+            RenderScriptCams(false, false, 0, true, true)
+            ClearFocus()
+            if viewing.frozen then FreezeEntityPosition(PlayerPedId(), false) end
+            viewing = nil
+        end
+    end
 end)

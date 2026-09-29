@@ -82,6 +82,47 @@ end)
 
 local _watching = {}   -- [watcherSrc] = { target = src, citizenid, startedAt }
 
+--[[ Watching from where you stand.
+
+     The watcher's ped used to be moved to the camera, hidden and made
+     invincible, which is a god mode anyone with the panel could switch on.
+     Now the ped stays put and the server widens how far that one player
+     receives entities, so the people and cars around the camera still show
+     up. Reset the moment they stop. ]]
+local _widened = {}
+
+local function Distance(a, b)
+    return #(vector3(a.x + 0.0, a.y + 0.0, a.z + 0.0) - vector3(b.x + 0.0, b.y + 0.0, b.z + 0.0))
+end
+
+function MdtWidenRange(src, coords)
+    local ped = GetPlayerPed(src)
+    local radius = 800.0
+    if ped and ped ~= 0 and coords then
+        radius = Distance(GetEntityCoords(ped), coords) + 500.0
+    end
+    radius = math.max(424.0, math.min(radius, 12000.0))
+    SetPlayerCullingRadius(src, radius)
+    _widened[src] = true
+end
+
+function MdtResetRange(src)
+    if not _widened[src] then return end
+    _widened[src] = nil
+    if GetPlayerName(src) then SetPlayerCullingRadius(src, 0.0) end
+end
+
+-- A body cam follows someone who keeps moving, so the range follows them.
+CreateThread(function()
+    while true do
+        Wait(4000)
+        for watcher, session in pairs(_watching) do
+            local target = GetPlayerPed(session.target)
+            if target and target ~= 0 then MdtWidenRange(watcher, GetEntityCoords(target)) end
+        end
+    end
+end)
+
 local function LiveEnabled()
     return Config.BodyCam.Enabled and Config.BodyCam.Live and Config.BodyCam.Live.Enabled
 end
@@ -165,7 +206,14 @@ lib.callback.register('XS-MDT:server:startBodyCam', function(source, targetSrc)
         TriggerClientEvent('XS-MDT:client:bodyCamNotice', targetSrc, { watcher = me.name, active = true })
     end
 
-    local coords = lib.callback.await('XS-MDT:client:whereAmI', targetSrc)
+    local targetPed = GetPlayerPed(targetSrc)
+    local coords = targetPed and targetPed ~= 0 and GetEntityCoords(targetPed) or nil
+    if coords then
+        coords = { x = coords.x, y = coords.y, z = coords.z }
+    else
+        coords = lib.callback.await('XS-MDT:client:whereAmI', targetSrc)
+    end
+    MdtWidenRange(source, coords)
 
     return true, {
         serverId = targetSrc,
@@ -179,6 +227,7 @@ end)
 lib.callback.register('XS-MDT:server:stopBodyCam', function(source)
     local session = _watching[source]
     _watching[source] = nil
+    MdtResetRange(source)
     if not session then return true end
 
     local seconds = os.time() - session.startedAt
@@ -195,6 +244,7 @@ end)
      being watched, so the same tidy-up runs on disconnect. ]]
 AddEventHandler('playerDropped', function()
     local src = source
+    _widened[src] = nil
     local session = _watching[src]
     if session then
         _watching[src] = nil
@@ -207,7 +257,15 @@ AddEventHandler('playerDropped', function()
     for watcher, s in pairs(_watching) do
         if s.target == src then
             _watching[watcher] = nil
+            MdtResetRange(watcher)
             TriggerClientEvent('XS-MDT:client:bodyCamLost', watcher, 'That unit disconnected')
         end
+    end
+end)
+
+AddEventHandler('onResourceStop', function(name)
+    if name ~= GetCurrentResourceName() then return end
+    for src in pairs(_widened) do
+        if GetPlayerName(src) then SetPlayerCullingRadius(src, 0.0) end
     end
 end)

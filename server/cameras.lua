@@ -102,6 +102,28 @@ lib.callback.register('XS-MDT:server:getCameras', function(source, filter)
     return { cameras = cameras, canManage = IsSupervisor(source) }
 end)
 
+-- The camera comes from the database, not from the panel, so a view can only
+-- ever open on a camera that exists.
+lib.callback.register('XS-MDT:server:startCameraView', function(source, id)
+    if not HasPanel(source, 'cameras') then return false, 'No access' end
+    local cam = MySQL.single.await('SELECT * FROM mdt_cameras WHERE id = ?', { tonumber(id) })
+    if not cam then return false, 'That camera no longer exists' end
+    if cam.status == 'offline' then return false, 'That camera is offline' end
+
+    local ok, coords = pcall(json.decode, cam.coords or 'null')
+    if not ok or type(coords) ~= 'table' or not coords.x then return false, 'That camera has no position set' end
+    cam.coords = coords
+
+    if MdtWidenRange then MdtWidenRange(source, coords) end
+    Audit(source, 'CAMERA_VIEWED', ('%s — %s'):format(cam.camera_code or cam.id, cam.label or ''))
+    return cam
+end)
+
+lib.callback.register('XS-MDT:server:stopCameraView', function(source)
+    if MdtResetRange then MdtResetRange(source) end
+    return true
+end)
+
 lib.callback.register('XS-MDT:server:saveCamera', function(source, data)
     if not HasPanel(source, 'cameras') then return false, 'No access' end
     if not IsSupervisor(source) then return false, 'Supervisors manage the camera list' end
