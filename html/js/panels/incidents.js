@@ -810,8 +810,8 @@ function openEditIncidentModal(id) {
         if (linkedArrestIds.length > 0 || linkedCitationIds.length > 0) {
             prefetchedRecords = await nuiFetch('getRecordsByIds', { arrests: linkedArrestIds, citations: linkedCitationIds }) || prefetchedRecords;
         }
-        window._linkedArrests   = prefetchedRecords.arrests.map(a => ({ id: a.id, label: a.citizenid }));
-        window._linkedCitations = prefetchedRecords.citations.map(c => ({ id: c.id, label: c.citizenid }));
+        window._linkedArrests   = (prefetchedRecords.arrests || []).map(a => ({ id: a.id, label: a.civilian_name || a.citizenid }));
+        window._linkedCitations = (prefetchedRecords.citations || []).map(c => ({ id: c.id, label: c.civilian_name || c.citizenid }));
 
         const modal = createModal('Edit Incident Report', `
             <div class="form-group">
