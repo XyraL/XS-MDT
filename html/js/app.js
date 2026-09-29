@@ -232,10 +232,12 @@ function applyDepartmentTheme(officer) {
 }
 
 // ── Tab Router ────────────────────────────────────────────────────────────
-function switchTab(tab) {
+// skipLoad shows the panel without drawing its list, for callers that are
+// about to draw one record into it.
+function switchTab(tab, skipLoad = false) {
     // Never open a panel this department doesn't have — the server would
     // refuse the data anyway, and an empty panel just looks broken.
-    if (MDT.panels && MDT.panels.length && !MDT.panels.includes(tab)) return;
+    if (MDT.panels && MDT.panels.length && !MDT.panels.includes(tab)) return false;
 
     document.querySelectorAll('.nav-item[data-tab]').forEach(el =>
         el.classList.toggle('active', el.dataset.tab === tab));
@@ -243,7 +245,11 @@ function switchTab(tab) {
         el.classList.toggle('active', el.id === `tab-${tab}`));
     if (MDT.activeTab === 'map' && tab !== 'map' && typeof stopMap === 'function') stopMap();
     MDT.activeTab = tab;
-    onTabActivated(tab);
+    if (!skipLoad) {
+        MDT.fromCase = null;
+        onTabActivated(tab);
+    }
+    return true;
 }
 
 let _mapScriptLoading = null;

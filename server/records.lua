@@ -1,5 +1,7 @@
 local IsAuthorized = function(src) return exports['XS-MDT']:IsAuthorized(src) end
 local HasPanel = function(src, panel) return exports['XS-MDT']:HasPanel(src, panel) end
+local IsSupervisor = function(src) return exports['XS-MDT']:IsSupervisor(src) end
+local GetOfficer = function(src) return exports['XS-MDT']:GetOfficerInfo(src) end
 
 -- Fine deduction handler — replaceable via exports
 local _fineHandler = function(targetSrc, amount, reason)
@@ -14,55 +16,186 @@ end
 exports('SetFineHandler', function(fn) _fineHandler = fn end)
 exports('DeductFine', function(targetSrc, amount, reason) _fineHandler(targetSrc, amount, reason) end)
 
+local function Decode(value)
+    if type(value) ~= 'string' then return value or {} end
+    local ok, decoded = pcall(json.decode, value)
+    return ok and decoded or {}
+end
+
+-- The server finds the suspect itself. The panel used to be trusted to say
+-- which player to jail and fine, and never did, so neither ever happened.
+local function OnlineSource(citizenid)
+    local ok, player = pcall(function() return Framework.GetPlayerByCitizenId(citizenid) end)
+    if ok and player and player.PlayerData then return player.PlayerData.source end
+    return nil
+end
+
+local function CleanCharges(list)
+    if type(list) ~= 'table' then return {} end
+    local out = {}
+    for _, c in ipairs(list) do
+        if type(c) == 'table' then
+            out[#out + 1] = {
+                id = tonumber(c.id),
+                code = c.code and tostring(c.code):sub(1, 20) or nil,
+                name = tostring(c.name or c.title or ''):sub(1, 150),
+                type = c.type and tostring(c.type):sub(1, 20) or nil,
+                category = c.category and tostring(c.category):sub(1, 60) or nil,
+                fine_amount = math.max(0, math.floor(tonumber(c.fine_amount) or 0)),
+                jail_time = math.max(0, math.floor(tonumber(c.jail_time) or 0)),
+            }
+            if #out >= 40 then break end
+        end
+    end
+    return out
+end
+
+local function Amount(value)
+    return math.max(0, math.floor(tonumber(value) or 0))
+end
+
+local function Text(value, max)
+    if value == nil then return nil end
+    local s = tostring(value)
+    if s == '' then return nil end
+    return s:sub(1, max)
+end
+
 -- ─── Arrests ───────────────────────────────────────────────────────────────
 
 lib.callback.register('XS-MDT:server:logArrest', function(source, data)
     if not HasPanel(source, 'arrests') then return false end
-    local officer = exports['XS-MDT']:GetOfficerInfo(source)
-    if not data.citizenid or not data.charges or #data.charges == 0 then return false end
+    local officer = GetOfficer(source)
+    if not officer then return false, 'Not on duty' end
+    if type(data) ~= 'table' or not data.citizenid then return false, 'Pick a suspect' end
+
+    local charges = CleanCharges(data.charges)
+    if #charges == 0 then return false, 'Add at least one charge' end
+
+    local fine, jail = Amount(data.fine), Amount(data.jailTime)
+    local narrative, location = Text(data.narrative, 20000), Text(data.location, 255)
 
     local id = MySQL.insert.await([[
         INSERT INTO mdt_arrests (citizenid, officer_citizenid, officer_name, charges, fine, jail_time, narrative, location)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ]], {
         data.citizenid, officer.citizenid, officer.name,
-        json.encode(data.charges), data.fine or 0, data.jailTime or 0,
-        data.narrative, data.location
+        json.encode(charges), fine, jail, narrative, location,
     })
+    if not id then return false, 'Could not save the arrest' end
 
-    -- Clear any active warrants for this civilian automatically
     if data.clearWarrants then
         MySQL.update.await("UPDATE mdt_warrants SET status = 'cleared', cleared_by = ?, cleared_at = NOW() WHERE citizenid = ? AND status = 'active'", {
             officer.citizenid, data.citizenid
         })
     end
 
-    -- Jail time trigger
-    if data.targetSource and data.jailTime and data.jailTime > 0 then
-        local jailResource = Config.JailResource
-        if jailResource == 'qb-prison' then
-            TriggerEvent('qb-prison:server:sendToJail', data.targetSource, data.jailTime)
-        elseif jailResource == 'ps-prison' then
-            TriggerEvent('prison:server:SendToJail', data.targetSource, data.jailTime)
-        else
-            TriggerClientEvent('XS-MDT:client:jailPlayer', data.targetSource, data.jailTime)
+    if type(data.linkedIncidents) == 'table' and MdtSetIncidentLink then
+        for _, incidentId in ipairs(data.linkedIncidents) do
+            MdtSetIncidentLink('arrest', id, incidentId, true, officer.citizenid)
         end
     end
-    -- Fine deduction
-    if data.targetSource and data.fine and data.fine > 0 and Config.FineDeduction.AutoDeductArrests then
-        _fineHandler(data.targetSource, data.fine, 'XS-MDT-arrest')
+
+    local target = OnlineSource(data.citizenid)
+
+    if target and jail > 0 then
+        local jailResource = Config.JailResource
+        if jailResource == 'qb-prison' then
+            TriggerEvent('qb-prison:server:sendToJail', target, jail)
+        elseif jailResource == 'ps-prison' then
+            TriggerEvent('prison:server:SendToJail', target, jail)
+        else
+            TriggerClientEvent('XS-MDT:client:jailPlayer', target, jail)
+        end
+    end
+
+    if target and fine > 0 and Config.FineDeduction.AutoDeductArrests then
+        _fineHandler(target, fine, 'XS-MDT-arrest')
     end
 
     exports['XS-MDT']:AuditLog('Arrest Logged', officer.name, 'Arrest ID: ' .. id .. ' | Citizenid: ' .. data.citizenid)
     exports['XS-MDT']:LogBodyCam(source, 'ARREST_LOGGED',
-        'Subject: ' .. data.citizenid .. ' | Charges: ' .. #data.charges .. ' | Fine: $' .. (data.fine or 0) .. ' | Jail: ' .. (data.jailTime or 0) .. 'min')
-    return id
+        'Subject: ' .. data.citizenid .. ' | Charges: ' .. #charges .. ' | Fine: $' .. fine .. ' | Jail: ' .. jail .. 'min')
+    return { id = id }
+end)
+
+lib.callback.register('XS-MDT:server:getArrest', function(source, id)
+    if not HasPanel(source, 'arrests') then return nil end
+    local officer = GetOfficer(source)
+    if not officer then return nil end
+
+    local a = MySQL.single.await([[
+        SELECT a.*, c.firstname, c.lastname, c.dob, c.gender, c.image
+        FROM mdt_arrests a LEFT JOIN mdt_civilians c ON c.citizenid = a.citizenid
+        WHERE a.id = ?
+    ]], { tonumber(id) })
+    if not a then return nil end
+
+    a.civilian_name = a.firstname and (a.firstname .. ' ' .. (a.lastname or '')) or a.citizenid
+    a.charges = Decode(a.charges)
+    a.tags = Decode(a.tags)
+    a.reports = MdtIncidentsLinkedTo and MdtIncidentsLinkedTo('arrest', a.id, officer.citizenid) or {}
+    a.evidence = MySQL.query.await([[
+        SELECT id, evidence_number, kind, label, status, location, logged_by_name, created_at
+        FROM mdt_evidence WHERE arrest_id = ? ORDER BY created_at
+    ]], { a.id }) or {}
+    a.cases = MdtCasesFor and MdtCasesFor('arrest', a.id) or {}
+    a.canEdit = a.officer_citizenid == officer.citizenid or IsSupervisor(source)
+    a.canDelete = IsSupervisor(source)
+    a.canCases = HasPanel(source, 'cases')
+    return a
+end)
+
+lib.callback.register('XS-MDT:server:updateArrest', function(source, data)
+    if not HasPanel(source, 'arrests') then return false end
+    local officer = GetOfficer(source)
+    if not officer then return false, 'Not on duty' end
+    if type(data) ~= 'table' or not data.id then return false, 'No arrest' end
+
+    local existing = MySQL.single.await('SELECT id, officer_citizenid, citizenid FROM mdt_arrests WHERE id = ?', { data.id })
+    if not existing then return false, 'That arrest no longer exists' end
+    if existing.officer_citizenid ~= officer.citizenid and not IsSupervisor(source) then
+        return false, 'Only the arresting officer or a supervisor can edit this'
+    end
+
+    local charges = CleanCharges(data.charges)
+    if #charges == 0 then return false, 'Keep at least one charge' end
+
+    MySQL.update.await([[
+        UPDATE mdt_arrests SET charges = ?, fine = ?, jail_time = ?, narrative = ?, location = ?, updated_at = NOW()
+        WHERE id = ?
+    ]], { json.encode(charges), Amount(data.fine), Amount(data.jailTime),
+          Text(data.narrative, 20000), Text(data.location, 255), existing.id })
+
+    exports['XS-MDT']:AuditLog('Arrest Edited', officer.name, 'Arrest ID: ' .. existing.id .. ' | Citizenid: ' .. existing.citizenid)
+    return true
+end)
+
+lib.callback.register('XS-MDT:server:deleteArrest', function(source, id)
+    if not HasPanel(source, 'arrests') then return false end
+    if not IsSupervisor(source) then return false, 'Supervisors only' end
+    local officer = GetOfficer(source)
+    local existing = MySQL.single.await('SELECT id, citizenid FROM mdt_arrests WHERE id = ?', { tonumber(id) })
+    if not existing then return false, 'Already gone' end
+
+    if MdtIncidentsLinkedTo and MdtSetIncidentLink then
+        for _, report in ipairs(MdtIncidentsLinkedTo('arrest', existing.id)) do
+            MdtSetIncidentLink('arrest', existing.id, report.id, false)
+        end
+    end
+    MySQL.update.await('UPDATE mdt_evidence SET arrest_id = NULL WHERE arrest_id = ?', { existing.id })
+    MySQL.update.await("DELETE FROM mdt_case_links WHERE kind = 'arrest' AND ref_id = ?", { tostring(existing.id) })
+    MySQL.update.await('DELETE FROM mdt_arrests WHERE id = ?', { existing.id })
+
+    exports['XS-MDT']:AuditLog('Arrest Deleted', officer and officer.name or 'Supervisor',
+        'Arrest ID: ' .. existing.id .. ' | Citizenid: ' .. existing.citizenid)
+    return true
 end)
 
 lib.callback.register('XS-MDT:server:getArrests', function(source, citizenid)
     if not HasPanel(source, 'arrests') then return nil end
     local results = MySQL.query.await('SELECT * FROM mdt_arrests WHERE citizenid = ? ORDER BY created_at DESC', { citizenid })
-    for _, a in ipairs(results) do a.charges = json.decode(a.charges) end
+    for _, a in ipairs(results) do a.charges = Decode(a.charges) end
     return results
 end)
 
@@ -70,32 +203,61 @@ end)
 
 lib.callback.register('XS-MDT:server:issueCitation', function(source, data)
     if not HasPanel(source, 'citations') then return false end
-    local officer = exports['XS-MDT']:GetOfficerInfo(source)
-    if not data.citizenid or not data.charges or #data.charges == 0 then return false end
+    local officer = GetOfficer(source)
+    if not officer then return false, 'Not on duty' end
+    if type(data) ~= 'table' or not data.citizenid then return false, 'Pick who the citation is for' end
+
+    local charges = CleanCharges(data.charges)
+    if #charges == 0 then return false, 'Add at least one charge' end
+    local fine = Amount(data.fine)
 
     local id = MySQL.insert.await([[
         INSERT INTO mdt_citations (citizenid, officer_citizenid, officer_name, charges, fine, location, notes)
         VALUES (?, ?, ?, ?, ?, ?, ?)
     ]], {
         data.citizenid, officer.citizenid, officer.name,
-        json.encode(data.charges), data.fine or 0, data.location, data.notes
+        json.encode(charges), fine, Text(data.location, 255), Text(data.notes, 2000)
     })
+    if not id then return false, 'Could not save the citation' end
 
-    -- Fine deduction on immediate cite
-    if data.targetSource and data.fine and data.fine > 0 and Config.FineDeduction.AutoDeductCitations then
-        _fineHandler(data.targetSource, data.fine, 'XS-MDT-citation')
+    local target = OnlineSource(data.citizenid)
+    if target and fine > 0 and (data.autoPay or Config.FineDeduction.AutoDeductCitations) and Config.FineDeduction.Enabled then
+        _fineHandler(target, fine, 'XS-MDT-citation')
+        MySQL.update.await('UPDATE mdt_citations SET paid = 1 WHERE id = ?', { id })
     end
 
-    exports['XS-MDT']:AuditLog('Citation Issued', officer.name, 'Citation ID: ' .. id .. ' | Fine: $' .. (data.fine or 0))
+    exports['XS-MDT']:AuditLog('Citation Issued', officer.name, 'Citation ID: ' .. id .. ' | Fine: $' .. fine)
     exports['XS-MDT']:LogBodyCam(source, 'CITATION_ISSUED',
-        'Subject: ' .. data.citizenid .. ' | Fine: $' .. (data.fine or 0) .. ' | Charges: ' .. #data.charges)
-    return id
+        'Subject: ' .. data.citizenid .. ' | Fine: $' .. fine .. ' | Charges: ' .. #charges)
+    return { id = id }
+end)
+
+lib.callback.register('XS-MDT:server:getCitation', function(source, id)
+    if not HasPanel(source, 'citations') then return nil end
+    local officer = GetOfficer(source)
+    if not officer then return nil end
+
+    local c = MySQL.single.await([[
+        SELECT ci.*, c.firstname, c.lastname, c.dob, c.image
+        FROM mdt_citations ci LEFT JOIN mdt_civilians c ON c.citizenid = ci.citizenid
+        WHERE ci.id = ?
+    ]], { tonumber(id) })
+    if not c then return nil end
+
+    c.civilian_name = c.firstname and (c.firstname .. ' ' .. (c.lastname or '')) or c.citizenid
+    c.charges = Decode(c.charges)
+    c.tags = Decode(c.tags)
+    c.reports = MdtIncidentsLinkedTo and MdtIncidentsLinkedTo('citation', c.id, officer.citizenid) or {}
+    c.cases = MdtCasesFor and MdtCasesFor('citation', c.id) or {}
+    c.canMarkPaid = IsSupervisor(source)
+    c.canCases = HasPanel(source, 'cases')
+    return c
 end)
 
 lib.callback.register('XS-MDT:server:getCitations', function(source, citizenid)
     if not HasPanel(source, 'citations') then return nil end
     local results = MySQL.query.await('SELECT * FROM mdt_citations WHERE citizenid = ? ORDER BY created_at DESC', { citizenid })
-    for _, c in ipairs(results) do c.charges = json.decode(c.charges) end
+    for _, c in ipairs(results) do c.charges = Decode(c.charges) end
     return results
 end)
 
@@ -109,7 +271,7 @@ lib.callback.register('XS-MDT:server:getRecentArrests', function(source)
         ORDER BY a.created_at DESC LIMIT 25
     ]], {})
     for _, a in ipairs(results) do
-        if a.charges then a.charges = json.decode(a.charges) end
+        a.charges = Decode(a.charges)
     end
     return results
 end)
@@ -146,7 +308,7 @@ lib.callback.register('XS-MDT:server:searchArrests', function(source, data)
     sql = sql .. ' ORDER BY a.created_at DESC LIMIT 100'
 
     local results = MySQL.query.await(sql, params)
-    for _, a in ipairs(results) do if a.charges then a.charges = json.decode(a.charges) end end
+    for _, a in ipairs(results) do a.charges = Decode(a.charges) end
     return results
 end)
 
@@ -161,7 +323,7 @@ lib.callback.register('XS-MDT:server:getArrestsByName', function(source, query)
         WHERE CONCAT(COALESCE(c.firstname,''),' ',COALESCE(c.lastname,'')) LIKE ? OR a.citizenid LIKE ?
         ORDER BY a.created_at DESC LIMIT 50
     ]], { like, like })
-    for _, a in ipairs(results) do if a.charges then a.charges = json.decode(a.charges) end end
+    for _, a in ipairs(results) do a.charges = Decode(a.charges) end
     return results
 end)
 
@@ -175,7 +337,7 @@ lib.callback.register('XS-MDT:server:getRecentCitations', function(source)
         ORDER BY ci.created_at DESC LIMIT 25
     ]], {})
     for _, ci in ipairs(results) do
-        if ci.charges then ci.charges = json.decode(ci.charges) end
+        ci.charges = Decode(ci.charges)
     end
     return results
 end)
@@ -212,7 +374,7 @@ lib.callback.register('XS-MDT:server:searchCitations', function(source, data)
     sql = sql .. ' ORDER BY ci.created_at DESC LIMIT 100'
 
     local results = MySQL.query.await(sql, params)
-    for _, ci in ipairs(results) do if ci.charges then ci.charges = json.decode(ci.charges) end end
+    for _, ci in ipairs(results) do ci.charges = Decode(ci.charges) end
     return results
 end)
 
@@ -227,7 +389,7 @@ lib.callback.register('XS-MDT:server:getCitationsByName', function(source, query
         WHERE CONCAT(COALESCE(c.firstname,''),' ',COALESCE(c.lastname,'')) LIKE ? OR ci.citizenid LIKE ?
         ORDER BY ci.created_at DESC LIMIT 50
     ]], { like, like })
-    for _, ci in ipairs(results) do if ci.charges then ci.charges = json.decode(ci.charges) end end
+    for _, ci in ipairs(results) do ci.charges = Decode(ci.charges) end
     return results
 end)
 
@@ -246,27 +408,30 @@ end)
 -- ─── Fetch records by ID lists (for incident linked records display) ──────────
 
 lib.callback.register('XS-MDT:server:getRecordsByIds', function(source, data)
-    if not HasPanel(source, 'arrests') then return nil end
+    if not HasPanel(source, 'arrests') and not HasPanel(source, 'incidents') then return nil end
     local result = { arrests = {}, citations = {} }
+    if type(data) ~= 'table' then return result end
 
-    if data.arrests and #data.arrests > 0 then
-        local ph = string.rep('?,', #data.arrests):sub(1, -2)
-        local rows = MySQL.query.await(
-            'SELECT id, citizenid, officer_name, charges, fine, jail_time, created_at FROM mdt_arrests WHERE id IN (' .. ph .. ')',
-            data.arrests
-        )
-        for _, a in ipairs(rows) do if a.charges then a.charges = json.decode(a.charges) end end
-        result.arrests = rows
+    if type(data.arrests) == 'table' and #data.arrests > 0 then
+        local rows = MySQL.query.await([[
+            SELECT a.id, a.citizenid, a.officer_name, a.charges, a.fine, a.jail_time, a.created_at,
+                   COALESCE(CONCAT(c.firstname, ' ', c.lastname), a.citizenid) AS civilian_name
+            FROM mdt_arrests a LEFT JOIN mdt_civilians c ON c.citizenid = a.citizenid
+            WHERE a.id IN (?)
+        ]], { data.arrests })
+        for _, a in ipairs(rows or {}) do a.charges = Decode(a.charges) end
+        result.arrests = rows or {}
     end
 
-    if data.citations and #data.citations > 0 then
-        local ph = string.rep('?,', #data.citations):sub(1, -2)
-        local rows = MySQL.query.await(
-            'SELECT id, citizenid, officer_name, charges, fine, paid, created_at FROM mdt_citations WHERE id IN (' .. ph .. ')',
-            data.citations
-        )
-        for _, c in ipairs(rows) do if c.charges then c.charges = json.decode(c.charges) end end
-        result.citations = rows
+    if type(data.citations) == 'table' and #data.citations > 0 then
+        local rows = MySQL.query.await([[
+            SELECT ci.id, ci.citizenid, ci.officer_name, ci.charges, ci.fine, ci.paid, ci.created_at,
+                   COALESCE(CONCAT(c.firstname, ' ', c.lastname), ci.citizenid) AS civilian_name
+            FROM mdt_citations ci LEFT JOIN mdt_civilians c ON c.citizenid = ci.citizenid
+            WHERE ci.id IN (?)
+        ]], { data.citations })
+        for _, c in ipairs(rows or {}) do c.charges = Decode(c.charges) end
+        result.citations = rows or {}
     end
 
     return result
@@ -277,21 +442,15 @@ end)
 -- Mark a citation as paid and optionally deduct the fine from the civilian's bank
 lib.callback.register('XS-MDT:server:markCitationPaid', function(source, citationId)
     if not HasPanel(source, 'citations') then return false end
-    local officer = exports['XS-MDT']:GetOfficerInfo(source)
+    local officer = GetOfficer(source)
     local citation = MySQL.single.await('SELECT citizenid, fine FROM mdt_citations WHERE id = ? AND paid = 0', { citationId })
     if not citation then return false end
 
     MySQL.update.await('UPDATE mdt_citations SET paid = 1 WHERE id = ?', { citationId })
 
-    -- Deduct from bank if target civilian is online
     if Config.FineDeduction.AutoDeductOnMarkPaid and citation.fine and citation.fine > 0 then
-        local players = Framework.GetPlayers()
-        for src, player in pairs(players) do
-            if player.PlayerData.citizenid == citation.citizenid then
-                _fineHandler(src, citation.fine, 'XS-MDT-citation-paid')
-                break
-            end
-        end
+        local target = OnlineSource(citation.citizenid)
+        if target then _fineHandler(target, citation.fine, 'XS-MDT-citation-paid') end
     end
 
     exports['XS-MDT']:AuditLog('Citation Paid', officer.name, 'Citation #' .. citationId .. ' marked as paid')

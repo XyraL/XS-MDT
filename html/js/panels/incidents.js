@@ -71,6 +71,7 @@ const SEVERITY_LABELS = {
 };
 
 function loadIncidents(filter = 'all') {
+    MDT.fromCase = null;
     const panel = document.getElementById('tab-incidents');
     panel.innerHTML = `
         <div class="panel-header">
@@ -101,7 +102,8 @@ function loadIncidents(filter = 'all') {
 
     nuiFetch('getIncidents', query).then(incidents => {
         const body = document.getElementById('incidents-body');
-        if (!incidents || incidents.length === 0) {
+        if (!body) return;
+        if (!Array.isArray(incidents) || incidents.length === 0) {
             body.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="i i-clipboard"></i></div><div class="empty-title">No incident reports found</div></div>';
             return;
         }
@@ -167,138 +169,164 @@ async function runIncidentSearch() {
     body.innerHTML = incidentCards(results);
 }
 
+let _openIncident = null;
+
 async function openIncidentDetail(id) {
     const panel = document.getElementById('tab-incidents');
-    // Placeholder while loading — edit buttons added once we know ownership
+    if (!panel) return;
     panel.innerHTML = `<div class="panel-header">
-        <div class="panel-title">Incident Report</div>
-        <div class="panel-actions" id="incident-header-actions">
-            <button class="btn btn-ghost btn-sm" onclick="loadIncidents()">← Back</button>
+        <div class="panel-header-left">
+            <div class="panel-title">Incident Report</div>
+            <div class="panel-subtitle" id="incident-detail-sub">Report #${Number(id)}</div>
         </div>
+        <div class="panel-actions" id="incident-header-actions">${recordBackButton('loadIncidents()')}</div>
     </div>
     <div class="panel-body" id="incident-detail">${Array(3).fill(0).map(()=>`<div class="card mb-2">${skeletonLines(3)}</div>`).join('')}</div>`;
 
     const incident = await nuiFetch('getIncident', id);
-    if (!incident) {
-        document.getElementById('incident-detail').innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="i i-alert"></i></div><div class="empty-text">Incident not found</div></div>';
+    const detail = document.getElementById('incident-detail');
+    if (!detail) return;
+    if (!incident || !incident.id) {
+        detail.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="i i-alert"></i></div><div class="empty-title">Report not found</div></div>';
         return;
     }
+    _openIncident = incident;
 
     const canEdit = MDT.officer && (
         MDT.officer.citizenid === incident.created_by ||
         MDT.officer.isSupervisor
     );
-    const actions = document.getElementById('incident-header-actions');
     const sev = SEVERITY_LABELS[incident.severity] || null;
-    if (actions && canEdit) {
-        actions.innerHTML = `
-            <button class="btn btn-ghost btn-sm" onclick="loadIncidents()">← Back</button>
-            <button class="btn btn-ghost btn-sm" onclick="printIncidentReport(${id})"><i class="i i-printer"></i> Print</button>
-            <button class="btn btn-ghost btn-sm" onclick="openEditIncidentModal(${id})"><i class="i i-edit"></i> Edit</button>
-            ${statusControl(incident)}
-            <button class="btn btn-danger btn-sm" onclick="deleteIncident(${id})"><i class="i i-trash"></i> Delete</button>`;
-    } else if (actions) {
-        actions.innerHTML = `
-            <button class="btn btn-ghost btn-sm" onclick="loadIncidents()">← Back</button>
-            <button class="btn btn-ghost btn-sm" onclick="printIncidentReport(${id})"><i class="i i-printer"></i> Print</button>`;
-    }
+    const number = incident.case_number || ('#' + incident.id);
+    const civilians = incident.involved_civilians || [];
+    const officers = incident.involved_officers || [];
 
-    document.getElementById('incident-detail').innerHTML = `
-        <div class="card" style="margin-bottom:14px;">
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;">
-                <div>
-                    <div style="font-size:20px;font-weight:800;margin-bottom:4px;">${esc(incident.title)}</div>
-                    <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:11.5px;color:var(--text-muted);">
-                        <span class="font-mono">Report #${incident.id}</span>
-                        <span>By: <strong style="color:var(--text-secondary);">${esc(incident.created_by_name)}</strong></span>
-                        <span>${fmtDate(incident.created_at)}</span>
-                        ${incident.updated_at !== incident.created_at ? `<span style="color:var(--accent-2);">Updated ${timeAgo(incident.updated_at)}</span>` : ''}
-                        ${canEdit ? `<span style="cursor:pointer;color:var(--accent-2)" onclick="openCaseNumberModal(${incident.id},'${(incident.case_number||'').replace(/'/g,"\\'")}')" title="Set Case Number">
-                            ${incident.case_number ? `<strong style="color:var(--accent-2)">Case: ${incident.case_number}</strong>` : '+ Link Case #'}
-                        </span>` : (incident.case_number ? `<span style="color:var(--accent-2)">Case: ${incident.case_number}</span>` : '')}
+    const actions = document.getElementById('incident-header-actions');
+    if (actions) {
+        actions.innerHTML = `
+            ${recordBackButton('loadIncidents()')}
+            <button class="btn btn-ghost btn-sm" onclick="printIncidentReport(${incident.id})"><i class="i i-printer"></i> Print</button>
+            ${canEdit ? `
+                <button class="btn btn-ghost btn-sm" onclick="openEditIncidentModal(${incident.id})"><i class="i i-edit"></i> Edit</button>
+                ${statusControl(incident)}
+                <button class="btn btn-danger btn-sm" onclick="deleteIncident(${incident.id})"><i class="i i-trash"></i> Delete</button>` : ''}`;
+    }
+    const sub = document.getElementById('incident-detail-sub');
+    if (sub) sub.textContent = `${number} · ${fmtDate(incident.created_at)}`;
+
+    detail.innerHTML = `
+        <div class="card mb-2"><div class="card-body">
+            <div class="report-head">
+                <div style="min-width:0;flex:1;">
+                    <div class="report-title">${esc(incident.title)} ${statusTag(incident.status)}</div>
+                    <div class="report-facts">
+                        <span class="mono">${esc(number)}</span>
+                        <span><i class="i i-badge"></i> ${esc(incident.created_by_name)}</span>
+                        <span><i class="i i-clock"></i> ${fmtDate(incident.created_at)}</span>
+                        ${incident.location ? `<span><i class="i i-map-pin"></i> ${esc(incident.location)}</span>` : ''}
+                        ${incident.updated_at && incident.updated_at !== incident.created_at ? `<span class="text-accent">Updated ${timeAgo(incident.updated_at)}</span>` : ''}
                     </div>
+                    ${recordCases('incident', incident.id, number + ' — ' + incident.title, incident.cases, incident.canCases, () => openIncidentDetail(incident.id))}
                 </div>
                 ${sev ? `<span class="tag ${esc(sev.tag)}" style="font-size:12px;padding:5px 12px;flex-shrink:0;">${esc(sev.label)}</span>` : ''}
             </div>
-            <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;">Narrative</div>
-            <div style="font-size:13px;line-height:1.75;white-space:pre-wrap;color:var(--text-secondary);">${esc(incident.narrative)}</div>
+            <div class="report-section-label" style="margin-top:14px;">Narrative</div>
+            <div class="report-text">${esc(incident.narrative)}</div>
             ${renderRecordTags('incident', incident.id, incident.tags)}
-        </div>
+        </div></div>
 
-        <div class="card" style="margin-bottom:14px;">
-            <div class="card-header">
-                <div class="card-title">
-                    <div class="card-title-icon"><i class="i i-archive"></i></div>
-                    Evidence (${(incident.evidence || []).length})
+        <div class="report-grid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><div class="card-title-icon"><i class="i i-link"></i></div>Arrests and citations</div>
+                    <div style="display:flex;gap:6px;">
+                        ${canOpenKind('arrest') ? `<button class="btn btn-ghost btn-sm" onclick="linkRecordToIncident('arrest', ${incident.id})">+ Arrest</button>` : ''}
+                        ${canOpenKind('citation') ? `<button class="btn btn-ghost btn-sm" onclick="linkRecordToIncident('citation', ${incident.id})">+ Citation</button>` : ''}
+                    </div>
                 </div>
-                <button class="btn btn-ghost btn-sm" onclick="openEvidenceModal(${incident.id})">+ Log Evidence</button>
-            </div>
-            ${renderEvidenceList(incident.evidence || [], incident.id)}
-        </div>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-            <div class="card">
-                <div class="card-header"><div class="card-title">Involved Civilians (${incident.involved_civilians.length})</div></div>
-                ${incident.involved_civilians.length === 0 ? '<div class="text-muted text-sm">None listed</div>' :
-                    incident.involved_civilians.map(c => `
-                        <div style="padding:7px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-                            <div>
-                                <div style="font-weight:600;font-size:13px;">${esc(c.name)} ${copyBtn(c.citizenid)}</div>
-                                <div class="text-muted text-sm font-mono">${c.citizenid}</div>
-                            </div>
-                            <button class="btn btn-ghost btn-sm" onclick="showCivilian('${c.citizenid}')">View Profile</button>
-                        </div>`).join('')}
+                <div id="incident-linked-records">${skeletonLines(2)}</div>
             </div>
             <div class="card">
-                <div class="card-header"><div class="card-title">Involved Officers (${incident.involved_officers.length})</div></div>
-                ${incident.involved_officers.length === 0 ? '<div class="text-muted text-sm">None listed</div>' :
-                    incident.involved_officers.map(o => `
-                        <div style="padding:7px 0;border-bottom:1px solid var(--border);">
-                            <div style="font-weight:600;font-size:13px;">${esc(o.name)}</div>
-                            <div class="text-muted text-sm font-mono">${o.citizenid}</div>
-                        </div>`).join('')}
+                <div class="card-header">
+                    <div class="card-title"><div class="card-title-icon"><i class="i i-box"></i></div>Evidence (${(incident.evidence || []).length})</div>
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn btn-ghost btn-sm" onclick="bookEvidenceFor('incident', ${incident.id})">+ Book</button>
+                        ${canOpenKind('evidence') ? `<button class="btn btn-ghost btn-sm" onclick="attachEvidenceTo('incident', ${incident.id})">Attach</button>` : ''}
+                    </div>
+                </div>
+                ${evidenceRows(incident.evidence || [], 'incident', incident.id)}
             </div>
         </div>
-        <div id="incident-linked-records-section"></div>`;
 
-    // Load linked arrests + citations if any
-    const linkedArrests   = incident.linked_arrests   || [];
-    const linkedCitations = incident.linked_citations || [];
-    if (linkedArrests.length > 0 || linkedCitations.length > 0) {
-        const section = document.getElementById('incident-linked-records-section');
-        if (section) {
-            section.innerHTML = `<div class="card" style="margin-top:14px;">
-                <div class="card-header"><div class="card-title">Linked Records</div></div>
-                <div id="linked-records-rows">${skeletonLines(2)}</div>
-            </div>`;
-            nuiFetch('getRecordsByIds', { arrests: linkedArrests, citations: linkedCitations }).then(records => {
-                const rows = document.getElementById('linked-records-rows');
-                if (!rows) return;
-                let html = '';
-                (records?.arrests || []).forEach(a => {
-                    html += `<div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
-                        <span class="tag tag-red">Arrest #${a.id}</span>
-                        <div style="flex:1;">
-                            <span style="font-size:12px;font-weight:600;">${a.citizenid}</span>
-                            <span class="text-muted text-sm"> · By ${esc(a.officer_name)} · ${fmtDateShort(a.created_at)}</span>
-                        </div>
-                        <span class="text-muted text-sm">${(a.charges||[]).length} charge(s)${a.fine ? ' · ' + dollarFmt(a.fine) : ''}</span>
-                    </div>`;
-                });
-                (records?.citations || []).forEach(c => {
-                    html += `<div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
-                        <span class="tag tag-yellow">Citation #${c.id}</span>
-                        <div style="flex:1;">
-                            <span style="font-size:12px;font-weight:600;">${c.citizenid}</span>
-                            <span class="text-muted text-sm"> · By ${esc(c.officer_name)} · ${fmtDateShort(c.created_at)}</span>
-                        </div>
-                        <span style="font-size:12px;color:var(--green);">${dollarFmt(c.fine)}</span>
-                    </div>`;
-                });
-                rows.innerHTML = html || '<div class="text-muted text-sm">No matching records found.</div>';
-            });
-        }
+        <div class="report-grid">
+            <div class="card">
+                <div class="card-header"><div class="card-title">Involved civilians (${civilians.length})</div></div>
+                ${civilians.length === 0 ? '<div class="text-muted text-sm">None listed</div>' : `<div class="link-list">${civilians.map(c => `
+                    <div class="link-row" onclick="showCivilian('${esc(c.citizenid)}')">
+                        <span class="link-row-icon"><i class="i i-user"></i></span>
+                        <span class="link-row-label">${esc(c.name)}</span>
+                        <span class="record-meta mono">${esc(c.citizenid)}</span>
+                    </div>`).join('')}</div>`}
+            </div>
+            <div class="card">
+                <div class="card-header"><div class="card-title">Involved officers (${officers.length})</div></div>
+                ${officers.length === 0 ? '<div class="text-muted text-sm">None listed</div>' : `<div class="link-list">${officers.map(o => `
+                    <div class="link-row static">
+                        <span class="link-row-icon"><i class="i i-badge"></i></span>
+                        <span class="link-row-label">${esc(o.name)}</span>
+                        <span class="record-meta mono">${esc(o.citizenid)}</span>
+                    </div>`).join('')}</div>`}
+            </div>
+        </div>`;
+
+    const arrests = incident.linked_arrests || [];
+    const citations = incident.linked_citations || [];
+    const box = document.getElementById('incident-linked-records');
+    if (!arrests.length && !citations.length) {
+        if (box) box.innerHTML = '<div class="text-muted text-sm">Nothing linked.</div>';
+        return;
     }
+
+    const records = await nuiFetch('getRecordsByIds', { arrests, citations });
+    const target = document.getElementById('incident-linked-records');
+    if (!target) return;
+
+    const rows = [];
+    (records && records.arrests || []).forEach(a => rows.push(`
+        <div class="link-row" onclick="openRecord('arrest', ${Number(a.id)})">
+            <span class="link-row-icon"><i class="i i-lock"></i></span>
+            <span class="mono link-row-no">Arrest #${Number(a.id)}</span>
+            <span class="link-row-label">${esc(a.civilian_name || a.citizenid)}</span>
+            <span class="record-meta">${(a.charges || []).length} charge(s)</span>
+            <button class="btn btn-ghost btn-xs" title="Unlink" onclick="event.stopPropagation();unlinkRecordFromIncident('arrest', ${Number(a.id)}, ${incident.id})"><i class="i i-x"></i></button>
+        </div>`));
+    (records && records.citations || []).forEach(c => rows.push(`
+        <div class="link-row" onclick="openRecord('citation', ${Number(c.id)})">
+            <span class="link-row-icon"><i class="i i-file"></i></span>
+            <span class="mono link-row-no">Citation #${Number(c.id)}</span>
+            <span class="link-row-label">${esc(c.civilian_name || c.citizenid)}</span>
+            <span class="record-meta">${dollarFmt(c.fine)}</span>
+            <button class="btn btn-ghost btn-xs" title="Unlink" onclick="event.stopPropagation();unlinkRecordFromIncident('citation', ${Number(c.id)}, ${incident.id})"><i class="i i-x"></i></button>
+        </div>`));
+
+    target.innerHTML = rows.length
+        ? `<div class="link-list">${rows.join('')}</div>`
+        : '<div class="text-muted text-sm">The linked records are no longer on file.</div>';
+}
+
+function linkRecordToIncident(kind, incidentId) {
+    const word = kind === 'citation' ? 'Citation' : 'Arrest';
+    pickRecord(`Link ${word}`, kind, 'Search by name, citizen ID or number...', async (r) => {
+        const ok = await nuiFetch('setIncidentLink', { kind, recordId: r.ref, incidentId, add: true });
+        if (!ok) return false;
+        showToast(`${word} linked`, r.label, 'success', 2500);
+        openIncidentDetail(incidentId);
+    });
+}
+
+async function unlinkRecordFromIncident(kind, recordId, incidentId) {
+    const ok = await nuiFetch('setIncidentLink', { kind, recordId, incidentId, add: false });
+    if (ok) openIncidentDetail(incidentId);
 }
 
 // ── Record Linker (link arrests / citations to an incident) ───────────────
@@ -762,7 +790,7 @@ async function saveIncidentDraft() {
     if (result) {
         clearIncidentDraft();
         showToast('Draft saved', 'Only you can see it until you file it.', 'success');
-        document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
+        document.getElementById('inc-title')?.closest('.modal-backdrop')?.remove();
         loadIncidents('drafts');
     } else {
         showToast('Error', 'Could not save the draft.', 'error');
@@ -873,62 +901,13 @@ async function deleteIncident(id) {
         }, 'Delete Report', '<i class="i i-trash"></i>');
 }
 
-function openCaseNumberModal(incidentId, currentCase) {
-    const modal = createModal('Link Case Number',
-        `<div style="margin-bottom:12px;font-size:13px;color:var(--text-muted)">
-            Assign a case number to group related incidents together.
-            All incidents with the same case number can be viewed together.
-        </div>
-        <div class="form-group">
-            <label>Case Number</label>
-            <input class="input" id="case-num-input" placeholder="e.g. CASE-2025-001" value="${currentCase || ''}">
-        </div>
-        ${currentCase ? `<div style="margin-top:8px">
-            <button class="btn btn-ghost btn-xs" onclick="viewLinkedIncidents('${currentCase}')">View all incidents in Case ${currentCase}</button>
-        </div>` : ''}`,
-        async () => {
-            const cn = (document.getElementById('case-num-input') || {}).value || '';
-            const ok = await nuiFetch('setCaseNumber', { incidentId, caseNumber: cn.trim() });
-            if (ok) {
-                showToast('Case Linked', cn.trim() ? 'Case number set to ' + cn.trim() : 'Case number removed', 'success');
-                closeModal(modal);
-                openIncidentDetail(incidentId);
-            } else {
-                showToast('Error', 'Could not update case number', 'error');
-            }
-        }, 'Save', '<i class="i i-folder"></i>');
-}
-
-async function viewLinkedIncidents(caseNumber) {
-    const panel = document.getElementById('tab-incidents');
-    panel.innerHTML = `<div class="panel-header">
-        <div class="panel-title">Case: ${caseNumber}</div>
-        <div class="panel-actions"><button class="btn btn-ghost btn-sm" onclick="loadIncidents()">← Back</button></div>
-    </div>
-    <div class="panel-body" id="case-incidents-list"><div class="empty-state"><div class="empty-icon"><i class="i i-folder"></i></div><div class="empty-text">Loading...</div></div></div>`;
-
-    const incidents = await nuiFetch('getIncidentsByCase', caseNumber);
-    const el = document.getElementById('case-incidents-list');
-    if (!el) return;
-    if (!incidents || !incidents.length) {
-        el.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="i i-folder"></i></div><div class="empty-text">No incidents found for this case</div></div>';
-        return;
-    }
-    el.innerHTML = incidents.map(function(i) {
-        return `<div class="card mb-2" onclick="openIncidentDetail(${i.id})" style="cursor:pointer;padding:12px 16px">
-            <div style="font-size:14px;font-weight:600;margin-bottom:4px">${esc(i.title)}</div>
-            <div style="font-size:12px;color:var(--text-muted)">Report #${i.id} · By ${esc(i.created_by_name)} · ${timeAgo(i.created_at)}</div>
-        </div>`;
-    }).join('');
-}
-
 window.loadIncidents                = loadIncidents;
 window.openIncidentDetail           = openIncidentDetail;
 window.openNewIncidentModal         = openNewIncidentModal;
 window.openEditIncidentModal        = openEditIncidentModal;
 window.deleteIncident               = deleteIncident;
-window.openCaseNumberModal          = openCaseNumberModal;
-window.viewLinkedIncidents          = viewLinkedIncidents;
+window.linkRecordToIncident         = linkRecordToIncident;
+window.unlinkRecordFromIncident     = unlinkRecordFromIncident;
 window.printIncidentReport          = printIncidentReport;
 window.createPersonLinker           = createPersonLinker;
 window.linkPerson                   = linkPerson;
@@ -939,101 +918,14 @@ window.linkRecord                   = linkRecord;
 window.unlinkRecord                 = unlinkRecord;
 window.refreshLinkedRecordsDisplay  = refreshLinkedRecordsDisplay;
 
-const EVIDENCE_LOOK = {
-    photo: ['<i class="i i-camera"></i>', 'Photo'],
-    item:  ['<i class="i i-box"></i>', 'Item'],
-    note:  ['<i class="i i-edit"></i>', 'Note'],
-};
-
-function renderEvidenceList(list, incidentId) {
-    if (!list.length) return '<div class="text-muted text-sm">Nothing logged yet.</div>';
-
-    return list.map(e => {
-        const [icon, kindLabel] = EVIDENCE_LOOK[e.kind] || ['<i class="i i-archive"></i>', e.kind];
-        return `
-        <div style="padding:9px 0;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start;">
-            ${e.kind === 'photo' && e.photo
-                ? `<img src="${esc(e.photo)}" alt="" style="width:84px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0;"
-                       onerror="this.style.display='none'">`
-                : `<div style="font-size:20px;flex-shrink:0;width:36px;text-align:center;">${icon}</div>`}
-            <div style="flex:1;min-width:0;">
-                <div style="font-weight:600;font-size:13px;">
-                    ${esc(e.label)}
-                    <span class="tag tag-gray" style="margin-left:6px;font-size:9.5px;">${esc(kindLabel)}</span>
-                </div>
-                ${e.detail ? `<div class="text-muted text-sm" style="white-space:pre-wrap;">${esc(e.detail)}</div>` : ''}
-                <div class="text-muted" style="font-size:10.5px;margin-top:3px;">
-                    Logged by ${esc(e.logged_by_name)} · ${fmtDate(e.created_at)}
-                </div>
-            </div>
-            <button class="btn btn-ghost btn-sm" title="Remove — your own within 15 minutes, or supervisor"
-                    onclick="removeEvidence(${e.id}, ${incidentId})"><i class="i i-x"></i></button>
-        </div>`;
-    }).join('');
-}
-
 function openEvidenceModal(incidentId) {
-    const modal = createModal('Log Evidence', `
-        <div class="form-row">
-            <div class="form-group" style="flex:1;">
-                <label class="form-label">Type</label>
-                <select class="select" id="ev-kind" onchange="document.getElementById('ev-photo-row').style.display = this.value === 'photo' ? '' : 'none'">
-                    <option value="item"><i class="i i-box"></i> Item</option>
-                    <option value="photo"><i class="i i-camera"></i> Photo</option>
-                    <option value="note"><i class="i i-edit"></i> Note</option>
-                </select>
-            </div>
-            <div class="form-group" style="flex:2;">
-                <label class="form-label">Label</label>
-                <input class="input" id="ev-label" placeholder="e.g. 9mm casing, kerb outside the bank">
-            </div>
-        </div>
-        <div class="form-group" id="ev-photo-row" style="display:none;">
-            <label class="form-label">Photo URL</label>
-            <input class="input" id="ev-photo" placeholder="Direct image link (Discord CDN, Imgur…)">
-        </div>
-        <div class="form-group">
-            <label class="form-label">Details</label>
-            <textarea class="textarea" id="ev-detail" style="min-height:90px;"
-                      placeholder="Where it was found, condition, anything a court would ask."></textarea>
-        </div>`,
-        async () => {
-            const kind = document.getElementById('ev-kind').value;
-            const label = document.getElementById('ev-label').value.trim();
-            if (!label) { showToast('Label needed', 'Say what the evidence is.', 'error'); return; }
-
-            const res = await nuiFetch('addEvidence', {
-                incidentId, kind, label,
-                detail: document.getElementById('ev-detail').value.trim(),
-                photo: document.getElementById('ev-photo')?.value.trim() || null,
-            });
-
-            if (res && res.ok) {
-                showToast('Evidence logged', label, 'success');
-                closeModal(modal);
-                openIncidentDetail(incidentId);
-            } else {
-                showToast('Not logged', (res && res.error) || 'The server refused it.', 'error');
-            }
-        }, 'Log It');
-}
-
-async function removeEvidence(id, incidentId) {
-    const res = await nuiFetch('deleteEvidence', { id });
-    if (res && res.ok) {
-        showToast('Evidence removed', '', 'success');
-        openIncidentDetail(incidentId);
-    } else {
-        showToast('Not removed', (res && res.error) || 'The server refused it.', 'error');
-    }
+    bookEvidenceFor('incident', incidentId);
 }
 
 window.incidentCards          = incidentCards;
 window.queueIncidentSearch    = queueIncidentSearch;
 window.runIncidentSearch      = runIncidentSearch;
-window.renderEvidenceList     = renderEvidenceList;
 window.openEvidenceModal      = openEvidenceModal;
-window.removeEvidence         = removeEvidence;
 window.statusTag              = statusTag;
 window.statusControl          = statusControl;
 window.changeIncidentStatus   = changeIncidentStatus;

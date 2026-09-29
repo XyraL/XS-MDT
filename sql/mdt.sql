@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS `mdt_arrests` (
     `location` VARCHAR(255) DEFAULT NULL,
     `tags` JSON DEFAULT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP NULL DEFAULT NULL,
     KEY `idx_citizenid` (`citizenid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -231,6 +232,7 @@ CREATE TABLE IF NOT EXISTS `mdt_civilians` (
 CREATE TABLE IF NOT EXISTS `mdt_evidence` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `incident_id` INT DEFAULT NULL,
+    `arrest_id` INT DEFAULT NULL,
     `case_id` INT DEFAULT NULL,
     `evidence_number` VARCHAR(20) DEFAULT NULL,
     `status` ENUM('booked', 'checked_out', 'released', 'destroyed', 'lost') DEFAULT 'booked',
@@ -243,6 +245,7 @@ CREATE TABLE IF NOT EXISTS `mdt_evidence` (
     `logged_by_name` VARCHAR(100) NOT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     KEY `idx_incident` (`incident_id`),
+    KEY `idx_arrest` (`arrest_id`),
     KEY `idx_case` (`case_id`),
     KEY `idx_evidence_number` (`evidence_number`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

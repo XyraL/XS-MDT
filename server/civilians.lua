@@ -142,6 +142,8 @@ lib.callback.register('XS-MDT:server:getCivilianProfile', function(source, citiz
         civilian.licences = exports['XS-MDT']:GetLicences(citizenid)
         civilian.canRevokeLicence = exports['XS-MDT']:IsSupervisor(source)
             or not Config.Licences.RevokeRequiresSupervisor
+        civilian.canGrantLicence = exports['XS-MDT']:IsSupervisor(source)
+            or not Config.Licences.GrantRequiresSupervisor
     end
 
     civilian.canSeeCriminal = CanSeeCriminal(source)

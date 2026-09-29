@@ -11,17 +11,7 @@ const CASE_STATUS = {
     closed: { label: 'Closed', tag: 'tag-gray' },
 };
 
-const LINK_KINDS = {
-    incident: { label: 'Report',   icon: 'clipboard' },
-    arrest:   { label: 'Arrest',   icon: 'lock' },
-    citation: { label: 'Citation', icon: 'file' },
-    warrant:  { label: 'Warrant',  icon: 'scale' },
-    bolo:     { label: 'BOLO',     icon: 'eye' },
-    evidence: { label: 'Evidence', icon: 'box' },
-    person:   { label: 'Person',   icon: 'user' },
-    vehicle:  { label: 'Vehicle',  icon: 'car' },
-    weapon:   { label: 'Firearm',  icon: 'alert' },
-};
+const CASE_ATTACHABLE = ['incident', 'arrest', 'citation', 'warrant', 'bolo', 'evidence', 'person', 'vehicle', 'weapon'];
 
 let _caseFilter = { status: 'all', mine: false, search: '' };
 let _cases = null;
@@ -151,13 +141,13 @@ function drawCase() {
                 </div>
                 ${Object.keys(byKind).length ? Object.entries(byKind).map(([kind, list]) => `
                     <div class="case-links">
-                        <div class="case-link-kind">${esc((LINK_KINDS[kind] || { label: kind }).label)}</div>
+                        <div class="case-link-kind">${esc((RECORD_KINDS[kind] || { label: kind }).label)}</div>
                         ${list.map(l => `
-                            <div class="case-link">
-                                <span class="case-link-icon"><i class="i i-${(LINK_KINDS[kind] || { icon: 'file' }).icon}"></i></span>
+                            <div class="case-link clickable" onclick="openCaseAttachment(${Number(l.id)})" title="Open">
+                                <span class="case-link-icon"><i class="i i-${(RECORD_KINDS[kind] || { icon: 'file' }).icon}"></i></span>
                                 <span class="case-link-label">${esc(l.label || (kind + ' #' + l.ref_id))}</span>
                                 <span class="record-meta">${esc(l.added_by_name)}</span>
-                                <button class="btn btn-ghost btn-xs" onclick="unlinkCase(${l.id})"><i class="i i-x"></i></button>
+                                <button class="btn btn-ghost btn-xs" title="Take off the case" onclick="event.stopPropagation();unlinkCase(${Number(l.id)})"><i class="i i-x"></i></button>
                             </div>`).join('')}
                     </div>`).join('')
                 : '<div class="text-muted text-sm">Nothing attached yet.</div>'}
@@ -252,37 +242,67 @@ function openCaseEditor(id) {
 }
 
 function openCaseLink() {
-    const body = `
+    const kinds = CASE_ATTACHABLE.filter(canOpenKind);
+    if (!kinds.length) return;
+    let kind = kinds[0];
+    let added = 0;
+
+    const modal = createModal('Attach to Case', `
         <div class="form-row">
-            <div class="form-group" style="width:180px;">
+            <div class="form-group" style="width:170px;">
                 <label class="form-label">What</label>
                 <select class="input select" id="cl-kind">
-                    ${Object.entries(LINK_KINDS).map(([k, v]) => `<option value="${k}">${esc(v.label)}</option>`).join('')}
+                    ${kinds.map(k => `<option value="${k}">${esc(RECORD_KINDS[k].label)}</option>`).join('')}
                 </select>
             </div>
             <div class="form-group" style="flex:1;">
-                <label class="form-label">Reference</label>
-                <input class="input mono" id="cl-ref" placeholder="Report number, plate, evidence number…">
+                <label class="form-label">Find it</label>
+                <div id="cl-picker"></div>
             </div>
         </div>
-        <div class="form-group">
-            <label class="form-label">Label <span class="text-muted">(what it is, in a few words)</span></label>
-            <input class="input" id="cl-label" placeholder="Bank job — first report">
-        </div>
-        <div class="form-hint">Anything a case should hold. The reference is whatever identifies it in its own panel.</div>`;
+        <div class="form-hint">Pick as many as you need. Each one is attached as soon as you click it.</div>
+        <div class="linked-persons" id="cl-added"></div>`,
+        () => finish(), 'Done', '<i class="i i-link"></i>');
+    modal.querySelector('#modal-cancel').style.display = 'none';
 
-    const modal = createModal('Attach to Case', body, () => {
-        nuiFetch('linkToCase', {
-            caseId: _openCase.id,
-            kind: document.getElementById('cl-kind').value,
-            refId: document.getElementById('cl-ref').value.trim(),
-            label: document.getElementById('cl-label').value.trim(),
-        }).then(res => {
-            if (!res) return;
-            closeModal(modal);
-            refreshCase();
+    const finish = () => {
+        closeModal(modal);
+        if (added) refreshCase();
+    };
+    modal.querySelector('.modal-close').onclick = finish;
+    modal.addEventListener('click', (e) => { if (e.target === modal && added) refreshCase(); });
+
+    const mount = () => {
+        new RecordPicker({
+            container: modal.querySelector('#cl-picker'),
+            kind,
+            placeholder: {
+                incident: 'Report number or title...', arrest: 'Name, citizen ID or arrest number...',
+                citation: 'Name, citizen ID or citation number...', warrant: 'Name or warrant number...',
+                bolo: 'Description or plate...', evidence: 'Evidence number or item...',
+                person: 'Name or citizen ID...', vehicle: 'Plate...', weapon: 'Serial, model or owner...',
+            }[kind],
+            onPick: async (item) => {
+                const ok = await nuiFetch('linkToCase', { caseId: _openCase.id, kind, refId: item.ref, label: item.label });
+                if (!ok) return;
+                added++;
+                const list = modal.querySelector('#cl-added');
+                if (list) list.insertAdjacentHTML('beforeend', `<span class="linked-person-tag"><i class="i i-check"></i> ${esc(item.label)}</span>`);
+                setTimeout(() => modal.querySelector('.rp-input')?.focus(), 10);
+            },
         });
-    }, 'Attach', '<i class="i i-link"></i>');
+        setTimeout(() => modal.querySelector('.rp-input')?.focus(), 30);
+    };
+
+    modal.querySelector('#cl-kind').onchange = (e) => { kind = e.target.value; mount(); };
+    mount();
+}
+
+function openCaseAttachment(linkId) {
+    const c = _openCase;
+    const link = c && (c.links || []).find(l => Number(l.id) === Number(linkId));
+    if (!link) return;
+    openRecord(link.kind, link.ref_id, { id: c.id, number: c.case_number });
 }
 
 function unlinkCase(id) {
@@ -311,5 +331,6 @@ window.loadCases = loadCases;
 window.openCase = openCase;
 window.openCaseEditor = openCaseEditor;
 window.openCaseLink = openCaseLink;
+window.openCaseAttachment = openCaseAttachment;
 window.unlinkCase = unlinkCase;
 window.openCaseNote = openCaseNote;

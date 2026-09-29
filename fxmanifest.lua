@@ -109,6 +109,7 @@ files {
     'html/js/panels/ems.js',
     'html/js/panels/fire.js',
     'html/js/components/namesearch.js',
+    'html/js/components/recordpicker.js',
 }
 
 lua54 'yes'

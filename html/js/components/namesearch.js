@@ -130,6 +130,7 @@ class NameSearch {
     // lastname but no name, and _renderSelected read person.name.charAt() —
     // the crash that took the charge picker down with it.
     _normalise(person) {
+        if (typeof person !== 'object' || person === null) person = { citizenid: String(person) };
         const name = person.name
             || [person.firstname, person.lastname].filter(Boolean).join(' ')
             || person.citizenid || 'Unknown';

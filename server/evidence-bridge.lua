@@ -61,15 +61,11 @@ exports('AttachEvidence', function(incidentId, ev)
 
     local kind = EVIDENCE_KINDS[ev.kind] and ev.kind or 'item'
     local label = tostring(ev.label or 'Evidence'):sub(1, 120)
+    local actor = { citizenid = 'system', name = tostring(ev.actorName or 'Evidence System'):sub(1, 100) }
 
-    MySQL.insert.await([[
-        INSERT INTO mdt_evidence (incident_id, kind, label, detail, photo, logged_by, logged_by_name)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ]], {
-        incidentId, kind, label,
-        ev.detail and tostring(ev.detail):sub(1, 1000) or nil,
-        kind == 'photo' and ev.photo and tostring(ev.photo):sub(1, 500) or nil,
-        'system', tostring(ev.actorName or 'Evidence System'):sub(1, 120),
+    local id = MdtBookEvidence(actor, {
+        incidentId = incidentId, kind = kind, label = label,
+        detail = ev.detail, photo = ev.photo, location = ev.location,
     })
-    return true
+    return id ~= nil
 end)

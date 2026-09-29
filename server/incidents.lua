@@ -24,6 +24,85 @@ local function CleanTags(list)
     return out
 end
 
+local function LinkColumn(kind)
+    return kind == 'citation' and 'linked_citations' or 'linked_arrests'
+end
+
+-- The reports that list an arrest or citation. A report someone else is
+-- still drafting is left out unless no viewer is given.
+function MdtIncidentsLinkedTo(kind, id, viewerCid)
+    local column = LinkColumn(kind)
+    local rows = MySQL.query.await(([[
+        SELECT id, case_number, title, status, severity, created_by, created_by_name, created_at
+        FROM mdt_incidents
+        WHERE JSON_CONTAINS(%s, ?) OR JSON_CONTAINS(%s, ?)
+        ORDER BY created_at DESC LIMIT 50
+    ]]):format(column, column), { tostring(id), json.encode(tostring(id)) }) or {}
+
+    local out = {}
+    for _, r in ipairs(rows) do
+        if not viewerCid or r.status ~= 'draft' or r.created_by == viewerCid then out[#out + 1] = r end
+    end
+    return out
+end
+
+-- Add an arrest or citation to a report's list, or take it off.
+function MdtSetIncidentLink(kind, recordId, incidentId, add, viewerCid)
+    recordId, incidentId = tonumber(recordId), tonumber(incidentId)
+    if not recordId or not incidentId then return false end
+
+    local row = MySQL.single.await(
+        'SELECT id, status, created_by, linked_arrests, linked_citations FROM mdt_incidents WHERE id = ?', { incidentId })
+    if not row then return false end
+    if viewerCid and row.status == 'draft' and row.created_by ~= viewerCid then return false end
+
+    local raw = kind == 'citation' and row.linked_citations or row.linked_arrests
+    local ok, list = pcall(json.decode, raw or '[]')
+    if not ok or type(list) ~= 'table' then list = {} end
+
+    local out, found = {}, false
+    for _, v in ipairs(list) do
+        if tonumber(v) == recordId then
+            found = true
+            if add then out[#out + 1] = recordId end
+        else
+            out[#out + 1] = tonumber(v) or v
+        end
+    end
+    if add and not found then out[#out + 1] = recordId end
+
+    if kind == 'citation' then
+        MySQL.update.await('UPDATE mdt_incidents SET linked_citations = ? WHERE id = ?', { json.encode(out), incidentId })
+    else
+        MySQL.update.await('UPDATE mdt_incidents SET linked_arrests = ? WHERE id = ?', { json.encode(out), incidentId })
+    end
+    return true
+end
+
+lib.callback.register('XS-MDT:server:setIncidentLink', function(source, data)
+    if type(data) ~= 'table' then return false end
+    local kind = data.kind == 'citation' and 'citation' or 'arrest'
+    if not HasPanel(source, kind == 'citation' and 'citations' or 'arrests') and not HasPanel(source, 'incidents') then
+        return false, 'No access'
+    end
+    local officer = exports['XS-MDT']:GetOfficerInfo(source)
+    if not officer then return false, 'Not on duty' end
+
+    local exists = kind == 'citation'
+        and MySQL.scalar.await('SELECT id FROM mdt_citations WHERE id = ?', { tonumber(data.recordId) })
+        or MySQL.scalar.await('SELECT id FROM mdt_arrests WHERE id = ?', { tonumber(data.recordId) })
+    if not exists then return false, 'That record no longer exists' end
+
+    local add = data.add ~= false
+    if not MdtSetIncidentLink(kind, data.recordId, data.incidentId, add, officer.citizenid) then
+        return false, 'That report does not exist'
+    end
+
+    exports['XS-MDT']:AuditLog(add and 'Report Linked' or 'Report Unlinked', officer.name,
+        ('%s #%s %s report #%s'):format(kind, data.recordId, add and 'to' or 'from', data.incidentId))
+    return true
+end)
+
 lib.callback.register('XS-MDT:server:getIncidents', function(source, data)
     if not HasPanel(source, 'incidents') then return nil end
     local officer = exports['XS-MDT']:GetOfficerInfo(source)
@@ -73,6 +152,8 @@ lib.callback.register('XS-MDT:server:getIncident', function(source, id)
     incident.tags = incident.tags and json.decode(incident.tags) or {}
     incident.evidence = MySQL.query.await(
         'SELECT * FROM mdt_evidence WHERE incident_id = ? ORDER BY created_at ASC', { id }) or {}
+    incident.cases = MdtCasesFor and MdtCasesFor('incident', incident.id) or {}
+    incident.canCases = HasPanel(source, 'cases')
     return incident
 end)
 
@@ -179,6 +260,8 @@ lib.callback.register('XS-MDT:server:deleteIncident', function(source, id)
         return false
     end
     MySQL.query.await('DELETE FROM mdt_incidents WHERE id = ?', { id })
+    MySQL.update.await('UPDATE mdt_evidence SET incident_id = NULL WHERE incident_id = ?', { id })
+    MySQL.update.await("DELETE FROM mdt_case_links WHERE kind = 'incident' AND ref_id = ?", { tostring(id) })
     exports['XS-MDT']:AuditLog('Incident Deleted', officer.name, 'Incident #' .. id)
     return true
 end)
@@ -248,15 +331,10 @@ lib.callback.register('XS-MDT:server:addEvidence', function(source, data)
         return { ok = false, error = 'No such report' }
     end
 
-    local id = MySQL.insert.await([[
-        INSERT INTO mdt_evidence (incident_id, kind, label, detail, photo, logged_by, logged_by_name)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ]], {
-        data.incidentId, data.kind, label,
-        data.detail and tostring(data.detail):sub(1, 1000) or nil,
-        data.kind == 'photo' and data.photo and tostring(data.photo):sub(1, 500) or nil,
-        officer.citizenid, officer.name,
+    local id = MdtBookEvidence(officer, {
+        incidentId = incident.id, kind = data.kind, label = label, detail = data.detail, photo = data.photo,
     })
+    if not id then return { ok = false, error = 'Could not log it' } end
 
     exports['XS-MDT']:AuditLog('Evidence Logged', officer.name,
         ('%s "%s" on %s'):format(data.kind, label, incident.case_number or ('#' .. incident.id)))

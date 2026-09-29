@@ -181,6 +181,15 @@ function removeWeapon(id) {
     });
 }
 
+function showWeapon(serial) {
+    if (!switchTab('weapons', true)) return;
+    _wFilter = { status: 'all', search: String(serial || '') };
+    loadWeapons();
+    const input = document.getElementById('w-search');
+    if (input) input.value = _wFilter.search;
+}
+
 window.loadWeapons = loadWeapons;
 window.openWeaponEditor = openWeaponEditor;
 window.removeWeapon = removeWeapon;
+window.showWeapon = showWeapon;

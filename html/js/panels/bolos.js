@@ -1,4 +1,4 @@
-function loadBolos() {
+function loadBolos(focusId = null) {
     const panel = document.getElementById('tab-bolos');
     panel.innerHTML = `
         <div class="panel-header">
@@ -44,6 +44,16 @@ function loadBolos() {
             html += persons.map(b => boloCard(b)).join('');
         }
         body.innerHTML = html;
+
+        if (focusId) {
+            const card = document.getElementById(`bolo-card-${Number(focusId)}`);
+            if (card) {
+                card.scrollIntoView({ block: 'center' });
+                card.classList.add('flash');
+            } else {
+                showToast('BOLO cleared', 'That BOLO is no longer active.', 'info', 3000);
+            }
+        }
     });
 }
 
@@ -52,7 +62,7 @@ function boloCard(b) {
     const accentColor = isVehicle ? 'var(--orange)' : 'var(--purple)';
     const tagClass = isVehicle ? 'tag-orange' : 'tag-purple';
     return `
-        <div class="card" style="border-left:3px solid ${accentColor};margin-bottom:10px;transition:var(--transition);"
+        <div class="card" id="bolo-card-${Number(b.id)}" style="border-left:3px solid ${accentColor};margin-bottom:10px;transition:var(--transition);"
              onmouseenter="this.style.borderColor='${accentColor}'" onmouseleave="this.style.borderColor='${accentColor}'">
             <div class="card-header" style="margin-bottom:8px;">
                 <div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap;">

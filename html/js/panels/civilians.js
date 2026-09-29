@@ -162,7 +162,7 @@ function showCivilian(citizenid) {
     openCivilianProfile(citizenid);
 }
 
-function openCivilianProfile(citizenid) {
+function openCivilianProfile(citizenid, tab = null) {
     const panel = document.getElementById('tab-civilians');
     panel.innerHTML = `
         <div class="panel-header">
@@ -191,12 +191,26 @@ function openCivilianProfile(citizenid) {
         }
         renderCivilianProfile(data);
 
+        if (tab) {
+            const tabEl = [...document.querySelectorAll('.profile-tab')].find(t => (t.getAttribute('onclick') || '').includes(`'${tab}'`));
+            if (tabEl) showCivTab(tabEl, tab);
+        }
+
+        MDT.civilianPrefill = {
+            citizenid: data.citizenid,
+            firstname: data.firstname,
+            lastname: data.lastname,
+            name: [data.firstname, data.lastname].filter(Boolean).join(' '),
+            dob: data.dob,
+            gender: data.gender,
+        };
+
         if (data.canSeeCriminal) {
             const bar = document.getElementById('civ-profile-actions');
             if (bar) bar.insertAdjacentHTML('beforeend', `
-                <button class="btn btn-warning btn-sm" onclick="openIssueWarrantModal('${citizenid}')"><i class="i i-scale"></i> Issue Warrant</button>
-                <button class="btn btn-success btn-sm" onclick="openNewCitationModal('${citizenid}')"><i class="i i-file"></i> Citation</button>
-                <button class="btn btn-danger btn-sm" onclick="openNewArrestModal('${citizenid}')"><i class="i i-lock"></i> Log Arrest</button>`);
+                <button class="btn btn-warning btn-sm" onclick="openIssueWarrantModal(MDT.civilianPrefill)"><i class="i i-scale"></i> Issue Warrant</button>
+                <button class="btn btn-success btn-sm" onclick="openNewCitationModal(MDT.civilianPrefill)"><i class="i i-file"></i> Citation</button>
+                <button class="btn btn-danger btn-sm" onclick="openNewArrestModal(MDT.civilianPrefill)"><i class="i i-lock"></i> Log Arrest</button>`);
         }
     });
 }
@@ -469,15 +483,16 @@ function renderWarrantsList(warrants, citizenid) {
 function renderCivArrestsList(arrests) {
     if (!arrests.length) return `<div class="empty-state"><div class="empty-icon"><i class="i i-lock"></i></div><div class="empty-title">No arrest records</div></div>`;
     return arrests.map(a => `
-        <div class="record-item arrest-item">
+        <div class="record-item arrest-item clickable" onclick="openRecord('arrest', ${Number(a.id)})" title="Open the arrest report">
             <div class="record-item-header">
                 <span class="tag tag-red">ARREST</span>
+                <span class="mono record-no">#${Number(a.id)}</span>
                 ${a.fine ? `<span class="tag tag-yellow">${dollarFmt(a.fine)} fine</span>` : ''}
                 ${a.jail_time ? `<span class="tag tag-orange">${a.jail_time} min jail</span>` : ''}
                 <span class="record-date">${fmtDate(a.created_at)}</span>
             </div>
-            <div class="record-charges">${(a.charges||[]).map(c=>`<span class="tag tag-red">${c.code} — ${esc(c.name)}</span>`).join('')}</div>
-            ${a.narrative ? `<div class="record-narrative">${esc(a.narrative)}</div>` : ''}
+            <div class="record-charges">${(a.charges||[]).map(c=>`<span class="tag tag-red">${esc(c.code)} — ${esc(c.name)}</span>`).join('')}</div>
+            ${a.narrative ? `<div class="record-narrative clamp-3">${esc(a.narrative)}</div>` : ''}
             <div class="record-officer">Arresting Officer: <strong>${esc(a.officer_name)}</strong>${a.location ? ` · <i class="i i-map-pin"></i> ${esc(a.location)}` : ''}</div>
         </div>`).join('');
 }
@@ -485,13 +500,14 @@ function renderCivArrestsList(arrests) {
 function renderCivCitationsList(citations) {
     if (!citations.length) return `<div class="empty-state"><div class="empty-icon"><i class="i i-file"></i></div><div class="empty-title">No citations on file</div></div>`;
     return citations.map(c => `
-        <div class="record-item citation-item">
+        <div class="record-item citation-item clickable" onclick="openRecord('citation', ${Number(c.id)})" title="Open the citation">
             <div class="record-item-header">
                 <span class="tag tag-yellow">CITATION</span>
+                <span class="mono record-no">#${Number(c.id)}</span>
                 <span class="tag ${c.paid?'tag-green':'tag-red'}">${c.paid?'PAID':'UNPAID'}</span>
                 <span class="record-date">${fmtDate(c.created_at)}</span>
             </div>
-            <div class="record-charges">${(c.charges||[]).map(ch=>`<span class="tag tag-yellow">${ch.code} — ${esc(ch.name)}</span>`).join('')}</div>
+            <div class="record-charges">${(c.charges||[]).map(ch=>`<span class="tag tag-yellow">${esc(ch.code)} — ${esc(ch.name)}</span>`).join('')}</div>
             <div style="margin-top:6px;font-size:13px;">Fine: <strong class="text-green">${dollarFmt(c.fine)}</strong></div>
             <div class="record-officer">Officer: <strong>${esc(c.officer_name)}</strong>${c.location ? ` · <i class="i i-map-pin"></i> ${esc(c.location)}` : ''}</div>
         </div>`).join('');
@@ -624,7 +640,9 @@ function renderLicences(data) {
                             ? '<span class="tag tag-gray">Not held</span>'
                             : `<span class="tag ${tag}">${label}</span>`;
 
-                        const actions = !l.held ? '' : `
+                        const actions = !l.held
+                            ? (data.canGrantLicence === false ? '' : `<button class="btn btn-ghost btn-sm" onclick="openGrantLicenceModal('${esc(data.citizenid)}','${esc(l.key)}','${esc(l.label)}')">Grant</button>`)
+                            : `
                             ${l.status !== 'valid' ? `<button class="btn btn-ghost btn-sm" onclick="openLicenceModal('${esc(data.citizenid)}','${esc(l.key)}','${esc(l.label)}','valid')">Reinstate</button>` : ''}
                             ${l.status !== 'suspended' ? `<button class="btn btn-ghost btn-sm" onclick="openLicenceModal('${esc(data.citizenid)}','${esc(l.key)}','${esc(l.label)}','suspended')">Suspend</button>` : ''}
                             ${(l.status !== 'revoked' && data.canRevokeLicence) ? `<button class="btn btn-danger btn-sm" onclick="openLicenceModal('${esc(data.citizenid)}','${esc(l.key)}','${esc(l.label)}','revoked')">Revoke</button>` : ''}`;
@@ -646,7 +664,7 @@ function renderLicences(data) {
 function openLicenceModal(citizenid, type, label, action) {
     const verb = action === 'valid' ? 'Reinstate' : action === 'revoked' ? 'Revoke' : 'Suspend';
 
-    createModal(`${verb} ${label} Licence`, `
+    const modal = createModal(`${verb} ${label} Licence`, `
         <div class="form-group">
             <label class="form-label">Reason${action === 'valid' ? ' (optional)' : ''}</label>
             <textarea class="textarea" id="licence-reason" style="min-height:90px;"
@@ -656,18 +674,41 @@ function openLicenceModal(citizenid, type, label, action) {
             const reason = document.getElementById('licence-reason')?.value.trim() || '';
             if (action !== 'valid' && !reason) {
                 showToast('Reason required', 'Say why the licence is being ' + action + '.', 'error');
-                return false;
+                return;
             }
             const res = await nuiFetch('setLicenceStatus', { citizenid, type, status: action, reason });
             if (res && res.ok) {
                 showToast(`Licence ${action === 'valid' ? 'reinstated' : action}`, label, 'success');
-                openCivilianProfile(citizenid);
+                closeModal(modal);
+                openCivilianProfile(citizenid, 'civ-licences');
             } else {
                 // The server says why — a refused revoke and a missing reason are
                 // very different problems, and "failed" tells the officer neither.
                 showToast('Could not change licence', (res && res.error) || 'Unknown error', 'error');
             }
-        });
+        }, verb, '<i class="i i-id"></i>');
+}
+
+function openGrantLicenceModal(citizenid, type, label) {
+    const modal = createModal(`Grant ${label} Licence`, `
+        <div class="form-group">
+            <label class="form-label">Note <span class="text-muted">(optional)</span></label>
+            <input class="input" id="licence-grant-note" placeholder="Passed the test, background check clear...">
+        </div>
+        <div class="form-hint">The character gets the licence in the city, not just on the MDT.</div>`,
+        async () => {
+            const res = await nuiFetch('grantLicence', {
+                citizenid, type,
+                reason: document.getElementById('licence-grant-note')?.value.trim() || '',
+            });
+            if (res && res.ok) {
+                showToast('Licence granted', label, 'success');
+                closeModal(modal);
+                openCivilianProfile(citizenid, 'civ-licences');
+            } else {
+                showToast('Could not grant licence', (res && res.error) || 'Unknown error', 'error');
+            }
+        }, 'Grant', '<i class="i i-id"></i>');
 }
 
 // ── Aliases ─────────────────────────────────────────────────────────────────
@@ -721,6 +762,7 @@ function _removeCivAlias(citizenid, index) {
 
 window.renderLicences          = renderLicences;
 window.openLicenceModal        = openLicenceModal;
+window.openGrantLicenceModal   = openGrantLicenceModal;
 window.initCivAliasEditor      = initCivAliasEditor;
 window._renderCivAliasEditor   = _renderCivAliasEditor;
 window._addCivAlias            = _addCivAlias;

@@ -1,5 +1,5 @@
 // ── Shared Charge Picker ──────────────────────────────────────────────────
-function renderChargePicker(pickerId, selectedId) {
+function renderChargePicker(pickerId, selectedId, preselected = []) {
     window._selectedCharges = [];
     const container = document.getElementById(pickerId);
     if (!container) return;
@@ -11,7 +11,7 @@ function renderChargePicker(pickerId, selectedId) {
         container.innerHTML = `<div class="skeleton skeleton-line w-full" style="height:110px;"></div>`;
         nuiFetch('getPenalCodes').then(data => {
             MDT.penalCodes = Array.isArray(data) ? data : [];
-            renderChargePicker(pickerId, selectedId);
+            renderChargePicker(pickerId, selectedId, preselected);
         });
         return;
     }
@@ -66,6 +66,28 @@ function renderChargePicker(pickerId, selectedId) {
             if (q && hasVisible) cat.querySelector('.charge-list').classList.add('open');
         });
     });
+
+    // Charges already on a record keep the fine and time they were logged
+    // with, even if the charge book has changed since.
+    if (preselected && preselected.length) {
+        const items = [...container.querySelectorAll('.charge-item')];
+        for (const charge of preselected) {
+            const match = items.find(item => {
+                try {
+                    const code = JSON.parse(item.dataset.code || '{}');
+                    return (charge.id != null && code.id === charge.id) || (charge.code && code.code === charge.code);
+                } catch (e) { return false; }
+            });
+            if (match) {
+                match.classList.add('selected');
+                const box = match.querySelector('input[type=checkbox]');
+                if (box) box.checked = true;
+            }
+            window._selectedCharges.push(charge);
+        }
+    }
+    updateSelectedChargesDisplay(selectedId);
+    updateChargeTotals();
 }
 
 function toggleChargeCategory(header) {
@@ -113,11 +135,15 @@ function updateChargeTotals() {
         <span class="charge-total-value">${dollarFmt(total)}</span>
         ${jail > 0 ? `<span class="text-muted text-xs">· ${jail} min jail</span>` : ''}`;
 
-    // Auto-fill fine inputs if they exist
-    ['arrest-fine','cite-fine'].forEach(id => {
+    // Fill the fine and time from the charges until the officer types their own.
+    ['arrest-fine', 'cite-fine'].forEach(id => {
         const inp = document.getElementById(id);
-        if (inp && total > 0 && !inp.dataset.manual) inp.value = total;
+        if (inp && !inp.dataset.manual) inp.value = total > 0 ? total : '';
     });
+    const jailInput = document.getElementById('arrest-jail');
+    if (jailInput && !jailInput.dataset.manual) jailInput.value = jail > 0 ? jail : '';
+
+    if (document.getElementById('arrest-narrative') && typeof queueArrestAutosave === 'function') queueArrestAutosave();
 }
 
 function removeCharge(codeId, selectedId) {

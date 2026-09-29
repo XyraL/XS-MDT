@@ -499,6 +499,10 @@ Config.Licences = {
     -- because it is reversible and happens roadside.
     RevokeRequiresSupervisor = true,
 
+    -- Granting a licence someone does not hold. Set true to leave that to
+    -- supervisors.
+    GrantRequiresSupervisor = false,
+
     Types = {
         { key = 'driver',   label = 'Driver',   icon = '🚗' },
         { key = 'weapon',   label = 'Weapon',   icon = '🔫' },
