@@ -1,5 +1,26 @@
 # Changelog
 
+## [3.0.1] — 2026-09-29
+
+The MDT now works with your dispatch script both ways.
+
+- Alerts from ps-dispatch, qs-dispatch, cd_dispatch, core_dispatch, rcore_dispatch and linden_outlawalert now show on the CAD
+- The CAD shows which dispatch a call came from
+- Calls from your dispatch clear after 30 minutes if nobody responds
+- While your dispatch sends calls in, the MDT stops making its own shots fired and fight calls, so they don't show twice
+- MDT calls now go out to rcore_dispatch too
+- cd_dispatch alerts are now sent the way Codesign's docs say to
+- New settings for all of this under YOUR DISPATCH SCRIPT in config.lua
+
+### Fixes
+
+- Fixed vehicles showing as Out when they were parked, with jg-advancedgarages and other garages
+- Fixed the vehicle model showing a number or Unknown instead of the car's name
+- Fixed MDT calls not showing in qs-dispatch and core_dispatch
+- Fixed MDT calls vanishing straight away in linden_outlawalert
+- Fixed turning off the MDT's own detection also turning off panic, backup and CAD calls
+- Fixed the new call popup saying "undefined"
+
 ## [3.0.0] — 2026-09-28
 
 Big update. New look, a smaller window, and a lot more MDT. Runs on QBCore as well as QBox.

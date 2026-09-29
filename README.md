@@ -31,6 +31,7 @@
 - **Live map panel** — Leaflet tile map of San Andreas with department-coloured
   unit markers, heading arrows, active CAD calls, follow-a-unit, and click-to-waypoint
 - **Department call routing** — `Config.CallRouting` decides who is alerted: medical goes to EMS, structure fires to Fire *and* EMS, crashes to all three. Panic and backup always reach everyone
+- **Works with your dispatch** — Alerts from ps-dispatch, qs-dispatch, cd_dispatch, core_dispatch, rcore_dispatch or linden_outlawalert land on the CAD, and MDT calls pop up in them
 - **Data separation** — EMS and Fire see identity and medical data; criminal history, warrants and officer notes stay with Police
 
 ### Records
@@ -355,22 +356,33 @@ Config.BodyCam = {
 
 ---
 
-## Dispatch Alerts
+## Your Dispatch Script
 
-Every call the MDT creates is also pushed to whatever dispatch resource you
-already run, because half the department has that UI open and not this one.
+The MDT works alongside `ps-dispatch`, `qs-dispatch`, `cd_dispatch`,
+`core_dispatch`, `rcore_dispatch` and `linden_outlawalert`, both ways:
+
+- **Alerts out.** Every call the MDT creates (manual calls, panic, backup,
+  `CreateDispatchCall`) also pops up in your dispatch.
+- **Calls in.** Every alert your dispatch raises also lands on the MDT's CAD,
+  tagged with where it came from, so officers can respond, add notes and close
+  it there. The MDT stays quiet for these, since your dispatch already alerted
+  everyone.
 
 ```lua
-Config.DispatchAlerts = 'auto'          -- every supported resource that is started
--- Config.DispatchAlerts = { 'ps-dispatch' }
--- Config.DispatchAlerts = false
+Config.DispatchAlerts = 'auto'   -- every supported resource that is started
+Config.DispatchCalls  = 'auto'   -- { 'ps-dispatch' } for only the ones you name, false for off
+
+-- The MDT stops detecting these itself while your dispatch sends calls in,
+-- so a shooting is not on the board twice. {} keeps both.
+Config.DispatchCallsReplace = { 'SHOTS_FIRED', 'FIGHT' }
+
+-- Calls from your dispatch that nobody responds to clear after this many
+-- minutes. 0 keeps them until someone closes them.
+Config.DispatchCallsExpire = 30
 ```
 
-Supported out of the box: `ps-dispatch`, `qs-dispatch`, `cd_dispatch`,
-`core_dispatch`, `linden_outlawalert`. Each is a single function in
-`server/dispatch-adapters.lua` — if your version takes different fields, that
-is the one place to change it, and a mismatch prints a line naming the adapter
-rather than breaking anything. The console says which ones are live on start.
+The console says which resources are linked on start, and the Management panel
+shows each one as `alerts out`, `calls in` or both.
 
 A dispatch in a renamed folder like `ps-dispatch-main` is found on its own. If
 yours has a name the MDT can't match, point it there:
@@ -379,12 +391,17 @@ yours has a name the MDT can't match, point it there:
 Config.DispatchAlertResources = { ['ps-dispatch'] = 'my-dispatch' }
 ```
 
-This is separate from the section below, which is for a resource that
-**replaces** the CAD rather than mirroring it.
+Each dispatch is one function in `server/dispatch-adapters.lua` (alerts out)
+and one in `server/dispatch-feed.lua` (calls in). If your version takes
+different fields, those are the places to change, and a mismatch in an alert
+prints a line naming the resource rather than breaking anything.
+
+This is separate from `Config.DispatchAdapters`, which is for a resource that
+**replaces** the CAD rather than working beside it.
 
 ## Dispatch Integration
 
-XS-MDT includes auto-detection for common in-game events (gunshots, vehicle crashes, fights). To send a dispatch call **from another resource**, use any of the methods below.
+XS-MDT includes auto-detection for common in-game events (gunshots, vehicle crashes, fights). While your dispatch script sends calls in, gunshots and fights are left to it (see above). To send a dispatch call **from another resource**, use any of the methods below.
 
 ### Server Export (recommended)
 ```lua
@@ -528,6 +545,16 @@ exports['XS-MDT']:GetWeaponsFor(citizenid)
 - Use the correct call type key format (`SHOTS_FIRED`, not `Shots Fired` or `shots_fired`).
 - Auto-dispatch has a 60-second rate limit per player per call type.
 - Verify the resource is running: `status XS-MDT` in the server console.
+
+**Calls from my dispatch are not on the CAD**
+- The Management panel should list your dispatch as `calls in`. If it says `not running`, set `Config.DispatchAlertResources`.
+- `Config.DispatchCalls` must not be `false`.
+- A call only reaches a department the MDT knows. Its jobs must be in `Config.Departments` (the job types `leo` and `ems` count as police and EMS).
+- If XS-Dispatch or another resource replaces the CAD, it owns the call list and nothing is sent in.
+
+**Cars show Out when they are parked**
+- The MDT reads parked status from `player_vehicles`. On `Config.VehicleStateFrom = 'auto'` it uses `in_garage` if your garage script added it (jg-advancedgarages), otherwise `state`.
+- If you changed garage scripts and the old column is still there, set it yourself: `'state'`, `'in_garage'` or `'stored'`.
 
 **SQL errors on start**
 - Ensure you ran `sql/mdt.sql` fully before starting the resource.
