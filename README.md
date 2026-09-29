@@ -35,12 +35,13 @@
 
 ### Records
 
-- **Cases** — the folder everything else goes in. Reports, arrests, citations, warrants, BOLOs, evidence, people, vehicles and firearms attach to a case, and notes go on the case so the story of it is not buried in one officer's report
-- **Evidence locker** — booked when it is collected, not when a report gets written. Its own number, a status, a shelf and a case, and every status change writes a custody row. Releasing or destroying evidence is a supervisor's call
+- **Cases** — the folder everything else goes in. Reports, arrests, citations, warrants, BOLOs, evidence, people, vehicles and firearms attach to a case, and notes go on the case so the story of it is not buried in one officer's report. Search to attach something, and click anything attached to open it
+- **Evidence locker** — booked when it is collected, not when a report gets written. Its own number, a status, a shelf and a case, and every status change writes a custody row. Attach it to a report, an arrest or a case whenever you like. Releasing or destroying evidence is a supervisor's call
 - **Weapons registry** — serial-first, because that is how a seized firearm is looked up, and a serial that is not on it is an unregistered one. A civilian lookup shows what they are registered to carry
 - **Cameras** — 35 real places seeded on first start: the six Fleecas, Pacific Standard, Blaine County Savings, the 24/7s, LTDs, Rob's Liquor, Vangelico, Ammu-Nation, the casino, plus street and transit cameras. Add your own in `Config.DefaultCameras`. A camera sets a GPS waypoint from its card
 - **Footage** — one row per clip from a street camera, a dashcam or a bodycam, with what it shows, how long it is and the case it belongs to. The MDT does not play video; it points you at the camera and records that somebody looked
 - **Live body cams** — command picks an on-duty officer and watches what their chest camera sees. The officer is told it is happening, every viewing and its duration is audited, and supervisors only see their own department. `ESC` comes back. All of that is `Config.BodyCam.Live`
+- **You stay put while watching** — cameras and body cams never move or hide your character, and the feed closes if you get hurt
 - **Charge book** — 178 charges across seven titles, written as `PC 1.34 A`. One grid with a class filter, and admins add their own in the panel
 
 ### Personnel
@@ -67,22 +68,23 @@
 ### Police
 
 - **Report search** — one box that searches case numbers, titles, narratives and officers across every report
-- **Evidence** — photos, items and notes logged on a report with who logged what and when. Your own entries can be removed for 15 minutes; after that it takes a supervisor
+- **Evidence on reports** — book evidence straight from a report or an arrest. It goes into the locker with its own number, and can be taken off the report again without losing it
 - **Department stats** — arrests, citations, reports, active warrants and fines on the dashboard with a daily activity chart, switchable between 7 and 30 days. Every officer sees the numbers; the top-officers list stays with supervisors
 - **Licence status** — Driver, weapon and business licences on the civilian profile, with suspend, revoke and reinstate. Qbox only tracks whether someone *holds* a licence; the MDT adds the state it is in, who changed it, and why. Suspending also flips the Qbox flag so other resources agree, and it will never hand back a licence that was never held. Revoking is supervisor-only by default
+- **Grant licences** — give someone a driver, weapon or business licence from their profile. It is a real licence in the city, not just a note on the MDT
 - **Aliases** — Record street names and false identities, and find people by them. Searching by phone number works too, with or without dashes
 - **Partial plate search** — An officer who caught three characters of a plate gets a shortlist instead of nothing. Plates with no registration still report an outstanding BOLO
 - **Report lifecycle** — Reports move through draft, open, under review and closed. Drafts are visible only to their author. Authors move their own reports; supervisors move anyone's
-- **Report templates** — Traffic stop, use of force, pursuit, robbery and assault skeletons that prompt for the things a report is useless without. Edit them at the top of `html/js/panels/incidents.js`
+- **Report templates** — Traffic stop, use of force, pursuit, robbery and assault skeletons that prompt for the things a report is useless without. Arrests get their own: standard, warrant, DUI, pursuit, drugs and weapons. Edit them at the top of `html/js/panels/incidents.js` and `html/js/panels/records.js`
 - **Autosaved narratives** — What you are typing is saved locally as you go, and offered back if the panel closes on you
 - **Case numbers** — Generated as `INC-<year>-<id>` instead of being typed by hand
 
 - **CAD Dispatch** — Create, update, and respond to live calls with P1/P2/P3 priority, elapsed timer, unit notes, GPS routing, and call history
 - **Civilian Lookup** — Full profiles with mugshot, flags, arrest history, citations, vehicles, warrants, and officer notes
 - **Vehicle Lookup** — Plate search with registration details and traffic stop shortcut
-- **Arrest Records** — Collapsible cards with charges, fine/jail info, tags, and officer/date filters
-- **Citation Records** — Same as arrests; supervisor can mark citations paid with optional auto bank deduction
-- **Incident Reports** — Narrative reports with severity, involved persons/officers, linked arrests/citations
+- **Arrest Records** — Every arrest opens as its own report: charges, fine and jail, the write-up, linked incident reports, evidence and cases. Templates and autosave like incident reports, and the arresting officer or a supervisor can edit it
+- **Citation Records** — Open on their own page too, with linked reports and cases. Supervisors mark them paid with optional auto bank deduction
+- **Incident Reports** — Narrative reports with severity, involved persons/officers, linked arrests/citations. Click a linked arrest or citation to open it
 - **Warrants** — Issue, clear, and expire warrants; active count badge on nav
 - **BOLOs** — Person and vehicle lookups with active badge
 - **Penal Codes** — Searchable, supervisor-editable code library used in arrest/citation modals
@@ -130,7 +132,8 @@ Run `sql/mdt.sql`. That is the whole step.
 
 The charge book seeds itself on first start — 178 charges across seven titles —
 so `sql/penal-codes.sql` only needs importing by hand if you cleared the table
-and want it back.
+and want it back. Coming from 2.x, the old default charges are swapped for it
+on their own. Any charges you added yourself stay.
 
 **Upgrading from an older version?** Just update the resource and start it.
 The MDT reads the schema it ships with, compares it to your database and adds
@@ -368,6 +371,13 @@ Supported out of the box: `ps-dispatch`, `qs-dispatch`, `cd_dispatch`,
 `server/dispatch-adapters.lua` — if your version takes different fields, that
 is the one place to change it, and a mismatch prints a line naming the adapter
 rather than breaking anything. The console says which ones are live on start.
+
+A dispatch in a renamed folder like `ps-dispatch-main` is found on its own. If
+yours has a name the MDT can't match, point it there:
+
+```lua
+Config.DispatchAlertResources = { ['ps-dispatch'] = 'my-dispatch' }
+```
 
 This is separate from the section below, which is for a resource that
 **replaces** the CAD rather than mirroring it.
