@@ -123,18 +123,25 @@ lib.callback.register('XS-MDT:server:getWeeklyHours', function(source)
 end)
 
 -- Auto clock-out if officer disconnects while clocked in
-AddEventHandler('playerDropped', function()
-    local src = source
+local function CloseShift(src)
     local player = Framework.GetPlayer(src)
     if not player then return end
     local cid = player.PlayerData.citizenid
-    if _openShifts[cid] then
-        MySQL.update.await([[
-            UPDATE mdt_shift_log
-            SET clock_out = NOW(),
-                duration_minutes = ROUND(TIMESTAMPDIFF(SECOND, clock_in, NOW()) / 60)
-            WHERE id = ?
-        ]], { _openShifts[cid] })
-        _openShifts[cid] = nil
-    end
+    local shiftId = _openShifts[cid]
+    if not shiftId then return end
+    _openShifts[cid] = nil
+    MySQL.update.await([[
+        UPDATE mdt_shift_log
+        SET clock_out = NOW(),
+            duration_minutes = ROUND(TIMESTAMPDIFF(SECOND, clock_in, NOW()) / 60)
+        WHERE id = ?
+    ]], { shiftId })
+end
+
+AddEventHandler('playerDropped', function()
+    CloseShift(source)
+end)
+
+AddEventHandler('QBCore:Server:OnPlayerUnload', function(src)
+    CloseShift(tonumber(src) or source)
 end)

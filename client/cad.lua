@@ -25,6 +25,11 @@ RegisterNetEvent('XS-MDT:client:callClosed', function(callId)
     end
 end)
 
+RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
+    for _, blip in pairs(cadBlips) do RemoveBlip(blip) end
+    cadBlips = {}
+end)
+
 -- Set GPS route to a call's location
 RegisterNUICallback('routeToCall', function(data, cb)
     if not data.coords then cb('no_coords') return end

@@ -242,9 +242,8 @@ end)
 
 --[[ A watcher who drops mid-session leaves the officer thinking they are still
      being watched, so the same tidy-up runs on disconnect. ]]
-AddEventHandler('playerDropped', function()
-    local src = source
-    _widened[src] = nil
+local function EndSessions(src, reason)
+    MdtResetRange(src)
     local session = _watching[src]
     if session then
         _watching[src] = nil
@@ -258,9 +257,17 @@ AddEventHandler('playerDropped', function()
         if s.target == src then
             _watching[watcher] = nil
             MdtResetRange(watcher)
-            TriggerClientEvent('XS-MDT:client:bodyCamLost', watcher, 'That unit disconnected')
+            TriggerClientEvent('XS-MDT:client:bodyCamLost', watcher, reason)
         end
     end
+end
+
+AddEventHandler('playerDropped', function()
+    EndSessions(source, 'That unit disconnected')
+end)
+
+AddEventHandler('QBCore:Server:OnPlayerUnload', function(src)
+    EndSessions(tonumber(src) or source, 'That unit logged out')
 end)
 
 AddEventHandler('onResourceStop', function(name)

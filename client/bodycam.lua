@@ -256,6 +256,10 @@ RegisterNetEvent('XS-MDT:client:bodyCamLost', function(reason)
     StopWatching(reason or 'Lost the feed')
 end)
 
+RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
+    StopWatching()
+end)
+
 --[[ Told to the officer being watched, not the watcher. A recording light you
      cannot see is not a recording light. ]]
 RegisterNetEvent('XS-MDT:client:bodyCamNotice', function(data)

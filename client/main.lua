@@ -331,3 +331,11 @@ RegisterNUICallback('qdRespond', function(data, cb)
 
     cb('ok')
 end)
+
+RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
+    CloseMDT()
+    if qdOpen then
+        qdOpen = false
+        SetNuiFocus(false, false)
+    end
+end)

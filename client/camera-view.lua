@@ -205,6 +205,10 @@ RegisterNUICallback('stopCameraView', function(_, cb)
     cb('ok')
 end)
 
+RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
+    StopViewing()
+end)
+
 --[[ Where the officer is standing and what they are looking at.
 
      Aiming a camera by typing coordinates and a heading is how you end up with

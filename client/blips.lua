@@ -176,3 +176,7 @@ AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
     ClearAllBlips()
 end)
+
+RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
+    ClearAllBlips()
+end)

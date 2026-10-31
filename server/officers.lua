@@ -248,13 +248,21 @@ AddEventHandler('XS-MDT:server:clearPosition', function()
     BroadcastUnits()
 end)
 
-AddEventHandler('playerDropped', function()
-    local player = Framework.GetPlayer(source)
+local function ClearUnit(src)
+    local player = Framework.GetPlayer(src)
     if not player then return end
     local cid = player.PlayerData.citizenid
     _unitPositions[cid] = nil
     _badgeCache[cid]    = nil
     BroadcastUnits()
+end
+
+AddEventHandler('playerDropped', function()
+    ClearUnit(source)
+end)
+
+AddEventHandler('QBCore:Server:OnPlayerUnload', function(src)
+    ClearUnit(tonumber(src) or source)
 end)
 
 exports('InvalidateBadgeCache', InvalidateBadge)
