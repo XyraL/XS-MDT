@@ -2,7 +2,7 @@
 
 ## [3.0.2] — 2026-10-30
 
-- Switching character clocks you out, takes you off the unit list, stops body cam viewing and clears the map
+- Logging out clocks you out, takes you off the unit list, stops body cam viewing and clears the map
 - Anyone watching a body cam is told when that unit logs out
 
 Replace everything except your config.lua. No SQL to run.
