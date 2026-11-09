@@ -88,6 +88,8 @@ lib.callback.register('XS-MDT:server:lookupPlate', function(source, plate)
 
         -- A BOLO can exist on a plate nobody has registered.
         local bolo = MySQL.single.await('SELECT * FROM mdt_bolos WHERE plate = ? AND active = 1', { plate })
+        local flag = not bolo and MdtPolice.PlateFlag(plate)
+        if flag then bolo = { type = 'vehicle', plate = plate, description = 'Flagged plate ' .. plate, reason = flag.reason, issued_by_name = flag.officer } end
 
         return {
             found   = false,
@@ -102,6 +104,8 @@ lib.callback.register('XS-MDT:server:lookupPlate', function(source, plate)
     local props = Props(vehicle)
 
     local bolo = MySQL.single.await("SELECT * FROM mdt_bolos WHERE plate = ? AND active = 1", { plate })
+    local flag = not bolo and MdtPolice.PlateFlag(plate)
+    if flag then bolo = { type = 'vehicle', plate = plate, description = 'Flagged plate ' .. plate, reason = flag.reason, issued_by_name = flag.officer } end
     local warrants = MySQL.query.await("SELECT COUNT(*) as count FROM mdt_warrants WHERE citizenid = ? AND status = 'active'", { vehicle.citizenid })
     local civilian = MySQL.single.await('SELECT * FROM mdt_civilians WHERE citizenid = ?', { vehicle.citizenid })
 
@@ -153,6 +157,7 @@ lib.callback.register('XS-MDT:server:flagVehicleStolen', function(source, data)
         issuedBy = officer.name,
     })
 
+    MdtPolice.FlagPlate(data.plate, 'Reported stolen')
     exports['XS-MDT']:AuditLog('Vehicle Flagged Stolen', officer.name, 'Plate: ' .. data.plate)
     return true
 end)

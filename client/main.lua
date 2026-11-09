@@ -37,6 +37,26 @@ AddEventHandler('XS-MDT:client:closeForBodyCam', function()
     CloseMDT()
 end)
 
+function OpenMDTForTarget(civData, mode)
+    if mdtOpen then
+        SendNUIMessage({ action = 'targetResult', data = civData, mode = mode })
+        return
+    end
+    local officer = lib.callback.await('XS-MDT:server:open', false)
+    if not officer then
+        lib.notify({ title = 'XS-MDT', description = 'Access Denied', type = 'error' })
+        return
+    end
+    if mdtOpen then return end
+    mdtOpen = true
+    SetNuiFocus(true, true)
+    SendNUIMessage({ action = 'openForTarget', officer = officer, data = civData, mode = mode })
+    TriggerEvent('XS-MDT:client:mdtStateChanged', true)
+    if Config.Sounds.Enabled then
+        SendNUIMessage({ action = 'playSound', sound = 'open' })
+    end
+end
+
 -- Register keybind
 RegisterKeyMapping('xs_mdt_open', 'Open XS-MDT', 'keyboard', Config.OpenKey)
 RegisterCommand('xs_mdt_open', function()

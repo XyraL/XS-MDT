@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.1.0] — 2026-11-09
+
+Works with XS-PoliceSystem.
+
+- BOLOs on a plate and cars flagged stolen are flagged for the radars, the helicopter camera and speed cameras
+- Plates flagged in the field show up as BOLOs, and clearing either side clears both
+- Booking mugshots become the profile photo
+- New Custody tab on the profile: ankle monitor, community service and forensic lab matches
+- Field ID checks and plate checks show active warrants
+- Watching a body cam opens the XS-PoliceSystem camera, with the dash cam and back seat camera a key away
+- Fixed the status menu on the dashboard being cut off, so you could not change from 10-8
+- Fixed an error when picking View MDT Profile, Issue Citation or Run Name Check on a player
+- Fixed the mouse staying stuck on screen after closing a profile opened from View MDT Profile
+- Esc closes an open window, like Issue Citation, before it closes the MDT. Closing the MDT no longer leaves a window on screen
+
+Replace everything except your config.lua. No SQL to run.
+
 ## [3.0.2] — 2026-10-30
 
 - Logging out clocks you out, takes you off the unit list, stops body cam viewing and clears the map

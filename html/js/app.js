@@ -91,7 +91,23 @@ function nuiPost(name, payload = {}) {
     }).then(r => r.json()).catch(() => null);
 }
 
+const POPUPS = '.modal-backdrop, .tag-picker-popup';
+
+function closePopups() {
+    document.querySelectorAll(POPUPS).forEach((el) => el.remove());
+}
+
+function closeTopPopup() {
+    if (document.getElementById('status-dropdown')) { closeStatusPicker(); return true; }
+    const open = document.querySelectorAll(POPUPS);
+    if (!open.length) return false;
+    open[open.length - 1].remove();
+    return true;
+}
+
 function closeMDT() {
+    closeStatusPicker();
+    closePopups();
     if (typeof stopMap === 'function') stopMap();
     fetch(`https://${MDT_RESOURCE}/close`, { method: 'POST' });
     document.getElementById('mdt-overlay').classList.add('hidden');
@@ -238,6 +254,7 @@ function switchTab(tab, skipLoad = false) {
     // Never open a panel this department doesn't have — the server would
     // refuse the data anyway, and an empty panel just looks broken.
     if (MDT.panels && MDT.panels.length && !MDT.panels.includes(tab)) return false;
+    closeStatusPicker();
 
     document.querySelectorAll('.nav-item[data-tab]').forEach(el =>
         el.classList.toggle('active', el.dataset.tab === tab));
@@ -479,7 +496,11 @@ const TAB_KEYS = {
 
 document.addEventListener('keydown', (e) => {
     if (document.getElementById('mdt-overlay').classList.contains('hidden')) return;
-    if (e.key === 'Escape') { closeMDT(); return; }
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        if (!closeTopPopup()) closeMDT();
+        return;
+    }
     if ((e.ctrlKey || e.metaKey) && TAB_KEYS[e.key]) {
         e.preventDefault();
         switchTab(TAB_KEYS[e.key]);
@@ -519,6 +540,8 @@ window.addEventListener('message', (e) => {
             openMDT(data.officer);
             break;
         case 'close':
+            closeStatusPicker();
+            closePopups();
             if (typeof stopMap === 'function') stopMap();
             document.getElementById('mdt-overlay').classList.add('hidden');
             break;
@@ -594,6 +617,7 @@ window.addEventListener('message', (e) => {
         case 'openForTarget':
             openMDT(data.officer);
             setTimeout(() => {
+                if (document.getElementById('mdt-overlay').classList.contains('hidden')) return;
                 if (data.mode === 'citation') openNewCitationModal(data.data);
                 else { showCivilian(data.data.citizenid); }
             }, 350);
@@ -785,36 +809,60 @@ function renderStatusPicker(currentCode) {
                 ${current.code} — ${esc(current.label)}
                 <span style="opacity:.6;font-size:10px;">▾</span>
             </button>
-            <div id="status-dropdown" style="
-                display:none;position:absolute;top:calc(100%+6px);left:0;
-                background:var(--bg-panel);border:1px solid var(--border-light);
-                border-radius:var(--radius);z-index:9999;min-width:200px;
-                box-shadow:0 12px 40px rgba(0,0,0,.6);overflow:hidden;">
-                ${UNIT_STATUSES.map(s => `
-                    <div onclick="setMyStatus('${s.code}');document.getElementById('status-dropdown').style.display='none';"
-                         style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;
-                                border-bottom:1px solid var(--border);transition:background .1s;"
-                         onmouseenter="this.style.background='var(--bg-hover)'"
-                         onmouseleave="this.style.background=''">
-                        <span style="width:9px;height:9px;border-radius:50%;background:${s.color};flex-shrink:0;"></span>
-                        <div>
-                            <div style="font-size:12px;font-weight:700;color:${s.color};">${s.code}</div>
-                            <div style="font-size:11px;color:var(--text-muted);">${esc(s.label)}</div>
-                        </div>
-                    </div>`).join('')}
-            </div>
         </div>`;
 }
 
-function toggleStatusPicker() {
+function closeStatusPicker() {
     const dd = document.getElementById('status-dropdown');
-    if (dd) dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
-    document.addEventListener('click', function closeIt(e) {
-        if (!document.getElementById('status-picker-wrap')?.contains(e.target)) {
-            if (dd) dd.style.display = 'none';
-            document.removeEventListener('click', closeIt);
-        }
-    }, { capture: true });
+    if (dd) dd.remove();
+    document.removeEventListener('click', statusPickerOutside, true);
+    window.removeEventListener('scroll', closeStatusPicker, true);
+    window.removeEventListener('resize', closeStatusPicker);
+}
+
+function statusPickerOutside(e) {
+    const dd = document.getElementById('status-dropdown');
+    const wrap = document.getElementById('status-picker-wrap');
+    if ((dd && dd.contains(e.target)) || (wrap && wrap.contains(e.target))) return;
+    closeStatusPicker();
+}
+
+function toggleStatusPicker() {
+    if (document.getElementById('status-dropdown')) return closeStatusPicker();
+    const btn = document.querySelector('#status-picker-wrap > button');
+    if (!btn) return;
+    const r = btn.getBoundingClientRect();
+    const dd = document.createElement('div');
+    dd.id = 'status-dropdown';
+    dd.style.cssText = `position:fixed;left:${Math.round(r.left)}px;top:${Math.round(r.bottom + 6)}px;
+        background:var(--bg-panel);border:1px solid var(--border-light);border-radius:var(--radius);
+        z-index:9999;min-width:200px;box-shadow:0 12px 40px rgba(0,0,0,.6);overflow:hidden;`;
+    dd.innerHTML = UNIT_STATUSES.map(s => `
+        <div data-status="${s.code}"
+             style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;
+                    border-bottom:1px solid var(--border);transition:background .1s;"
+             onmouseenter="this.style.background='var(--bg-hover)'"
+             onmouseleave="this.style.background=''">
+            <span style="width:9px;height:9px;border-radius:50%;background:${s.color};flex-shrink:0;"></span>
+            <div>
+                <div style="font-size:12px;font-weight:700;color:${s.color};">${s.code}</div>
+                <div style="font-size:11px;color:var(--text-muted);">${esc(s.label)}</div>
+            </div>
+        </div>`).join('');
+    dd.addEventListener('click', e => {
+        const row = e.target.closest('[data-status]');
+        if (!row) return;
+        closeStatusPicker();
+        setMyStatus(row.dataset.status);
+    });
+    document.body.appendChild(dd);
+    const h = dd.offsetHeight;
+    if (r.bottom + 6 + h > window.innerHeight - 8 && r.top - 6 - h > 8) dd.style.top = `${Math.round(r.top - 6 - h)}px`;
+    const w = dd.offsetWidth;
+    if (r.left + w > window.innerWidth - 8) dd.style.left = `${Math.max(8, Math.round(window.innerWidth - 8 - w))}px`;
+    document.addEventListener('click', statusPickerOutside, true);
+    window.addEventListener('scroll', closeStatusPicker, true);
+    window.addEventListener('resize', closeStatusPicker);
 }
 
 // ── Search History ────────────────────────────────────────────────────────
@@ -874,7 +922,7 @@ Object.assign(window, {
     skeletonLines, skeletonCard, updateOfficerCard,
     updateCADBadge, updateBoloBadge, updateWarrantBadge,
     UNIT_STATUSES, getStatusConfig, addSearchHistory,
-    renderStatusPicker, toggleStatusPicker, setMyStatus,
+    renderStatusPicker, toggleStatusPicker, closeStatusPicker, setMyStatus,
     renderSearchHistory, showPanicAlert, playUISound,
     copyToClipboard, copyBtn, _doCopy,
 });

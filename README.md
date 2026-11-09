@@ -68,6 +68,7 @@
 
 ### Police
 
+- **Works with XS-PoliceSystem** — When it is running, the two share everything: a BOLO on a plate or a car flagged stolen flags that plate for the radars, helicopter camera and speed cameras, and a plate flagged in the field shows up here as a BOLO. Clearing either side clears both. Booking mugshots become the profile photo, and a Custody tab on the profile shows ankle monitors, community service and forensic lab matches. Officers checking an ID or running a plate in the field see the warrants from the MDT
 - **Report search** — one box that searches case numbers, titles, narratives and officers across every report
 - **Evidence on reports** — book evidence straight from a report or an arrest. It goes into the locker with its own number, and can be taken off the report again without losing it
 - **Department stats** — arrests, citations, reports, active warrants and fines on the dashboard with a daily activity chart, switchable between 7 and 30 days. Every officer sees the numbers; the top-officers list stays with supervisors
@@ -110,6 +111,7 @@
 | [oxmysql](https://github.com/overextended/oxmysql) | Yes |
 | [ox_target](https://github.com/overextended/ox_target) **or** [qb-target](https://github.com/qbcore-framework/qb-target) | Optional |
 | [XS-Dispatch](https://github.com/XyraL/XS-Dispatch) *(or any adapter)* | Optional — falls back to the built-in CAD |
+| XS-PoliceSystem | Optional — shares BOLOs, flagged plates, mugshots, custody and warrants |
 
 > **Note:** the MDT detects which of the two is started. Set `Config.Framework`
 > to `'qbox'` or `'qbcore'` only if you have both up during a migration.

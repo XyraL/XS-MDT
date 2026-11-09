@@ -267,6 +267,10 @@ function civProfileTabs(data) {
         const bad = data.licences.filter(l => l.status !== 'valid').length;
         tabs.push(['civ-licences', 'Licences', bad || null]);
     }
+    if (data.canSeeCriminal && civHasCustody(data)) {
+        const c = data.custody;
+        tabs.push(['civ-custody', 'Custody', (c.lab || []).length || null]);
+    }
     if (data.canSeeCriminal) tabs.push(['civ-officer-notes', 'Notes', null]);
 
     return tabs.map(([id, label, count], i) => `
@@ -289,6 +293,7 @@ function civProfileBodies(data) {
         wrap('civ-citations', renderCivCitationsList(data.citations || []));
         wrap('civ-vehicles',  renderVehiclesList(data.vehicles || []));
         if ((data.licences || []).length) wrap('civ-licences', renderLicences(data));
+        if (civHasCustody(data)) wrap('civ-custody', renderCivCustody(data.custody));
     }
     if (data.canSeeMedical) {
         wrap('civ-medical', renderCivMedical(data));
@@ -300,6 +305,51 @@ function civProfileBodies(data) {
                  '<div class="empty-subtitle">Your department can only see identity details</div></div>');
     }
     return out.join('');
+}
+
+function civHasCustody(data) {
+    const c = data && data.custody;
+    return !!(c && (c.tracker || c.service || c.mugshot || (c.lab || []).length));
+}
+
+function renderCivCustody(c) {
+    const when = (ts) => ts ? new Date(ts * 1000).toLocaleString() : '';
+    const row = (key, val) => val ? `<div class="info-row"><div class="info-key">${esc(key)}</div><div class="info-val">${esc(val)}</div></div>` : '';
+    const status = [];
+    if (c.tracker) status.push('<span class="tag tag-orange"><i class="i i-alert"></i> Ankle monitor fitted</span>');
+    if (c.service) status.push(`<span class="tag tag-orange">Community service · ${esc(String(c.service.tasks))} tasks left</span>`);
+    const service = c.service ? `
+        <div class="card">
+            <div class="card-header"><div class="card-title">Community service</div></div>
+            <div class="card-body">
+                ${row('Tasks left', String(c.service.tasks))}
+                ${row('Reason', c.service.reason)}
+                ${row('Given by', c.service.officer)}
+            </div>
+        </div>` : '';
+    const mug = c.mugshot ? `
+        <div class="card">
+            <div class="card-header"><div class="card-title">Booking mugshot</div></div>
+            <div class="card-body">
+                ${row('Taken', when(c.mugshot.at))}
+                ${row('By', c.mugshot.officer)}
+            </div>
+        </div>` : '';
+    const lab = (c.lab || []).length ? `
+        <div class="card">
+            <div class="card-header"><div class="card-title">Forensic lab matches</div><span class="tag tag-blue">${c.lab.length}</span></div>
+            <div class="card-body">
+                ${c.lab.map(r => `
+                    <div class="info-row" style="flex-direction:column;gap:3px;">
+                        <div class="info-val" style="font-weight:600;">${esc(r.result)}</div>
+                        <div class="info-val" style="color:var(--text-secondary);">${esc(r.subject)}</div>
+                        <div class="info-key">${esc([r.station, r.officer, when(r.at)].filter(Boolean).join(' · '))}</div>
+                    </div>`).join('')}
+            </div>
+        </div>` : '';
+    return `
+        ${status.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">${status.join('')}</div>` : ''}
+        ${service}${mug}${lab}`;
 }
 
 function renderCivMedical(data) {

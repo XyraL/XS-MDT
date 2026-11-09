@@ -231,8 +231,20 @@ end)
 
 -- ── NUI and events ────────────────────────────────────────────────────────
 
+local function PoliceSystemWatch(serverId)
+    if GetResourceState('XS-PoliceSystem') ~= 'started' then return false end
+    local ok, handled = pcall(function() return exports['XS-PoliceSystem']:WatchUnit(serverId, 'body') end)
+    return ok and handled == true
+end
+
 RegisterNUICallback('startBodyCam', function(data, cb)
     if not LiveEnabled() or watching then cb(false) return end
+
+    if PoliceSystemWatch(data and data.serverId) then
+        TriggerEvent('XS-MDT:client:closeForBodyCam')
+        cb({ ok = true })
+        return
+    end
 
     local ok, info = lib.callback.await('XS-MDT:server:startBodyCam', false, data and data.serverId)
     if not ok or type(info) ~= 'table' then cb(false) return end

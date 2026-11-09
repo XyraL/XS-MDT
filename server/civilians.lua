@@ -22,6 +22,7 @@ local function SyncCivilian(citizenid)
     ]], { citizenid, info.firstname, info.lastname, info.birthdate, info.gender, info.phone })
     return MySQL.single.await('SELECT * FROM mdt_civilians WHERE citizenid = ?', { citizenid })
 end
+MdtSyncCivilian = SyncCivilian
 
 -- Search civilians by name or DOB
 lib.callback.register('XS-MDT:server:searchCivilians', function(source, query)
@@ -143,6 +144,13 @@ lib.callback.register('XS-MDT:server:getCivilianProfile', function(source, citiz
         civilian.canGrantLicence = exports['XS-MDT']:IsSupervisor(source)
             or not Config.Licences.GrantRequiresSupervisor
     end
+
+    if (not civilian.image or civilian.image == '') and HasPanel(source, 'mugshots') then
+        local image = MdtPolice.Mugshot(citizenid)
+        if image and MdtPolice.SaveImage(citizenid, image) then civilian.image = image end
+    end
+
+    if CanSeeCriminal(source) then civilian.custody = MdtPolice.Profile(citizenid) end
 
     civilian.canSeeCriminal = CanSeeCriminal(source)
     civilian.canSeeMedical  = CanSeeMedical(source)

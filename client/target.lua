@@ -1,7 +1,5 @@
 if not Config.Target.Enabled then return end
 
-local mdtOpen = false  -- shadow from main.lua (updated via event)
-
 -- Target options are registered once at start, so each needs its own runtime
 -- check: without one every player — civilians included — sees "Issue Citation"
 -- on anyone they aim at.
@@ -11,10 +9,6 @@ local function CanUse(panel)
     if Config.OnDutyOnly and not pd.job.onduty then return false end
     return Dept.HasPanel(pd.job.name, panel)
 end
-
-AddEventHandler('XS-MDT:client:mdtStateChanged', function(state)
-    mdtOpen = state
-end)
 
 CreateThread(function()
     local hasOxTarget = GetResourceState('ox_target') == 'started'
@@ -31,7 +25,7 @@ CreateThread(function()
                 distance = Config.Target.MaxDistance,
                 canInteract = function() return CanUse('civilians') end,
                 onSelect = function(data)
-                    local playerId = GetPlayerFromEntity(data.entity)
+                    local playerId = NetworkGetPlayerIndexFromPed(data.entity)
                     if playerId == -1 then return end
                     TriggerServerEvent('XS-MDT:server:targetOpenProfile', GetPlayerServerId(playerId))
                 end,
@@ -43,7 +37,7 @@ CreateThread(function()
                 distance = Config.Target.MaxDistance,
                 canInteract = function() return CanUse('citations') end,
                 onSelect = function(data)
-                    local playerId = GetPlayerFromEntity(data.entity)
+                    local playerId = NetworkGetPlayerIndexFromPed(data.entity)
                     if playerId == -1 then return end
                     TriggerServerEvent('XS-MDT:server:targetQuickCitation', GetPlayerServerId(playerId))
                 end,
@@ -55,7 +49,7 @@ CreateThread(function()
                 distance = Config.Target.MaxDistance,
                 canInteract = function() return CanUse('warrants') end,
                 onSelect = function(data)
-                    local playerId = GetPlayerFromEntity(data.entity)
+                    local playerId = NetworkGetPlayerIndexFromPed(data.entity)
                     if playerId == -1 then return end
                     TriggerServerEvent('XS-MDT:server:targetRunName', GetPlayerServerId(playerId))
                 end,
@@ -70,7 +64,7 @@ CreateThread(function()
                     icon   = 'fas fa-id-card',
                     canInteract = function() return CanUse('civilians') end,
                     action = function(entity)
-                        local playerId = GetPlayerFromEntity(entity)
+                        local playerId = NetworkGetPlayerIndexFromPed(entity)
                         if playerId == -1 then return end
                         TriggerServerEvent('XS-MDT:server:targetOpenProfile', GetPlayerServerId(playerId))
                     end,
@@ -80,7 +74,7 @@ CreateThread(function()
                     icon   = 'fas fa-file-alt',
                     canInteract = function() return CanUse('citations') end,
                     action = function(entity)
-                        local playerId = GetPlayerFromEntity(entity)
+                        local playerId = NetworkGetPlayerIndexFromPed(entity)
                         if playerId == -1 then return end
                         TriggerServerEvent('XS-MDT:server:targetQuickCitation', GetPlayerServerId(playerId))
                     end,
@@ -90,7 +84,7 @@ CreateThread(function()
                     icon   = 'fas fa-search',
                     canInteract = function() return CanUse('warrants') end,
                     action = function(entity)
-                        local playerId = GetPlayerFromEntity(entity)
+                        local playerId = NetworkGetPlayerIndexFromPed(entity)
                         if playerId == -1 then return end
                         TriggerServerEvent('XS-MDT:server:targetRunName', GetPlayerServerId(playerId))
                     end,
@@ -114,16 +108,7 @@ RegisterNetEvent('XS-MDT:client:targetResult', function(civData, mode)
         return
     end
 
-    if mdtOpen then
-        SendNUIMessage({ action = 'targetResult', data = civData, mode = mode })
-    else
-        -- Auto-open MDT then navigate
-        local officer = lib.callback.await('XS-MDT:server:open', false)
-        if not officer then return end
-        mdtOpen = true
-        SetNuiFocus(true, true)
-        SendNUIMessage({ action = 'openForTarget', officer = officer, data = civData, mode = mode })
-    end
+    OpenMDTForTarget(civData, mode)
 end)
 
 -- Quick name check result — shown as in-game notification (no MDT needed)

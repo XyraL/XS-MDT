@@ -27,6 +27,7 @@ lib.callback.register('XS-MDT:server:issueBolo', function(source, data)
         issuedBy = officer.name,
     })
 
+    if data.plate and data.plate ~= '' then MdtPolice.FlagPlate(data.plate, 'BOLO: ' .. tostring(data.reason)) end
     exports['XS-MDT']:AuditLog('BOLO Issued', officer.name, data.type .. ': ' .. data.description)
     return id
 end)
@@ -34,9 +35,11 @@ end)
 lib.callback.register('XS-MDT:server:clearBolo', function(source, boloId)
     if not HasPanel(source, 'bolos') then return false end
     local officer = exports['XS-MDT']:GetOfficerInfo(source)
+    local row = MySQL.single.await('SELECT plate FROM mdt_bolos WHERE id = ?', { boloId })
     MySQL.update.await('UPDATE mdt_bolos SET active = 0, cleared_by = ?, cleared_at = NOW() WHERE id = ?', {
         officer.citizenid, boloId
     })
+    if row and row.plate and row.plate ~= '' then MdtPolice.UnflagPlate(row.plate) end
     -- Notify clients to remove the BOLO from their boards
     TriggerClientEvent('XS-MDT:client:boloCleared', -1, boloId)
     exports['XS-MDT']:AuditLog('BOLO Cleared', officer.name, 'BOLO ID: ' .. boloId)
