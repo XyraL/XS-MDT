@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.1.1] — 2026-11-20
+
+- Fixed tag and button colours that did not show in game
+
+Replace everything except your config.lua. No SQL to run.
+
 ## [3.1.0] — 2026-11-09
 
 Works with XS-PoliceSystem.

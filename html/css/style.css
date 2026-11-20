@@ -39,18 +39,18 @@
   --faint: #66666e;
 
   /* State — the only colours that carry meaning. */
-  --p1: #ff4d5e;  --p2: #ffb020;  --p3: #3ddc97;
-  --red: #ff4d5e; --yellow: #ffb020; --green: #3ddc97;
-  --blue: #4d8dff; --orange: #ff8a3d; --purple: #a88bff;
+  --p1: #ff4d5e; --p1-rgb: 255,77,94;  --p2: #ffb020; --p2-rgb: 255,176,32;  --p3: #3ddc97; --p3-rgb: 61,220,151;
+  --red: #ff4d5e; --red-rgb: 255,77,94; --yellow: #ffb020; --yellow-rgb: 255,176,32; --green: #3ddc97; --green-rgb: 61,220,151;
+  --blue: #4d8dff; --blue-rgb: 77,141,255; --orange: #ff8a3d; --orange-rgb: 255,138,61; --purple: #a88bff; --purple-rgb: 168,139,255;
   /* State colours keep a little warmth so they read against graphite rather
      than glowing off it. */
   --alert: #ff4d5e;
 
-  --felony: #ff4d5e;  --misdemeanor: #ffb020;  --infraction: #7c8ba0;
-  --on-duty: #3ddc97; --off-duty: #5c6674;
+  --felony: #ff4d5e; --felony-rgb: 255,77,94;  --misdemeanor: #ffb020; --misdemeanor-rgb: 255,176,32;  --infraction: #7c8ba0; --infraction-rgb: 124,139,160;
+  --on-duty: #3ddc97; --on-duty-rgb: 61,220,151; --off-duty: #5c6674;
 
   /* Department accent — chrome only. Overwritten at runtime. */
-  --accent: #3b82f6;
+  --accent: #3b82f6; --accent-rgb: 59,130,246;
   --accent-2: #3b82f6;
   --accent-glow: #3b82f626;
   --accent-ink: #ffffff;
@@ -264,7 +264,7 @@ body.hidden, .hidden { display: none !important; }
   font: 10.5px var(--font-mono); color: var(--faint); letter-spacing: .03em;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.status-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--on-duty); box-shadow: 0 0 0 3px color-mix(in srgb, var(--on-duty) 18%, transparent); }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--on-duty); box-shadow: 0 0 0 3px rgba(var(--on-duty-rgb),.18); }
 .status-dot.off { background: var(--off-duty); box-shadow: none; }
 
 #mdt-close-btn {
@@ -275,7 +275,7 @@ body.hidden, .hidden { display: none !important; }
   font: 500 11px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase;
   cursor: pointer; text-align: center;
 }
-#mdt-close-btn:hover { background: color-mix(in srgb, var(--red) 12%, transparent); color: var(--red); }
+#mdt-close-btn:hover { background: rgba(var(--red-rgb),.12); color: var(--red); }
 
 /* ── Work area ────────────────────────────────────────────────────────────── */
 
@@ -348,12 +348,12 @@ body.hidden, .hidden { display: none !important; }
 }
 .btn-primary:hover { filter: brightness(1.08); background: var(--accent); color: var(--accent-ink); }
 
-.btn-danger  { color: var(--red); border-color: color-mix(in srgb, var(--red) 32%, transparent); }
-.btn-danger:hover { background: color-mix(in srgb, var(--red) 12%, transparent); color: var(--red); }
-.btn-success { color: var(--green); border-color: color-mix(in srgb, var(--green) 32%, transparent); }
-.btn-success:hover { background: color-mix(in srgb, var(--green) 12%, transparent); color: var(--green); }
-.btn-warning { color: var(--yellow); border-color: color-mix(in srgb, var(--yellow) 32%, transparent); }
-.btn-warning:hover { background: color-mix(in srgb, var(--yellow) 12%, transparent); color: var(--yellow); }
+.btn-danger  { color: var(--red); border-color: rgba(var(--red-rgb),.32); }
+.btn-danger:hover { background: rgba(var(--red-rgb),.12); color: var(--red); }
+.btn-success { color: var(--green); border-color: rgba(var(--green-rgb),.32); }
+.btn-success:hover { background: rgba(var(--green-rgb),.12); color: var(--green); }
+.btn-warning { color: var(--yellow); border-color: rgba(var(--yellow-rgb),.32); }
+.btn-warning:hover { background: rgba(var(--yellow-rgb),.12); color: var(--yellow); }
 
 .btn-add-tag {
   height: 20px; padding: 0 9px;
@@ -494,15 +494,15 @@ body.hidden, .hidden { display: none !important; }
   white-space: nowrap;
 }
 
-.tag-red,    .ns-badge-red    { color: var(--red);    border-color: color-mix(in srgb, var(--red) 34%, transparent);    background: color-mix(in srgb, var(--red) 11%, transparent); }
-.tag-yellow                   { color: var(--yellow); border-color: color-mix(in srgb, var(--yellow) 34%, transparent); background: color-mix(in srgb, var(--yellow) 11%, transparent); }
-.tag-green,  .ns-badge-green  { color: var(--green);  border-color: color-mix(in srgb, var(--green) 34%, transparent);  background: color-mix(in srgb, var(--green) 11%, transparent); }
-.tag-blue                     { color: var(--blue);   border-color: color-mix(in srgb, var(--blue) 34%, transparent);   background: color-mix(in srgb, var(--blue) 11%, transparent); }
-.tag-orange                   { color: var(--orange); border-color: color-mix(in srgb, var(--orange) 34%, transparent); background: color-mix(in srgb, var(--orange) 11%, transparent); }
-.tag-purple                   { color: var(--purple); border-color: color-mix(in srgb, var(--purple) 34%, transparent); background: color-mix(in srgb, var(--purple) 11%, transparent); }
+.tag-red,    .ns-badge-red    { color: var(--red);    border-color: rgba(var(--red-rgb),.34);    background: rgba(var(--red-rgb),.11); }
+.tag-yellow                   { color: var(--yellow); border-color: rgba(var(--yellow-rgb),.34); background: rgba(var(--yellow-rgb),.11); }
+.tag-green,  .ns-badge-green  { color: var(--green);  border-color: rgba(var(--green-rgb),.34);  background: rgba(var(--green-rgb),.11); }
+.tag-blue                     { color: var(--blue);   border-color: rgba(var(--blue-rgb),.34);   background: rgba(var(--blue-rgb),.11); }
+.tag-orange                   { color: var(--orange); border-color: rgba(var(--orange-rgb),.34); background: rgba(var(--orange-rgb),.11); }
+.tag-purple                   { color: var(--purple); border-color: rgba(var(--purple-rgb),.34); background: rgba(var(--purple-rgb),.11); }
 .tag-gray,   .ns-badge-gray   { color: var(--faint); }
 
-.status-badge.on-duty { color: var(--on-duty); border-color: color-mix(in srgb, var(--on-duty) 34%, transparent); background: color-mix(in srgb, var(--on-duty) 11%, transparent); }
+.status-badge.on-duty { color: var(--on-duty); border-color: rgba(var(--on-duty-rgb),.34); background: rgba(var(--on-duty-rgb),.11); }
 
 .tag-remove {
   padding: 0 1px 0 3px;
@@ -523,9 +523,9 @@ body.hidden, .hidden { display: none !important; }
   font-size: 12.5px;
   margin-bottom: 12px;
 }
-.alert-danger { border-left-color: var(--red);    background: color-mix(in srgb, var(--red) 7%, var(--surface)); }
-.alert-warn   { border-left-color: var(--yellow); background: color-mix(in srgb, var(--yellow) 7%, var(--surface)); }
-.alert-info   { border-left-color: var(--blue);   background: color-mix(in srgb, var(--blue) 7%, var(--surface)); }
+.alert-danger { border-left-color: var(--red);    background: linear-gradient(rgba(var(--red-rgb),.07),rgba(var(--red-rgb),.07)),var(--surface); }
+.alert-warn   { border-left-color: var(--yellow); background: linear-gradient(rgba(var(--yellow-rgb),.07),rgba(var(--yellow-rgb),.07)),var(--surface); }
+.alert-info   { border-left-color: var(--blue);   background: linear-gradient(rgba(var(--blue-rgb),.07),rgba(var(--blue-rgb),.07)),var(--surface); }
 
 /* ═══ Empty states ═════════════════════════════════════════════════════════ */
 
@@ -564,9 +564,9 @@ body.hidden, .hidden { display: none !important; }
   background: var(--raised-2); color: var(--dim);
   font: 600 10.5px var(--font-mono);
 }
-.top-officer-rank.gold   { background: color-mix(in srgb, var(--yellow) 18%, transparent); color: var(--yellow); }
+.top-officer-rank.gold   { background: rgba(var(--yellow-rgb),.18); color: var(--yellow); }
 .top-officer-rank.silver { background: var(--raised-2); color: var(--text); }
-.top-officer-rank.bronze { background: color-mix(in srgb, var(--orange) 14%, transparent); color: var(--orange); }
+.top-officer-rank.bronze { background: rgba(var(--orange-rgb),.14); color: var(--orange); }
 
 /* ── Weekly chart ─────────────────────────────────────────────────────────────
    Bars on one baseline, labels in their own row. A flat week has to look flat;
@@ -585,7 +585,7 @@ body.hidden, .hidden { display: none !important; }
 .chart-bar {
   width: 76%; max-width: 22px;
   border-radius: 2px 2px 0 0;
-  background: color-mix(in srgb, var(--accent) 42%, var(--raised-2));
+  background: linear-gradient(rgba(var(--accent-rgb),.42),rgba(var(--accent-rgb),.42)),var(--raised-2);
   display: flex; flex-direction: column;
   transition: filter .12s;
 }
@@ -608,7 +608,7 @@ body.hidden, .hidden { display: none !important; }
 .chart-key span { display: inline-flex; align-items: center; gap: 5px; }
 .key-swatch { width: 8px; height: 8px; border-radius: 2px; }
 .key-swatch.arrests { background: var(--accent); }
-.key-swatch.citations { background: color-mix(in srgb, var(--accent) 42%, var(--raised-2)); }
+.key-swatch.citations { background: linear-gradient(rgba(var(--accent-rgb),.42),rgba(var(--accent-rgb),.42)),var(--raised-2); }
 .chart-peak { margin-left: auto; }
 
 /* ═══ Activity ═════════════════════════════════════════════════════════════ */
@@ -970,9 +970,9 @@ body.hidden, .hidden { display: none !important; }
   font: 600 10px/1.6 var(--font-mono); letter-spacing: .06em;
   background: var(--raised-2); color: var(--dim);
 }
-.priority-1 { background: color-mix(in srgb, var(--p1) 16%, transparent); color: var(--p1); }
-.priority-2 { background: color-mix(in srgb, var(--p2) 16%, transparent); color: var(--p2); }
-.priority-3 { background: color-mix(in srgb, var(--p3) 14%, transparent); color: var(--p3); }
+.priority-1 { background: rgba(var(--p1-rgb),.16); color: var(--p1); }
+.priority-2 { background: rgba(var(--p2-rgb),.16); color: var(--p2); }
+.priority-3 { background: rgba(var(--p3-rgb),.14); color: var(--p3); }
 
 /* How long a call has been sitting. Neutral until it is old enough to matter. */
 .elapsed-chip {
@@ -1007,8 +1007,8 @@ body.hidden, .hidden { display: none !important; }
   font: 600 9.5px/1.7 var(--font-mono); letter-spacing: .1em; text-transform: uppercase;
   background: var(--raised-2); color: var(--dim);
 }
-.bulletin-badge-urgent   { background: color-mix(in srgb, var(--yellow) 16%, transparent); color: var(--yellow); }
-.bulletin-badge-critical { background: color-mix(in srgb, var(--red) 16%, transparent); color: var(--red); }
+.bulletin-badge-urgent   { background: rgba(var(--yellow-rgb),.16); color: var(--yellow); }
+.bulletin-badge-critical { background: rgba(var(--red-rgb),.16); color: var(--red); }
 
 /* ═══ Odds and ends ════════════════════════════════════════════════════════ */
 
@@ -1037,10 +1037,10 @@ body.hidden, .hidden { display: none !important; }
   background: var(--raised);
   font-size: 11.5px;
 }
-.linked-person-tag.officer-tag { border-color: color-mix(in srgb, var(--accent) 40%, transparent); color: var(--accent); }
-.linked-person-tag.red    { border-color: color-mix(in srgb, var(--red) 40%, transparent);    color: var(--red); }
-.linked-person-tag.yellow { border-color: color-mix(in srgb, var(--yellow) 40%, transparent); color: var(--yellow); }
-.linked-person-tag.green  { border-color: color-mix(in srgb, var(--green) 40%, transparent);  color: var(--green); }
+.linked-person-tag.officer-tag { border-color: rgba(var(--accent-rgb),.4); color: var(--accent); }
+.linked-person-tag.red    { border-color: rgba(var(--red-rgb),.4);    color: var(--red); }
+.linked-person-tag.yellow { border-color: rgba(var(--yellow-rgb),.4); color: var(--yellow); }
+.linked-person-tag.green  { border-color: rgba(var(--green-rgb),.4);  color: var(--green); }
 
 .stat-card { min-width: 0; }
 
@@ -1121,9 +1121,9 @@ body.hidden, .hidden { display: none !important; }
   font: 600 9.5px/1.7 var(--font-mono); letter-spacing: .09em; text-transform: uppercase;
   border: 1px solid transparent;
 }
-.charge-class-felony      { color: var(--felony);      border-color: color-mix(in srgb, var(--felony) 34%, transparent);      background: color-mix(in srgb, var(--felony) 11%, transparent); }
-.charge-class-misdemeanor { color: var(--misdemeanor); border-color: color-mix(in srgb, var(--misdemeanor) 34%, transparent); background: color-mix(in srgb, var(--misdemeanor) 11%, transparent); }
-.charge-class-infraction  { color: var(--infraction);  border-color: color-mix(in srgb, var(--infraction) 34%, transparent);  background: color-mix(in srgb, var(--infraction) 11%, transparent); }
+.charge-class-felony      { color: var(--felony);      border-color: rgba(var(--felony-rgb),.34);      background: rgba(var(--felony-rgb),.11); }
+.charge-class-misdemeanor { color: var(--misdemeanor); border-color: rgba(var(--misdemeanor-rgb),.34); background: rgba(var(--misdemeanor-rgb),.11); }
+.charge-class-infraction  { color: var(--infraction);  border-color: rgba(var(--infraction-rgb),.34);  background: rgba(var(--infraction-rgb),.11); }
 
 /* Segmented filter. */
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; flex: none; }
@@ -1214,7 +1214,7 @@ body.hidden, .hidden { display: none !important; }
 .roster-manage { justify-content: flex-end; }
 
 /* The duty light, in the three states a roster actually has. */
-.dot.duty-on   { color: var(--on-duty); box-shadow: 0 0 0 3px color-mix(in srgb, var(--on-duty) 16%, transparent); }
+.dot.duty-on   { color: var(--on-duty); box-shadow: 0 0 0 3px rgba(var(--on-duty-rgb),.16); }
 .dot.duty-off  { color: var(--yellow); }
 .dot.duty-away { color: var(--faint); }
 
@@ -1235,7 +1235,7 @@ body.hidden, .hidden { display: none !important; }
   font-size: 12.5px;
 }
 .rank-row:last-child { border-bottom: 0; }
-.rank-row.current { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.rank-row.current { background: rgba(var(--accent-rgb),.09); }
 .rank-row.locked { opacity: .5; }
 .rank-no {
   width: 22px; height: 22px; flex: none;
@@ -1582,7 +1582,7 @@ body.hidden, .hidden { display: none !important; }
   position: absolute; top: 9px; left: 10px;
   width: 7px; height: 7px; border-radius: 50%;
   background: var(--red);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--red) 70%, transparent);
+  box-shadow: 0 0 8px rgba(var(--red-rgb),.7);
   animation: live-blink 1.4s ease-in-out infinite;
 }
 @keyframes live-blink { 0%, 55% { opacity: 1; } 75%, 100% { opacity: .15; } }

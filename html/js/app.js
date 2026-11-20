@@ -237,6 +237,14 @@ function applyDepartmentTheme(officer) {
         root.style.setProperty('--accent', officer.departmentColor);
         root.style.setProperty('--accent-2', officer.departmentColor);
         root.style.setProperty('--accent-glow', officer.departmentColor + '26'); // ~15% alpha
+        let hex = String(officer.departmentColor).trim().replace(/^#/, '');
+        if (hex.length === 3) hex = hex.replace(/./g, (c) => c + c);
+        if (/^[0-9a-f]{6}$/i.test(hex)) {
+            const n = parseInt(hex, 16);
+            root.style.setProperty('--accent-rgb', `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`);
+        } else {
+            root.style.removeProperty('--accent-rgb');
+        }
     }
     const logo = document.querySelector('.logo-hex');
     // Config gives an icon name, not markup. Anything that is not a plain
